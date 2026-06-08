@@ -1,0 +1,27 @@
+# Tuist (generated project — not committed)
+*.xcodeproj
+*.xcworkspace
+Derived/
+.tuist/
+Tuist/.build/
+graph.png
+
+# SwiftPM
+.build/
+.swiftpm/
+
+# Xcode
+DerivedData/
+*.xcuserstate
+xcuserdata/
+
+# macOS
+.DS_Store
+
+# Mayfly artifacts (large / local-only)
+images/
+restore-cache/
+*.ipsw
+*.img
+*.mayfly/
+nvram.bin
