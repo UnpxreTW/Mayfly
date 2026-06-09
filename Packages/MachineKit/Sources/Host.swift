@@ -22,14 +22,15 @@ public enum Host {
 	/// 框架允許的 CPU 數範圍。建立 VM 設定時 `cpuCount` 必須落在此區間，
 	/// 否則 `validate()` 會擋下。
 	public static var allowedCPUCount: ClosedRange<Int> {
-		VZVirtualMachineConfiguration.minimumAllowedCPUCount
-			... VZVirtualMachineConfiguration.maximumAllowedCPUCount
+		Config.minimumAllowedCPUCount ... Config.maximumAllowedCPUCount
 	}
 
 	/// 框架允許的記憶體大小範圍（bytes）。`memorySize` 必須落在此區間，
 	/// 且為 1 MiB 的整數倍。
 	public static var allowedMemoryBytes: ClosedRange<UInt64> {
-		VZVirtualMachineConfiguration.minimumAllowedMemorySize
-			... VZVirtualMachineConfiguration.maximumAllowedMemorySize
+		Config.minimumAllowedMemorySize ... Config.maximumAllowedMemorySize
 	}
+
+	/// `VZVirtualMachineConfiguration` 的本地縮寫，純為可讀性。
+	private typealias Config = VZVirtualMachineConfiguration
 }
