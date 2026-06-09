@@ -13,15 +13,18 @@ import Foundation
 /// 只 import Foundation、不碰 Virtualization——CLI / GUI / MCP 都能組一份，把它
 /// 翻成 VZ 設定是引擎內層的事。欄位刻意只放「持久狀態的檔案位置」加少數執行
 /// 參數，不放任何 VZ 型別。
-public struct MacGuest: Sendable {
+public struct MacGuestSpec: Sendable {
 
 	/// macOS guest 的顯示器設定。
 	///
 	/// macOS 一定要掛圖形裝置（即使 headless、沒開視窗也要），否則開得起來卻
 	/// 無法正常進系統 / 被連線——這是 macOS guest 與 Linux 最大的差異之一。
 	public struct Display: Sendable {
+
 		public var widthInPixels: Int
+
 		public var heightInPixels: Int
+
 		public var pixelsPerInch: Int
 
 		public init(
