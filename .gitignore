@@ -18,6 +18,10 @@ xcuserdata/
 # macOS
 .DS_Store
 
+# Editor / LSP
+.nvim/
+buildServer.json
+
 # Mayfly artifacts (large / local-only)
 images/
 restore-cache/
