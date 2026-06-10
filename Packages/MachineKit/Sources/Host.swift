@@ -31,6 +31,22 @@ public enum Host {
 		Config.minimumAllowedMemorySize ... Config.maximumAllowedMemorySize
 	}
 
+	/// 把要求的 CPU 數收進 ``allowedCPUCount`` 範圍。
+	public static func clampedCPUCount(_ requested: Int) -> Int {
+		min(max(requested, allowedCPUCount.lowerBound), allowedCPUCount.upperBound)
+	}
+
+	/// 把要求的記憶體收進 ``allowedMemoryBytes`` 範圍、並向下對齊 1 MiB 倍數
+	/// （框架要求 `memorySize` 為 1 MiB 整數倍）。
+	public static func clampedMemoryBytes(_ requested: UInt64) -> UInt64 {
+		let oneMiB: UInt64 = 1 << 20
+		// 下界先向上對齊，floor 後才不會跌破下界、或在下界本身未對齊時吐出
+		// 非 1 MiB 倍數的值。
+		let alignedMinimum = (allowedMemoryBytes.lowerBound + oneMiB - 1) / oneMiB * oneMiB
+		let clamped = min(max(requested, alignedMinimum), allowedMemoryBytes.upperBound)
+		return clamped / oneMiB * oneMiB
+	}
+
 	/// `VZVirtualMachineConfiguration` 的本地縮寫，純為可讀性。
 	private typealias Config = VZVirtualMachineConfiguration
 }

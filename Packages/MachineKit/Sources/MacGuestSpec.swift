@@ -53,11 +53,20 @@ public struct MacGuestSpec: Sendable {
 	/// 取得；之後每次開機都要用它重建平台設定。
 	public var hardwareModel: URL
 
+	/// 要求的 vCPU 數。超出 `Host.allowedCPUCount` 時引擎會自動收斂、不擲錯。
 	public var cpuCount: Int
 
+	/// 要求的記憶體（bytes）。超出 `Host.allowedMemoryBytes` 時引擎會自動收斂
+	/// 並向下對齊 1 MiB、不擲錯。
 	public var memoryBytes: UInt64
 
+	/// 顯示器設定。一定會掛上（見 ``Display``）；headless 只是不開視窗。
 	public var display: Display
+
+	/// 固定 MAC 位址字串（如 `02:` 開頭的本地管理位址）。固定值讓 guest 跨重開機
+	/// 保有同一 DHCP lease，host 端才能用 MAC 從 `dhcpd_leases` 反查 IP——與
+	/// machineIdentifier 同屬 guest 身份的一部分。`nil` 則每次開機隨機產生。
+	public var macAddress: String?
 
 	public init(
 		diskImage: URL,
@@ -66,7 +75,8 @@ public struct MacGuestSpec: Sendable {
 		hardwareModel: URL,
 		cpuCount: Int = 4,
 		memoryBytes: UInt64 = 4 * 1024 * 1024 * 1024,
-		display: Display = Display()
+		display: Display = Display(),
+		macAddress: String? = nil
 	) {
 		self.diskImage = diskImage
 		self.auxiliaryStorage = auxiliaryStorage
@@ -75,5 +85,6 @@ public struct MacGuestSpec: Sendable {
 		self.cpuCount = cpuCount
 		self.memoryBytes = memoryBytes
 		self.display = display
+		self.macAddress = macAddress
 	}
 }
