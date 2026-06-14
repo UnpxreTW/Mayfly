@@ -11,7 +11,7 @@ let package = Package(
 		.library(name: "MachineKit", targets: ["MachineKit"]),
 	],
 	dependencies: [
-		.package(url: "https://github.com/UnpxreTW/SwiftStyleKit.git", from: "1.2.0"),
+		.package(url: "https://github.com/UnpxreTW/SwiftStyleKit.git", from: "2.0.0"),
 	],
 	targets: [
 		.target(
