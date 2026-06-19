@@ -19,8 +19,8 @@ import Foundation
 /// `metadata.json` 會在新版 decode 失敗（未知欄位則向後相容、會被忽略）。
 public struct BundleMetadata: Codable, Sendable {
 
-	/// 固定 locally-administered MAC（`02:` 開頭）。跨重開機保 DHCP lease、
-	/// 屬 guest 身份的一部分。
+	/// 固定 locally-administered unicast MAC（第一個 byte 低 nibble 為 2/6/a/e）。
+	/// 跨重開機保 DHCP lease、屬 guest 身份的一部分。
 	public var macAddress: String
 
 	/// 安裝來源的 OS build version（如 `VZMacOSRestoreImage.buildVersion`）。
