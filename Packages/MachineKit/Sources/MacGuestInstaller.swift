@@ -22,7 +22,7 @@ import Virtualization
 /// 烤進磁碟的身份 → 硬開機凍結。型別層硬分流比「靠檔案存在與否 runtime 分流」
 /// 安全。
 ///
-/// `@unchecked Sendable` 不變式同 ``MacGuest``：`vm` / `installer` / `observation`
+/// `@unchecked Sendable` 不變式同 ``MacGuest``：`virtualMachine` / `installer` / `observation`
 /// 與兩個取消旗標（`installStarted` / `cancelledBeforeStart`）的「驅動 / 變更狀態」
 /// 都只在私有 `vmQueue` 上（VZ 的 queue 合約含 init、callback、install）。出生與
 /// KVO 註冊都包在 init 的 `queue.sync` 內；唯一在 vmQueue 外的觸碰是 `progress`
@@ -154,7 +154,7 @@ public final class MacGuestInstaller: @unchecked Sendable {
 			)
 		}
 		self.vmQueue = queue
-		self.vm = built.machine
+		self.virtualMachine = built.machine
 		self.installer = built.installer
 		self.observation = built.observation
 		self.progress = stream
@@ -294,7 +294,7 @@ public final class MacGuestInstaller: @unchecked Sendable {
 	private let vmQueue: DispatchQueue
 
 	/// 被驅動的 VM；teardown 後 nil。只在 vmQueue 上觸碰。
-	private var vm: VZVirtualMachine?
+	private var virtualMachine: VZVirtualMachine?
 
 	/// 安裝器；teardown 後 nil。只在 vmQueue 上觸碰。
 	private var installer: VZMacOSInstaller?
@@ -374,7 +374,7 @@ public final class MacGuestInstaller: @unchecked Sendable {
 			observation?.invalidate()
 			observation = nil
 			installer = nil
-			vm = nil
+			virtualMachine = nil
 		}
 		progressContinuation.finish()
 	}
