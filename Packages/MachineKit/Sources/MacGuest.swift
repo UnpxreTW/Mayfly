@@ -19,7 +19,7 @@ import Virtualization
 /// `VZVirtualMachine` 困在一條私有 serial queue 上，對外只露 async 門面
 /// 與 Sendable 事件。
 ///
-/// `@unchecked Sendable` 不變式：`vm` 與 `relay` 只在 `vmQueue` 上觸碰——
+/// `@unchecked Sendable` 不變式：`virtualMachine` 與 `relay` 只在 `vmQueue` 上觸碰——
 /// 這正是 Virtualization 的 queue 合約（init 即綁定該 queue、callback 與
 /// delegate 落在其上、非 serial queue 上未定義）；本標註只是把這份
 /// runtime 合約對型別系統做的免責聲明。佐證：(1) 兩者在 `queue.sync` 內
@@ -28,7 +28,7 @@ import Virtualization
 /// (4) delegate callback 以 `dispatchPrecondition` 防衛。
 ///
 /// 絕不暴露 `VZVirtualMachine` 本體：編譯器不會替呼叫端擋「非對齊
-/// executor 上裸 `await vm.start()`」，queue 紀律只能靠 API 形狀強制。
+/// executor 上裸 `await virtualMachine.start()`」，queue 紀律只能靠 API 形狀強制。
 /// 同理 MachineKit 不綁 process runloop——那是 CLI / App 層的選擇。
 ///
 /// 一台 `MacGuest` 是**一次性生命週期**：停止後不支援重啟（停機狀態
@@ -41,7 +41,7 @@ public final class MacGuest: @unchecked Sendable {
 	/// builder Console 的轉出口，讓呼叫端不必直接碰 builder 命名空間。
 	public typealias Console = MacGuestConfigurationBuilder.Console
 
-	/// 生命週期事件流。單一消費者語意：多處 for-await 會分食事件。事件
+	/// 生命週期事件流。單一 consumer 語意：多處 for-await 會分食事件。事件
 	/// yield 自 vmQueue、消費發生在呼叫端自己的 Task 上。注意 host 硬停
 	/// （``forceStop()``）沒有對應的 delegate callback、不會出現在本流——
 	/// 停機的單一真相是 ``waitUntilStopped()``。
@@ -72,7 +72,7 @@ public final class MacGuest: @unchecked Sendable {
 		do {
 			try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, any Error>) in
 				vmQueue.async {
-					self.vm.start { result in
+					self.virtualMachine.start { result in
 						continuation.resume(with: result)
 					}
 				}
@@ -97,7 +97,7 @@ public final class MacGuest: @unchecked Sendable {
 	public func forceStop() async throws {
 		try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, any Error>) in
 			vmQueue.async {
-				self.vm.stop { error in
+				self.virtualMachine.stop { error in
 					if let error {
 						continuation.resume(throwing: error)
 					} else {
@@ -117,14 +117,14 @@ public final class MacGuest: @unchecked Sendable {
 	/// Task 取消（`CancellationError`）——non-throwing 版本在取消時沒有
 	/// 誠實的值可回。
 	public func waitUntilStopped() async throws -> GuestStopReason {
-		let id: UUID = .init()
+		let waiterID: UUID = .init()
 		return try await withTaskCancellationHandler {
 			try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<GuestStopReason, any Error>) in
 				vmQueue.async {
 					// onCancel 可能搶在註冊前跑（tombstone 已放）——兩個
 					// 閉包都在 vmQueue 上序列化、無 race；先消化 tombstone
 					// 確保它不殘留，取消也優先於「已停止」的值。
-					if self.relay.cancelledWaiterIDs.remove(id) != nil {
+					if self.relay.cancelledWaiterIDs.remove(waiterID) != nil {
 						continuation.resume(throwing: CancellationError())
 						return
 					}
@@ -132,17 +132,17 @@ public final class MacGuest: @unchecked Sendable {
 						continuation.resume(returning: reason)
 						return
 					}
-					self.relay.stopWaiters[id] = continuation
+					self.relay.stopWaiters[waiterID] = continuation
 				}
 			}
 		} onCancel: {
 			vmQueue.async {
-				if let waiter = self.relay.stopWaiters.removeValue(forKey: id) {
+				if let waiter = self.relay.stopWaiters.removeValue(forKey: waiterID) {
 					waiter.resume(throwing: CancellationError())
 				} else if self.relay.stopReason == nil {
 					// 已 settle 就不插 tombstone：operation 會以快路徑收
 					// 斂回值（cooperative cancellation 容許）、插了沒人清。
-					self.relay.cancelledWaiterIDs.insert(id)
+					self.relay.cancelledWaiterIDs.insert(waiterID)
 				}
 			}
 		}
@@ -192,7 +192,7 @@ public final class MacGuest: @unchecked Sendable {
 	public func currentState() async -> VZVirtualMachine.State {
 		await withCheckedContinuation { continuation in
 			vmQueue.async {
-				continuation.resume(returning: self.vm.state)
+				continuation.resume(returning: self.virtualMachine.state)
 			}
 		}
 	}
@@ -208,7 +208,7 @@ public final class MacGuest: @unchecked Sendable {
 		// sync 閉包保證建構與 delegate 設定發生在 vmQueue 上（VZ 的 queue
 		// 合約含 init）；之後的可見性由 dispatch 入隊邊界 + self 完成初始
 		// 化才可能跨界保證。閉包捕局部值、不捕尚未初始化完的 self。
-		(self.vm, self.relay) = try queue.sync {
+		(self.virtualMachine, self.relay) = try queue.sync {
 			let configuration = try MacGuestConfigurationBuilder.makeConfiguration(from: spec, console: console)
 			let machine: VZVirtualMachine = .init(configuration: configuration, queue: queue)
 			let proxy: GuestEventRelay = .init(queue: queue, eventContinuation: continuation)
@@ -219,13 +219,13 @@ public final class MacGuest: @unchecked Sendable {
 
 	// MARK: Private
 
-	/// 一切 VZ 觸碰的唯一入口；`vm` / `relay` 的隔離邊界。
+	/// 一切 VZ 觸碰的唯一入口；`virtualMachine` / `relay` 的隔離邊界。
 	private let vmQueue: DispatchQueue
 
 	/// 被駕馭的 VM 本體。只在 `vmQueue` 上觸碰、絕不外露。
-	private let vm: VZVirtualMachine
+	private let virtualMachine: VZVirtualMachine
 
-	/// delegate proxy。`vm.delegate` 是 weak、由 harness 強持有。
+	/// delegate proxy。`virtualMachine.delegate` 是 weak、由 harness 強持有。
 	private let relay: GuestEventRelay
 
 	/// 讀 relay 的已停狀態（vmQueue 上）；未停回 nil。

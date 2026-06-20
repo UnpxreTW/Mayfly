@@ -27,9 +27,9 @@ final class GuestEventRelay: NSObject, VZVirtualMachineDelegate {
 	}
 
 	deinit {
-		// 不收尾的話消費者的 for-await 會在 MacGuest 釋放後永久懸掛。
+		// 不收尾的話 consumer 的 for-await 會在 MacGuest 釋放後永久懸掛。
 		// Continuation 自身 Sendable、finish() 可在任意 thread 呼叫——
-		// deinit 不碰 vm、不違反 vmQueue 不變式。
+		// deinit 不碰 virtualMachine、不違反 vmQueue 不變式。
 		eventContinuation.finish()
 	}
 

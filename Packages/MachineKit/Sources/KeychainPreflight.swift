@@ -128,8 +128,9 @@ private struct LegacyDefaultKeychainQuery: DefaultKeychainQuerying {
 		guard SecKeychainGetPath(keychain, &length, &buffer) == errSecSuccess else {
 			return nil
 		}
-		// length 出參 = 不含 NUL 的實際長度；用它截斷再解碼，避開
-		// String(cString: [CChar]) 這個 stdlib 已 deprecated 的 overload。
-		return String(decoding: buffer.prefix(Int(length)).map(UInt8.init(bitPattern:)), as: UTF8.self)
+		// length 出參 = 不含 NUL 的實際長度；用它截斷再以 failable 解碼（避開
+		// String(cString: [CChar]) 這個 stdlib 已 deprecated 的 overload；非法
+		// UTF-8 回 nil、由呼叫端當「取不到路徑」處理，best-effort 不影響判定）。
+		return String(bytes: buffer.prefix(Int(length)).map(UInt8.init(bitPattern:)), encoding: .utf8)
 	}
 }
