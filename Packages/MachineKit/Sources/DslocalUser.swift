@@ -43,11 +43,22 @@ public struct DslocalUser: Sendable {
 		return try PropertyListSerialization.data(fromPropertyList: inner, format: .binary, options: 0)
 	}
 
+	/// 帳號短名，對應 dslocal 的 `RecordName`、家目錄 `/Users/<shortName>`。
 	public var shortName: String
+
+	/// 數字 user id（dslocal `UniqueID`）。
 	public var uid: Int
+
+	/// 主要群組 id（dslocal `PrimaryGroupID`）；預設 20（staff）。
 	public var primaryGID: Int
+
+	/// 穩定的 `GeneratedUID`——使用者紀錄與 admin 群組成員引用同一個。
 	public var generatedUID: UUID
+
+	/// 顯示名（dslocal `RealName`）。
 	public var realName: String
+
+	/// 登入 shell；預設 `/bin/zsh`。
 	public var shell: String
 
 	/// 組出整筆 dslocal 使用者紀錄的 binary plist。每個值都 array-wrap——dslocal
