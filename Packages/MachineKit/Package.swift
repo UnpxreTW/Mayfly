@@ -24,5 +24,9 @@ let package = Package(
 				.plugin(name: "SwiftStyleLint", package: "SwiftStyleKit"),
 			]
 		),
+		.testTarget(
+			name: "MachineKitTests",
+			dependencies: ["MachineKit"]
+		),
 	]
 )
