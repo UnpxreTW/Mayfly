@@ -35,10 +35,10 @@ public enum FirstBootDaemon {
 		forUser user: String,
 		label: String = "me.unpxre.mayfly.firstboot"
 	) throws -> [InjectedFile] {
-		[
+		try [
 			InjectedFile(
 				relativePath: "Library/LaunchDaemons/\(label).plist",
-				contents: try plist(label: label),
+				contents: plist(label: label),
 				owner: (0, 0),
 				mode: 0o644
 			),
@@ -53,7 +53,7 @@ public enum FirstBootDaemon {
 				contents: Data(sshdDropIn.utf8),
 				owner: (0, 0),
 				mode: 0o644
-			),
+			)
 		]
 	}
 
@@ -65,7 +65,7 @@ public enum FirstBootDaemon {
 			"ProgramArguments": ["/bin/sh", "/\(scriptRelativePath)"],
 			"RunAtLoad": true,
 			"StandardOutPath": "/var/log/mayfly-firstboot.log",
-			"StandardErrorPath": "/var/log/mayfly-firstboot.log",
+			"StandardErrorPath": "/var/log/mayfly-firstboot.log"
 		]
 		return try PropertyListSerialization.data(fromPropertyList: dictionary, format: .xml, options: 0)
 	}
@@ -108,8 +108,11 @@ public enum FirstBootDaemon {
 		IP=$(ipconfig getifaddr en0 2>/dev/null)
 		echo "PROVISIONING_READY user=\(user) ip=${IP:-none}" > /dev/console
 
-		# 5. Self-disable: bootout + disable (override persists), then remove payload.
-		launchctl bootout system "/Library/LaunchDaemons/\(label).plist" 2>/dev/null
+		# 5. Self-disable WITHOUT self-bootout: a bootout of our OWN job would SIGTERM
+		#    this running script before the cleanup below executes. RunAtLoad +
+		#    no-KeepAlive means the job goes inactive on exit 0; the disable override
+		#    plus the removed plist stop any future load (each ephemeral clone must
+		#    NOT re-run this — otherwise every boot pays the 15s kill-loop again).
 		launchctl disable "system/\(label)" 2>/dev/null
 		rm -f "/Library/LaunchDaemons/\(label).plist" "/\(scriptRelativePath)"
 		exit 0
@@ -121,11 +124,15 @@ public enum FirstBootDaemon {
 	/// sshd 硬化 drop-in。檔名 `01-`：OpenSSH 的 `Include …/sshd_config.d/*` 走
 	/// **字典序 first-match-wins**，`01-` 排在 Apple 預設 `100-macos.conf` 之前而勝出
 	/// （`99-` 字典序反而落在 `100-` 之後、會輸——這是 verifier 推翻的常見誤解）。
+	/// `KbdInteractiveAuthentication no` 與 `PasswordAuthentication no` 必須並列：缺
+	/// 前者時 PAM keyboard-interactive 仍能走密碼登入、`PasswordAuthentication no`
+	/// 形同虛設、key-only 政策不生效。
 	static let sshdDropIn = """
-	PasswordAuthentication no
-	PubkeyAuthentication yes
-	PermitRootLogin no
-	"""
+		PasswordAuthentication no
+		KbdInteractiveAuthentication no
+		PubkeyAuthentication yes
+		PermitRootLogin no
+		"""
 
 	// MARK: Private
 
