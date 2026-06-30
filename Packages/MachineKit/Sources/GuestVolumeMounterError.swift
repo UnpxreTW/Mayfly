@@ -10,9 +10,9 @@ import Foundation
 
 /// host 側離線掛載 / 注入 guest 卷時的錯誤。
 ///
-/// 目前只涵蓋「找出 guest Data 卷」這條安全關鍵路徑（``GuestDiskTopology``）；
-/// 實際 attach / mount / chown 的薄殼（需 root）落地時再補 `stillBusy` /
-/// `encryptedLocked` / `requiresRoot` 等案例。
+/// 涵蓋兩層：純識別核心 ``GuestDiskTopology``（`noDataVolume` / `ambiguousVolume` /
+/// `malformedTopology`）＋ Process 薄殼 ``GuestVolumeMounter``（attach / mount /
+/// enableOwnership / chown 的命令與生命週期錯誤）。
 public enum GuestVolumeMounterError: Error {
 
 	/// attached image 上找不到 macOS guest 的 Data 卷——非 macOS 映像、或 APFS
@@ -25,4 +25,25 @@ public enum GuestVolumeMounterError: Error {
 
 	/// `diskutil apfs list -plist` 的輸出無法解碼成預期結構。
 	case malformedTopology(underlying: any Error)
+
+	/// 外部命令（hdiutil / diskutil / chown / chmod）非零 exit。
+	case commandFailed(executable: String, status: Int32, stderr: String)
+
+	/// install 後 VZ 仍持有 disk fd，attach 退避重試到上限仍 busy。
+	case stillBusy
+
+	/// guest Data 卷加密 / 鎖定、host 端無法 RW 掛載——觸發 Recovery fallback、非崩潰。
+	case encryptedLocked
+
+	/// 需 root 的步驟（`diskutil enableOwnership` / numeric `chown`）在非 root 下被呼叫。
+	case requiresRoot
+
+	/// `hdiutil attach -plist` 輸出解不出 GUID base disk。
+	case unparseableAttachOutput
+
+	/// 生命週期誤用：attach / locate / mount 尚未完成就呼叫依賴它的後續步驟。
+	case notReady(step: String)
+
+	/// 寫入某筆注入檔失敗。
+	case writeFailed(relativePath: String, underlying: any Error)
 }
