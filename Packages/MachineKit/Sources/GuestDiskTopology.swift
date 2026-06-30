@@ -8,9 +8,7 @@
 
 import Foundation
 
-// MARK: - GuestDiskTopology
-
-/// `diskutil apfs list -plist` 的解碼 + 「在 attached image 上找出 guest Data 卷」的
+/// `diskutil apfs list -plist` 的解析 + 「在 attached image 上找出 guest Data 卷」的
 /// 純邏輯——`GuestVolumeMounter` 的**安全關鍵核心**，不碰 Process、不需 root、
 /// 可純紙上單測。
 ///
@@ -22,6 +20,8 @@ import Foundation
 /// disk 上的 iSC〔Preboot/xART〕與 Recovery container），最後回其唯一 Data 卷。
 public struct GuestDiskTopology {
 
+	// MARK: Public
+
 	/// 在 `attachedBaseDisk`（hdiutil attach 回的整顆 image disk、如 `disk8`）上找出
 	/// guest 的 Data 卷 device identifier（如 `disk11s5`）。
 	///
@@ -32,7 +32,7 @@ public struct GuestDiskTopology {
 	public func dataVolumeDeviceID(onAttachedDisk attachedBaseDisk: String) throws -> String {
 		// 安全閘：只考慮 physical store 落在 attached image disk 分割上的 container。
 		let onAttached = containers.filter { container in
-			container.physicalStores.contains { isPartition($0.deviceIdentifier, of: attachedBaseDisk) }
+			container.physicalStoreIdentifiers.contains { isPartition($0, of: attachedBaseDisk) }
 		}
 		// guest 主 container = 同時具 System 與 Data role（排除 attached disk 上只含
 		// Preboot/xART/Recovery 的 iSC / Recovery container）。
@@ -53,16 +53,64 @@ public struct GuestDiskTopology {
 		return data.deviceIdentifier
 	}
 
-	// MARK: Public
-
-	/// 從 `diskutil apfs list -plist` 的輸出解碼。解碼失敗擲
+	/// 從 `diskutil apfs list -plist` 的輸出解析。手動讀 `[String: Any]`、不走 Decodable——
+	/// 巢狀鏡像型別各自帶 `CodingKeys` 會踩 swiftlint「型別至多巢狀一層」；手動讀也對缺
+	/// key 更耐受。plist 非預期結構（非字典 / 缺 `Containers`）或 bytes 非 plist 擲
 	/// ``GuestVolumeMounterError/malformedTopology(underlying:)``。
 	public init(plistData: Data) throws {
+		let object: Any
 		do {
-			self.containers = try PropertyListDecoder().decode(Root.self, from: plistData).containers
+			object = try PropertyListSerialization.propertyList(from: plistData, options: [], format: nil)
 		} catch {
 			throw GuestVolumeMounterError.malformedTopology(underlying: error)
 		}
+		guard
+			let root = object as? [String: Any],
+			let rawContainers = root["Containers"] as? [[String: Any]]
+		else {
+			throw GuestVolumeMounterError.malformedTopology(underlying: ParseFailure.unexpectedShape)
+		}
+		self.containers = rawContainers.map(Container.init(raw:))
+	}
+
+	// MARK: Private
+
+	/// 一個 APFS container：實體後盾分割的 device id 清單 + 其上的卷。
+	private struct Container {
+
+		init(raw: [String: Any]) {
+			self.physicalStoreIdentifiers = ((raw["PhysicalStores"] as? [[String: Any]]) ?? [])
+				.compactMap { $0["DeviceIdentifier"] as? String }
+			self.volumes = ((raw["Volumes"] as? [[String: Any]]) ?? []).map(Volume.init(raw:))
+		}
+
+		let physicalStoreIdentifiers: [String]
+
+		let volumes: [Volume]
+
+		/// container 內是否有任一卷帶指定 role。
+		func hasVolume(withRole role: String) -> Bool {
+			volumes.contains { $0.roles.contains(role) }
+		}
+	}
+
+	/// container 內的一個卷：device identifier + role 集（如 `["Data"]`）。
+	private struct Volume {
+
+		init(raw: [String: Any]) {
+			self.deviceIdentifier = raw["DeviceIdentifier"] as? String ?? ""
+			self.roles = raw["Roles"] as? [String] ?? []
+		}
+
+		let deviceIdentifier: String
+
+		let roles: [String]
+	}
+
+	/// plist 結構非預期（非字典 / 缺 `Containers`）時的內部標記、包進 `malformedTopology`。
+	private enum ParseFailure: Error {
+
+		case unexpectedShape
 	}
 
 	/// diskutil 的 role 詞彙（穩定字串）。
@@ -71,73 +119,12 @@ public struct GuestDiskTopology {
 	/// diskutil 的 role 詞彙（穩定字串）。
 	private static let roleData = "Data"
 
-	/// 解碼後的 APFS container 清單。
+	/// 解析後的 APFS container 清單。
 	private let containers: [Container]
-
-	// MARK: Private
 
 	/// `partition` 是否為 `baseDisk` 的一個分割（`disk8s2` 之於 `disk8`）。用 `<base>s`
 	/// 前綴比對、而非單純 `hasPrefix(base)`——避免 `disk8` 誤吃 `disk80s1`（另一顆盤）。
 	private func isPartition(_ partition: String, of baseDisk: String) -> Bool {
 		partition.hasPrefix(baseDisk + "s")
 	}
-}
-
-// MARK: - Root
-
-/// `diskutil apfs list -plist` 根層：只取 `Containers`。
-private struct Root: Decodable {
-
-	enum CodingKeys: String, CodingKey {
-		case containers = "Containers"
-	}
-
-	let containers: [Container]
-}
-
-// MARK: - Container
-
-/// 一個 APFS container：實體後盾 + 其上的卷。
-private struct Container: Decodable {
-
-	enum CodingKeys: String, CodingKey {
-		case physicalStores = "PhysicalStores"
-		case volumes = "Volumes"
-	}
-
-	let physicalStores: [PhysicalStore]
-
-	let volumes: [Volume]
-
-	/// container 內是否有任一卷帶指定 role。
-	func hasVolume(withRole role: String) -> Bool {
-		volumes.contains { $0.roles.contains(role) }
-	}
-}
-
-// MARK: - PhysicalStore
-
-/// container 的實體後盾分割（`DeviceIdentifier` 如 `disk8s2`）。
-private struct PhysicalStore: Decodable {
-
-	enum CodingKeys: String, CodingKey {
-		case deviceIdentifier = "DeviceIdentifier"
-	}
-
-	let deviceIdentifier: String
-}
-
-// MARK: - Volume
-
-/// container 內的一個卷：device identifier + role 集（如 `["Data"]`）。
-private struct Volume: Decodable {
-
-	enum CodingKeys: String, CodingKey {
-		case deviceIdentifier = "DeviceIdentifier"
-		case roles = "Roles"
-	}
-
-	let deviceIdentifier: String
-
-	let roles: [String]
 }
