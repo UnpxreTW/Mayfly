@@ -81,7 +81,6 @@ public struct GuestDiskTopology {
 	private func isPartition(_ partition: String, of baseDisk: String) -> Bool {
 		partition.hasPrefix(baseDisk + "s")
 	}
-
 }
 
 // MARK: - Root
@@ -94,7 +93,6 @@ private struct Root: Decodable {
 	}
 
 	let containers: [Container]
-
 }
 
 // MARK: - Container
@@ -115,7 +113,6 @@ private struct Container: Decodable {
 	func hasVolume(withRole role: String) -> Bool {
 		volumes.contains { $0.roles.contains(role) }
 	}
-
 }
 
 // MARK: - PhysicalStore
@@ -128,7 +125,6 @@ private struct PhysicalStore: Decodable {
 	}
 
 	let deviceIdentifier: String
-
 }
 
 // MARK: - Volume
@@ -144,5 +140,4 @@ private struct Volume: Decodable {
 	let deviceIdentifier: String
 
 	let roles: [String]
-
 }
