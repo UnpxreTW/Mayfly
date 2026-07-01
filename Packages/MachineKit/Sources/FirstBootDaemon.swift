@@ -30,9 +30,15 @@ public enum FirstBootDaemon {
 	///
 	/// - Parameters:
 	///   - user: 已離線建立的本機帳號 shortName，供 opendirectoryd reconcile 重申。
+	///   - uid: 該帳號的 uid，供 script 以 numeric chown 修正離線注入 home 子樹的屬主
+	///     （不依賴開機時 opendirectoryd 是否已認得帳號名）。
+	///   - gid: 該帳號的主要 gid，與 uid 一起 `chown -R uid:gid`，讓 home 子樹群組與注入檔
+	///     （gid 20 staff）一致、不留 `mkdir -p` 造出的 wheel(0)。
 	///   - label: LaunchDaemon 的 `Label`，同時決定 plist 檔名。
 	public static func layers(
 		forUser user: String,
+		uid: Int,
+		gid: Int,
 		label: String = "me.unpxre.mayfly.firstboot"
 	) throws -> [InjectedFile] {
 		try [
@@ -44,7 +50,7 @@ public enum FirstBootDaemon {
 			),
 			InjectedFile(
 				relativePath: scriptRelativePath,
-				contents: Data(script(forUser: user, label: label).utf8),
+				contents: Data(script(forUser: user, uid: uid, gid: gid, label: label).utf8),
 				owner: (0, 0),
 				mode: 0o755
 			),
@@ -79,7 +85,7 @@ public enum FirstBootDaemon {
 	/// - `bootstrap` 前先 `bootout` 清殘留 service 紀錄（否則首次常回 IO error 5）。
 	/// - kill-loop 視為 mandatory-until-disproven（26 的 Setup Assistant 可能短暫
 	///   重生）；process label 待真機核對。
-	public static func script(forUser user: String, label: String) -> String {
+	public static func script(forUser user: String, uid: Int, gid: Int, label: String) -> String {
 		"""
 		#!/bin/sh
 		# Mayfly first-boot provisioning finisher — runs once, then self-disables.
@@ -93,22 +99,33 @@ public enum FirstBootDaemon {
 			sleep 0.5
 		done
 
-		# 2. Enable sshd via the launchctl service path (NOT systemsetup).
+		# 2. Fix ownership of the offline-injected home subtree. mkdir -p created
+		#    /Users/<user> and .ssh as root:wheel; the account must own its home (login
+		#    and Library writes) and sshd StrictModes wants .ssh user-owned + not
+		#    group/world writable. Numeric uid:gid keeps this independent of opendirectoryd.
+		HOME_DIR="/Users/\(user)"
+		if [ -d "$HOME_DIR" ]; then
+			chown -R \(uid):\(gid) "$HOME_DIR" 2>/dev/null
+			chmod 700 "$HOME_DIR/.ssh" 2>/dev/null
+			chmod 600 "$HOME_DIR/.ssh/authorized_keys" 2>/dev/null
+		fi
+
+		# 3. Enable sshd via the launchctl service path (NOT systemsetup).
 		#    bootout first to clear any stale record (avoids first-run IO error 5).
 		launchctl bootout system /System/Library/LaunchDaemons/ssh.plist 2>/dev/null
 		launchctl enable system/com.openssh.sshd 2>/dev/null
 		launchctl bootstrap system /System/Library/LaunchDaemons/ssh.plist 2>/dev/null
 
-		# 3. Reconcile the offline-injected dslocal user (opendirectoryd cache).
+		# 4. Reconcile the offline-injected dslocal user (opendirectoryd cache).
 		dscacheutil -flushcache 2>/dev/null
 		killall opendirectoryd 2>/dev/null
 		dseditgroup -o edit -a "\(user)" -t user admin 2>/dev/null
 
-		# 4. Report readiness on the serial console (network-independent signal).
+		# 5. Report readiness on the serial console (network-independent signal).
 		IP=$(ipconfig getifaddr en0 2>/dev/null)
 		echo "PROVISIONING_READY user=\(user) ip=${IP:-none}" > /dev/console
 
-		# 5. Self-disable WITHOUT self-bootout: a bootout of our OWN job would SIGTERM
+		# 6. Self-disable WITHOUT self-bootout: a bootout of our OWN job would SIGTERM
 		#    this running script before the cleanup below executes. RunAtLoad +
 		#    no-KeepAlive means the job goes inactive on exit 0; the disable override
 		#    plus the removed plist stop any future load (each ephemeral clone must
