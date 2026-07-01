@@ -15,7 +15,7 @@ private final class FirstBootDaemonTests {
 	/// 三個注入檔（plist / script / sshd drop-in）、owner 皆 root:wheel、mode 正確。
 	@Test
 	private func `layers are three files with correct owner mode`() throws {
-		let layers = try FirstBootDaemon.layers(forUser: "runner")
+		let layers = try FirstBootDaemon.layers(forUser: "runner", uid: 501, gid: 20)
 		#expect(layers.count == 3)
 
 		let plist = try #require(layers.first { $0.relativePath.hasSuffix(".plist") })
@@ -44,7 +44,7 @@ private final class FirstBootDaemonTests {
 	/// sshd 走 launchctl service 路徑、絕不用 systemsetup。
 	@Test
 	private func `script uses launchctl not systemsetup`() {
-		let script: String = FirstBootDaemon.script(forUser: "runner", label: "test.label")
+		let script: String = FirstBootDaemon.script(forUser: "runner", uid: 501, gid: 20, label: "test.label")
 		#expect(script.contains("launchctl enable system/com.openssh.sshd"))
 		#expect(script.contains("launchctl bootstrap system /System/Library/LaunchDaemons/ssh.plist"))
 		// systemsetup 可出現在說明註解、絕不可被當指令呼叫——濾掉註解行後只驗指令面。
@@ -58,7 +58,7 @@ private final class FirstBootDaemonTests {
 	/// bootstrap 前先 bootout 清殘留（避免首次 IO error 5）。
 	@Test
 	private func `script bootout precedes bootstrap`() throws {
-		let script: String = FirstBootDaemon.script(forUser: "runner", label: "test.label")
+		let script: String = FirstBootDaemon.script(forUser: "runner", uid: 501, gid: 20, label: "test.label")
 		let bootout = try #require(script.range(of: "launchctl bootout system /System/Library/LaunchDaemons/ssh.plist"))
 		let bootstrap = try #require(script.range(of: "launchctl bootstrap system /System/Library/LaunchDaemons/ssh.plist"))
 		#expect(bootout.lowerBound < bootstrap.lowerBound)
@@ -67,7 +67,7 @@ private final class FirstBootDaemonTests {
 	/// script 含 kill-loop / readiness marker / opendirectoryd reconcile / 自我刪除。
 	@Test
 	private func `script has kill loop reconcile readiness self disable`() {
-		let script: String = FirstBootDaemon.script(forUser: "runner", label: "test.label")
+		let script: String = FirstBootDaemon.script(forUser: "runner", uid: 501, gid: 20, label: "test.label")
 		#expect(script.contains("pkill -x \"Setup Assistant\""))
 		#expect(script.contains("dscacheutil -flushcache"))
 		#expect(script.contains("killall opendirectoryd"))
@@ -76,11 +76,19 @@ private final class FirstBootDaemonTests {
 		#expect(script.contains("rm -f"))
 	}
 
+	/// 開機以 numeric chown -R 修正離線注入 home 子樹的屬主、並把 .ssh 收緊 0700。
+	@Test
+	private func `script chowns injected home subtree`() {
+		let script: String = FirstBootDaemon.script(forUser: "runner", uid: 501, gid: 20, label: "test.label")
+		#expect(script.contains("chown -R 501:20 \"$HOME_DIR\""))
+		#expect(script.contains("chmod 700 \"$HOME_DIR/.ssh\""))
+	}
+
 	/// 自我停用：移除 payload，但絕不 bootout 自己的 daemon——self-bootout 會 SIGTERM
 	/// 正在跑的本 script、cleanup 跑不到，golden image 封進去後每個 clone 都重跑。
 	@Test
 	private func `self disable removes payload without self bootout`() {
-		let script: String = FirstBootDaemon.script(forUser: "runner", label: "test.label")
+		let script: String = FirstBootDaemon.script(forUser: "runner", uid: 501, gid: 20, label: "test.label")
 		#expect(!script.contains("launchctl bootout system \"/Library/LaunchDaemons"))
 		#expect(script.contains("launchctl disable \"system/test.label\""))
 		#expect(script.contains("rm -f \"/Library/LaunchDaemons/test.label.plist\""))
@@ -98,7 +106,7 @@ private final class FirstBootDaemonTests {
 	/// drop-in 檔名 01- 字典序排在 Apple 預設 100-macos.conf 之前（first-match 勝出）。
 	@Test
 	private func `conf filename sorts before apple default`() throws {
-		let layers = try FirstBootDaemon.layers(forUser: "runner")
+		let layers = try FirstBootDaemon.layers(forUser: "runner", uid: 501, gid: 20)
 		let conf = try #require(layers.first { $0.relativePath.hasSuffix("01-mayfly.conf") })
 		let filename = try #require(conf.relativePath.split(separator: "/").last.map(String.init))
 		#expect(filename < "100-macos.conf")
