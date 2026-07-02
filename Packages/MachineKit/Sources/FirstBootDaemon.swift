@@ -121,9 +121,14 @@ public enum FirstBootDaemon {
 		killall opendirectoryd 2>/dev/null
 		dseditgroup -o edit -a "\(user)" -t user admin 2>/dev/null
 
-		# 5. Report readiness on the serial console (network-independent signal).
+		# 5. Report readiness over the virtio serial device (network-independent
+		#    signal). /dev/console does NOT route to the VZ serial port (real-hardware
+		#    verified); the host-visible device is /dev/cu.virtio. Silently skip if the
+		#    guest was booted without a serial console attached; /dev/console kept as
+		#    a secondary echo for GUI-console debugging.
 		IP=$(ipconfig getifaddr en0 2>/dev/null)
-		echo "PROVISIONING_READY user=\(user) ip=${IP:-none}" > /dev/console
+		echo "PROVISIONING_READY user=\(user) ip=${IP:-none}" > /dev/cu.virtio 2>/dev/null
+		echo "PROVISIONING_READY user=\(user) ip=${IP:-none}" > /dev/console 2>/dev/null
 
 		# 6. Self-disable WITHOUT self-bootout: a bootout of our OWN job would SIGTERM
 		#    this running script before the cleanup below executes. RunAtLoad +
