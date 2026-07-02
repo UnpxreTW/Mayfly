@@ -59,6 +59,21 @@ private func makeLineStream(_ lines: [String]) -> AsyncStream<String> {
 	}
 }
 
+/// 永不結束的行序列（無 marker）——重現實機 console：boot log 無盡、marker 永不來、流不結束。
+private func makeEndlessLineStream() -> AsyncStream<String> {
+	AsyncStream { continuation in
+		let task = Task {
+			var index = 0
+			while !Task.isCancelled {
+				continuation.yield("boot log line \(index)")
+				index += 1
+				try? await Task.sleep(for: .milliseconds(1))
+			}
+		}
+		continuation.onTermination = { _ in task.cancel() }
+	}
+}
+
 private func collect(_ stream: AsyncStream<Readiness>) async -> [Readiness] {
 	var received: [Readiness] = []
 	for await readiness in stream {
@@ -137,12 +152,45 @@ private final class ReadinessGateTests {
 		#expect(await collect(stream) == [.booting, .provisioningReady(ip: "192.168.64.7")])
 	}
 
-	/// 無 marker → 只發 booting 後結束（沒有偽 ready）。
+	/// 實機關鍵路徑：console 全程無 marker（`/dev/console` 未路由到 virtio serial）→ lease 輪詢
+	/// 仍**獨立**解出 IP（不像 #22 只在偵到 marker 後才解、實機會永久卡）。
 	@Test
-	private func `readiness stays booting without marker`() async {
-		let gate: ReadinessGate = .init(macAddress: nil, readLeases: { nil })
+	private func `readiness resolves via lease when console has no marker`() async {
+		let gate: ReadinessGate = .init(
+			macAddress: "0a:1b:02:d4:e5:f6",
+			readLeases: { leaseFixture },
+			leaseResolvePollMilliseconds: 1,
+			leaseResolveTimeoutMilliseconds: 1000
+		)
+		let stream = gate.readiness(consoleLines: makeLineStream(["boot log", "no marker here"]))
+		#expect(await collect(stream) == [.booting, .provisioningReady(ip: "192.168.64.7")])
+	}
+
+	/// 重現實機：console 無盡輸出、永無 marker（stream 不結束、console-watch 永久 block）→ lease
+	/// 輪詢仍競速勝出解 IP，gate 不卡住（#22 實機掛在這、上面的 finite-stream 測涵蓋不到）。
+	@Test
+	private func `readiness resolves via lease over an endless markerless console`() async {
+		let gate: ReadinessGate = .init(
+			macAddress: "0a:1b:02:d4:e5:f6",
+			readLeases: { leaseFixture },
+			leaseResolvePollMilliseconds: 1,
+			leaseResolveTimeoutMilliseconds: 1000
+		)
+		let stream = gate.readiness(consoleLines: makeEndlessLineStream())
+		#expect(await collect(stream) == [.booting, .provisioningReady(ip: "192.168.64.7")])
+	}
+
+	/// 無 marker + lease 解不出 → 逾時後 best-effort 發 provisioningReady(ip: nil)（不再永久卡 booting）。
+	@Test
+	private func `readiness reports nil when no marker and no lease`() async {
+		let gate: ReadinessGate = .init(
+			macAddress: nil,
+			readLeases: { nil },
+			leaseResolvePollMilliseconds: 1,
+			leaseResolveTimeoutMilliseconds: 5
+		)
 		let stream = gate.readiness(consoleLines: makeLineStream(["boot log line", "another line"]))
-		#expect(await collect(stream) == [.booting])
+		#expect(await collect(stream) == [.booting, .provisioningReady(ip: nil)])
 	}
 
 	/// marker ip=none + lease 晚幾次輪詢才出現 → 輪詢到解出 IP（不讀一次就放棄）。
