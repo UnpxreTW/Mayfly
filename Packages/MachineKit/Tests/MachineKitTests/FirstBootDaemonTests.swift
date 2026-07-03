@@ -76,6 +76,16 @@ private final class FirstBootDaemonTests {
 		#expect(script.contains("rm -f"))
 	}
 
+	/// readiness marker 寫 guest 的 virtio serial 裝置 /dev/cu.virtio（host 收得到、真機驗過）；
+	/// /dev/console 不路由到 VZ serial port、只留作次要 echo。兩者皆容錯（無 serial 的開機組態）。
+	@Test
+	private func `readiness marker targets virtio serial device`() {
+		let script: String = FirstBootDaemon.script(forUser: "runner", uid: 501, gid: 20, label: "test.label")
+		#expect(script.contains("> /dev/cu.virtio 2>/dev/null"))
+		let markerLines = script.split(separator: "\n").filter { $0.contains("PROVISIONING_READY") && $0.contains("echo") }
+		#expect(markerLines.allSatisfy { $0.contains("2>/dev/null") })
+	}
+
 	/// 開機以 numeric chown -R 修正離線注入 home 子樹的屬主、並把 .ssh 收緊 0700。
 	@Test
 	private func `script chowns injected home subtree`() {
