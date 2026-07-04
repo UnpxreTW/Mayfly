@@ -15,10 +15,10 @@ import Foundation
 ///   marker `PROVISIONING_READY user=<u> ip=<ip>`。不經 host 網路、繞開 Local Network TCC；
 ///   但**實機驗證發現 macOS guest 的 `/dev/console` 未必路由到 VZVirtioConsole serial**（marker
 ///   可能永遠不出現）——故只當「有就更快」的機會路徑、不倚賴。
-/// - **lease 輪詢（可靠主路徑）**：以 guest MAC 對 host `dhcpd_leases` 做 per-byte radix:16
-///   byte-match（lease 檔省略前導零）解 IP。同樣 TCC-free（host 讀自己的 lease 檔、非對 guest
-///   發網路），且給的是 SSH 真正要的 IP。marker 可能永久無輸出，故 lease 輪詢與逾時 guard
-///   保證整體有界。到逾時仍無 IP → `provisioningReady(ip: nil)`（best-effort）。
+/// - **lease 輪詢（可靠主路徑）**：以 guest MAC 反查 host `dhcpd_leases` 解 IP（解析正本
+///   在 ``GuestLease``）。同樣 TCC-free（host 讀自己的 lease 檔、非對 guest 發網路），且給
+///   的是 SSH 真正要的 IP。marker 可能永久無輸出，故 lease 輪詢與逾時 guard 保證整體有界。
+///   到逾時仍無 IP → `provisioningReady(ip: nil)`（best-effort）。
 ///
 /// console 行來源與 lease 讀取都**注入** → 餵假行序列 + 假 lease 內容即可純測 parser、競速與
 /// 狀態機、不必開真 VM。真實接線＝把 console output handle 的 `bytes.lines` 橋成
@@ -79,32 +79,6 @@ public struct ReadinessGate: Sendable {
 		return (user: user, ip: ip)
 	}
 
-	/// 從 `dhcpd_leases` 內容以 guest MAC byte-match 解 IP。兩邊 MAC 皆 per-byte radix:16
-	/// 正規化（lease 檔省略前導零：`a:1b:2` == `0a:1b:02`），去掉 `hw_address=<type>,` 的 type
-	/// 前綴。每個 `{}` 區塊在 `{` 重置 IP、避免缺 `ip_address` 的區塊誤用前一塊的值。找不到 /
-	/// MAC 空 / MAC 非法回 nil。純函式。
-	static func resolveLeaseIP(fromLeases content: String, matching macAddress: String) -> String? {
-		let target = normalizedMAC(macAddress)
-		guard !target.isEmpty else {
-			return nil
-		}
-		var currentIP: String?
-		for rawLine in content.split(whereSeparator: \.isNewline) {
-			let line = rawLine.trimmingCharacters(in: .whitespaces)
-			if line == "{" {
-				currentIP = nil
-			} else if line.hasPrefix("ip_address=") {
-				currentIP = String(line.dropFirst("ip_address=".count))
-			} else if line.hasPrefix("hw_address=") {
-				let value = line.dropFirst("hw_address=".count).split(separator: ",").last.map(String.init) ?? ""
-				if normalizedMAC(value) == target, let ip = currentIP {
-					return ip
-				}
-			}
-		}
-		return nil
-	}
-
 	// MARK: Private
 
 	/// 一路競速的結果：`resolved` 帶解出的 IP（可能 nil＝該路無 IP、等其他路）、`timedOut`＝整體逾時。
@@ -113,17 +87,6 @@ public struct ReadinessGate: Sendable {
 		case resolved(String?)
 
 		case timedOut
-	}
-
-	/// MAC 拆冒號、每段 radix:16 解 byte。**任一段非法 hex → 回空**（不做掉段後的部分比對，杜絕
-	/// wrong-host 的長度巧合命中）。
-	private static func normalizedMAC(_ mac: String) -> [Int] {
-		let segments = mac.split(separator: ":")
-		let bytes = segments.compactMap { Int($0, radix: 16) }
-		guard bytes.count == segments.count else {
-			return []
-		}
-		return bytes
 	}
 
 	/// 待比對的 guest MAC（lease 解析用；nil 則 lease 路必然解不出）。
@@ -179,7 +142,7 @@ public struct ReadinessGate: Sendable {
 	private func pollLeaseIP() async -> String? {
 		var elapsedMS = 0
 		while true {
-			if let ip = Self.resolveLeaseIP(fromLeases: readLeases() ?? "", matching: macAddress ?? "") {
+			if let ip = GuestLease.resolveIP(fromLeases: readLeases() ?? "", matching: macAddress ?? "") {
 				return ip
 			}
 			guard elapsedMS < leaseResolveTimeoutMilliseconds else {

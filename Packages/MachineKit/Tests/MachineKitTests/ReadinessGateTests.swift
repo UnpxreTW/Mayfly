@@ -120,22 +120,6 @@ private final class ReadinessGateTests {
 		#expect(ReadinessGate.parseMarker(line: "PROVISIONING_READY ip=10.0.0.9") == nil)
 	}
 
-	/// 前導零正規化後 MAC byte-match → 回該區塊 IP。
-	@Test
-	private func `resolve lease ip matches normalized mac`() {
-		#expect(ReadinessGate.resolveLeaseIP(fromLeases: leaseFixture, matching: "0a:1b:02:d4:e5:f6") == "192.168.64.7")
-	}
-
-	@Test
-	private func `resolve lease ip returns nil for non matching mac`() {
-		#expect(ReadinessGate.resolveLeaseIP(fromLeases: leaseFixture, matching: "aa:bb:cc:dd:ee:ff") == nil)
-	}
-
-	@Test
-	private func `resolve lease ip returns nil for empty mac`() {
-		#expect(ReadinessGate.resolveLeaseIP(fromLeases: leaseFixture, matching: "") == nil)
-	}
-
 	/// marker 帶 ip → 直接用、不碰 lease；流為 booting → provisioningReady(ip)。
 	@Test
 	private func `readiness emits ready from marker ip`() async {
@@ -220,9 +204,4 @@ private final class ReadinessGateTests {
 		#expect(await collect(stream) == [.booting, .provisioningReady(ip: nil)])
 	}
 
-	/// 非法 hex 段的 MAC → 視為無效、回 nil（不做掉段後的部分比對）。
-	@Test
-	private func `resolve lease ip rejects malformed mac`() {
-		#expect(ReadinessGate.resolveLeaseIP(fromLeases: leaseFixture, matching: "0a:1b:zz:d4:e5:f6") == nil)
-	}
 }
