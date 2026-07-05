@@ -32,15 +32,23 @@ public struct BundleMetadata: Codable, Sendable {
 	/// 安裝所用 `.ipsw` 的 SHA256，供稽核與偵測來源變動。
 	public var restoreImageSHA256: String
 
+	/// 這份 bundle 是否為可拋複本（``GuestCloner`` clone 時標 `true`）。跨行程重開
+	/// 的識別依據：``EphemeralBundle/load(from:)`` 驗此欄才鑄造、``GoldenBundle/load(from:)``
+	/// 拒收帶標者——destroy 刪不到 golden 的型別閘門性質因此跨行程保留。Optional
+	/// 依演進規則：舊 bundle 無此欄、decode 得 `nil`（＝非複本）。
+	public var ephemeral: Bool?
+
 	public init(
 		macAddress: String,
 		osBuildVersion: String,
 		osVersion: String,
-		restoreImageSHA256: String
+		restoreImageSHA256: String,
+		ephemeral: Bool? = nil
 	) {
 		self.macAddress = macAddress
 		self.osBuildVersion = osBuildVersion
 		self.osVersion = osVersion
 		self.restoreImageSHA256 = restoreImageSHA256
+		self.ephemeral = ephemeral
 	}
 }

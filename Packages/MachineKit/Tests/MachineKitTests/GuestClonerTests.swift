@@ -34,9 +34,10 @@ private final class GuestClonerTests {
 		#expect(goldenDisk == cloneDisk)
 	}
 
-	/// clone 的 MAC 換成注入值、其餘 metadata 欄位原樣；golden 的 metadata 不動。
+	/// clone 的 MAC 換成注入值、標上 ephemeral、其餘 metadata 欄位原樣；golden 的
+	/// metadata 不動（也不會沾到 ephemeral 標記）。
 	@Test
-	private func `clone regenerates mac and preserves other metadata`() throws {
+	private func `clone regenerates mac marks ephemeral and preserves other metadata`() throws {
 		let fixture = try makeGoldenFixture()
 		defer { removeFixture(fixture.root) }
 		let destination: URL = fixture.root.appending(component: "job.bundle")
@@ -45,12 +46,14 @@ private final class GuestClonerTests {
 
 		let cloneMetadata = try decodeMetadata(in: clone.bundle)
 		#expect(cloneMetadata.macAddress == "02:00:00:00:00:99")
+		#expect(cloneMetadata.ephemeral == true)
 		#expect(cloneMetadata.osBuildVersion == "25F80")
 		#expect(cloneMetadata.osVersion == "26.5.1")
 		#expect(cloneMetadata.restoreImageSHA256 == "deadbeef")
 
 		let goldenMetadata = try decodeMetadata(in: fixture.golden.bundle)
 		#expect(goldenMetadata.macAddress == "0a:1b:2c:3d:4e:5f")
+		#expect(goldenMetadata.ephemeral == nil)
 	}
 
 	/// 目的地已存在 → `destinationExists`、絕不覆蓋。

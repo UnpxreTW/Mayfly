@@ -35,6 +35,25 @@ private final class GoldenBundleTests {
 		}
 	}
 
+	/// 標了 ephemeral 的 bundle（可拋複本）→ markedEphemeral、不得回鍋當 golden。
+	@Test
+	private func `load rejects ephemeral bundle`() throws {
+		let root: URL = try makeBundleFixture()
+		defer { try? FileManager.default.removeItem(at: root) }
+		let bundle: URL = root.appending(component: "golden.bundle")
+		let metadata: BundleMetadata = .init(
+			macAddress: "0a:1b:2c:3d:4e:5f",
+			osBuildVersion: "25F80",
+			osVersion: "26.5.1",
+			restoreImageSHA256: "deadbeef",
+			ephemeral: true
+		)
+		try JSONEncoder().encode(metadata).write(to: GuestBundleLayout.metadata(in: bundle))
+		#expect(throws: GoldenBundleError.markedEphemeral(bundle)) {
+			try GoldenBundle.load(from: bundle)
+		}
+	}
+
 	/// metadata 存在但毀損 → metadataUndecodable（不鑄造殘缺 bundle）。
 	@Test
 	private func `load throws undecodable metadata`() throws {

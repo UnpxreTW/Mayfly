@@ -80,4 +80,18 @@ public enum GuestBundleLayout {
 			macAddress: metadata.macAddress
 		)
 	}
+
+	/// 佈局完整性檢查：回傳五件套中第一個不存在的檔（依固定順序）、齊全回 nil。
+	/// ``GoldenBundle/load(from:)`` 與 ``EphemeralBundle/load(from:)`` 共用的缺件判準。
+	static func firstMissingComponent(in bundle: URL) -> URL? {
+		let components: [URL] = [
+			diskImage(in: bundle),
+			auxiliaryStorage(in: bundle),
+			machineIdentifier(in: bundle),
+			hardwareModel(in: bundle),
+			metadata(in: bundle)
+		]
+		return components.first { !FileManager.default.fileExists(atPath: $0.path) }
+	}
+
 }
