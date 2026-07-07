@@ -40,5 +40,4 @@ public struct EphemeralBundle: Sendable {
 
 	/// clone 出來的 guest bundle 目錄。
 	public let bundle: URL
-
 }

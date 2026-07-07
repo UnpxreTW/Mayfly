@@ -93,5 +93,4 @@ public enum GuestBundleLayout {
 		]
 		return components.first { !FileManager.default.fileExists(atPath: $0.path) }
 	}
-
 }
