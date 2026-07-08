@@ -52,7 +52,7 @@ public struct GuestCloner: Sendable {
 			)
 		}
 		do {
-			try regenerateMACAddress(in: destination)
+			try rewriteIdentity(in: destination)
 		} catch {
 			try? FileManager.default.removeItem(at: destination)
 			throw error
@@ -82,11 +82,13 @@ public struct GuestCloner: Sendable {
 	/// clone 身份再生所用的 MAC 產生器。
 	private let makeMACAddress: @Sendable () -> String
 
-	/// 重寫 clone 內 `metadata.json`：只換 MAC、其餘欄位原樣帶過。
-	private func regenerateMACAddress(in bundle: URL) throws {
+	/// 重寫 clone 內 `metadata.json`：換新 MAC、標 `ephemeral=true`（跨行程重開時
+	/// ``EphemeralBundle/load(from:)`` 的識別依據）、其餘欄位原樣帶過。
+	private func rewriteIdentity(in bundle: URL) throws {
 		let metadataURL: URL = GuestBundleLayout.metadata(in: bundle) // propertyTypes 誤判防護：回傳型別是 URL、非 GuestBundleLayout
 		var metadata = try JSONDecoder().decode(BundleMetadata.self, from: Data(contentsOf: metadataURL))
 		metadata.macAddress = makeMACAddress()
+		metadata.ephemeral = true
 		try JSONEncoder().encode(metadata).write(to: metadataURL)
 	}
 }

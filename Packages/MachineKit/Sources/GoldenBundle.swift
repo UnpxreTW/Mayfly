@@ -16,28 +16,27 @@ import Foundation
 /// （跨行程重開檢查點）兩條鑄造途徑，下游模組（CLI / app / MCP）只能消費。
 public struct GoldenBundle: Sendable {
 
-	/// 跨行程重開：驗過佈局（五件套齊 + metadata 可解）後鑄造。
+	/// 跨行程重開：驗過佈局（五件套齊 + metadata 可解）且**未標 ephemeral** 才鑄造
+	/// ——可拋複本（開過機就髒）不得回鍋當 golden 再 clone，golden pristine 的前提
+	/// 在跨行程重開這一路也守住。
 	///
 	/// **誠實界線**：這是佈局檢查點、不是 provision 證明——bundle 落盤後沒有可靠
 	/// 的「注入跑過」痕跡可驗（marker 檔方案留後續）。同行程內 provision 直接回
 	/// 的 ``GoldenBundle`` 才帶完整語義；load 提供的是「至少是完整 bundle、不是
 	/// 任意路徑」的下限保證。
 	public static func load(from bundle: URL) throws -> GoldenBundle {
-		let components: [URL] = [
-			GuestBundleLayout.diskImage(in: bundle),
-			GuestBundleLayout.auxiliaryStorage(in: bundle),
-			GuestBundleLayout.machineIdentifier(in: bundle),
-			GuestBundleLayout.hardwareModel(in: bundle),
-			GuestBundleLayout.metadata(in: bundle)
-		]
-		for component in components where !FileManager.default.fileExists(atPath: component.path) {
-			throw GoldenBundleError.missingComponent(component)
+		if let missing = GuestBundleLayout.firstMissingComponent(in: bundle) {
+			throw GoldenBundleError.missingComponent(missing)
 		}
 		let metadataURL: URL = GuestBundleLayout.metadata(in: bundle)
+		let metadata: BundleMetadata
 		do {
-			_ = try JSONDecoder().decode(BundleMetadata.self, from: Data(contentsOf: metadataURL))
+			metadata = try JSONDecoder().decode(BundleMetadata.self, from: Data(contentsOf: metadataURL))
 		} catch {
 			throw GoldenBundleError.metadataUndecodable(metadataURL)
+		}
+		guard metadata.ephemeral != true else {
+			throw GoldenBundleError.markedEphemeral(bundle)
 		}
 		return GoldenBundle(bundle: bundle)
 	}

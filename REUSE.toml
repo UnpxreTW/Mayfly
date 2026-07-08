@@ -13,6 +13,9 @@ path = [
 	"Packages/MachineKit/NOTICE",
 	"Packages/MachineKit/Package.swift",
 	"Packages/MachineKit/Package.resolved",
+	"Packages/mayfly-cli/NOTICE",
+	"Packages/mayfly-cli/Package.swift",
+	"Packages/mayfly-cli/Package.resolved",
 ]
 precedence = "aggregate"
 SPDX-FileCopyrightText = "2026 Unpxre (GitHub: UnpxreTW)"
