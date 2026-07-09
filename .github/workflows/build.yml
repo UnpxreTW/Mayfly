@@ -22,3 +22,5 @@ jobs:
           xcode-version: '26.3'
       - name: swift build（MachineKit）
         run: swift build --package-path Packages/MachineKit
+      - name: swift build（mayfly-cli）
+        run: swift build --package-path Packages/mayfly-cli

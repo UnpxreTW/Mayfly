@@ -22,3 +22,5 @@ jobs:
           xcode-version: '26.3'
       - name: swift test（MachineKit）
         run: swift test --package-path Packages/MachineKit
+      - name: swift test（mayfly-cli）
+        run: swift test --package-path Packages/mayfly-cli
