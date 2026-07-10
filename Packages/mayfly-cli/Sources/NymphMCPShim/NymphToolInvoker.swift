@@ -43,9 +43,9 @@ enum NymphToolInvoker {
 		} catch let error as NymphShimError {
 			return errorResult(code: error.code, message: error.message)
 		} catch let error as NymphTransportError {
-			return errorResult(code: "daemon_unreachable", message: error.description)
+			return errorResult(code: "daemon_unreachable", message: transportErrorMessage(for: error))
 		} catch {
-			return errorResult(code: "internal_error", message: "\(error)")
+			return errorResult(code: "internal_error", message: "an internal shim error occurred")
 		}
 	}
 
@@ -56,24 +56,24 @@ enum NymphToolInvoker {
 		case .spawn:
 			return .spawn(SpawnParams(
 				golden: try arguments.requiredString("golden"),
-				cpus: arguments.int("cpus", default: 4),
-				memoryGiB: arguments.int("memory_gib", default: 4),
-				wait: arguments.bool("wait", default: true),
-				readinessTimeoutSeconds: arguments.int("readiness_timeout_s", default: 180)
+				cpus: try arguments.int("cpus", default: 4),
+				memoryGiB: try arguments.int("memory_gib", default: 4),
+				wait: try arguments.bool("wait", default: true),
+				readinessTimeoutSeconds: try arguments.int("readiness_timeout_s", default: 180)
 			))
 
 		case .execute:
 			return .execute(ExecuteParams(
 				id: try arguments.requiredString("id"),
 				command: try arguments.requiredStringArray("cmd"),
-				timeoutSeconds: arguments.optionalInt("timeout_s"),
+				timeoutSeconds: try arguments.optionalInt("timeout_s"),
 				standardInput: arguments.string("stdin"),
 				workingDirectory: arguments.string("cwd"),
 				environment: arguments.stringDictionary("env")
 			))
 
 		case .list:
-			return .list(ListParams(all: arguments.bool("all", default: false)))
+			return .list(ListParams(all: try arguments.bool("all", default: false)))
 
 		case .status:
 			return .status(StatusParams(id: try arguments.requiredString("id")))
@@ -81,7 +81,7 @@ enum NymphToolInvoker {
 		case .destroy:
 			return .destroy(DestroyParams(
 				id: try arguments.requiredString("id"),
-				force: arguments.bool("force", default: true)
+				force: try arguments.bool("force", default: true)
 			))
 		}
 	}
@@ -106,7 +106,80 @@ enum NymphToolInvoker {
 			return successResult(destroyValue(result))
 
 		case let .toolError(error):
-			return errorResult(code: error.code, message: error.message)
+			return errorResult(code: error.code, message: daemonErrorMessage(for: error.code))
+		}
+	}
+
+	// MARK: - outward error genericisation
+
+	/// daemon ``ToolError`` 的對外訊息：**只依穩定 `code` 給通稱化訊息、丟棄 daemon 原始
+	/// `message`**。daemon 訊息可能夾帶 host 絕對路徑（`clone_failed` 帶 `clone failed: <path>`）、
+	/// guest IP／ssh stderr／known_hosts（`transport_failure`）、或 `String(describing:)` 內部細節
+	/// （`internal_error`）——這些留在 daemon 自己的 host-side log，不外流給 MCP client。LLM 拿到
+	/// actionable 的 `code` 已足夠判斷下一步。未知／未來新增的 code 落 `default` 的通稱訊息、
+	/// 不外流。
+	private static func daemonErrorMessage(for code: String) -> String {
+		switch code {
+		case "no_such_id":
+			return "no session with the requested id"
+
+		case "admission_denied":
+			return "the concurrent session limit has been reached"
+
+		case "golden_not_found":
+			return "the requested golden alias was not found"
+
+		case "clone_failed":
+			return "failed to clone the golden bundle"
+
+		case "not_ready":
+			return "the session is not ready"
+
+		case "ip_unavailable":
+			return "the session is ready but no IP is resolvable yet"
+
+		case "transport_failure":
+			return "the SSH connection to the guest failed"
+
+		case "timed_out":
+			return "the operation timed out"
+
+		case "not_apple_silicon":
+			return "nymph requires Apple Silicon"
+
+		case "bad_request":
+			return "the request was malformed"
+
+		case "internal_error":
+			return "the nymph daemon reported an internal error"
+
+		default:
+			return "the nymph daemon reported an error"
+		}
+	}
+
+	/// 傳輸失敗的對外訊息：**去掉 path／errno**。``NymphTransportError/description`` 帶 socket
+	/// 路徑（`pathTooLong`）與 errno 供 host-side triage／CLI（host 使用者看自機路徑無妨），但
+	/// MCP client 不該看到 host 檔案系統路徑——只給通稱化的 per-case 訊息，不帶任何值。
+	private static func transportErrorMessage(for error: NymphTransportError) -> String {
+		switch error {
+		case .connectFailed:
+			return "cannot reach the nymph daemon (is `mayfly nymph` running?)"
+
+		case .connectionClosed:
+			return "the connection to the nymph daemon closed before a response arrived"
+
+		case .pathTooLong:
+			return "the nymph socket path is too long"
+
+		case .socketCreationFailed:
+			return "failed to create the nymph socket"
+
+		case .bindFailed:
+			return "failed to bind the nymph socket"
+
+		case .listenFailed:
+			return "failed to listen on the nymph socket"
 		}
 	}
 
