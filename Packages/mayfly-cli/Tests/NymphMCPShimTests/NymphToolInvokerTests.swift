@@ -66,7 +66,7 @@ private final class NymphToolInvokerTests {
 		#expect(result.structuredContent?.objectValue?["code"] == "invalid_arguments")
 	}
 
-	/// booting 這時降級：`ip` 為 nil → JSON `null`（NY-1）。
+	/// booting 逾時降級：`ip` 為 nil → JSON `null`（NY-1）。
 	@Test
 	private func `spawn booting result encodes null ip`() async throws {
 		let harness = makeHarness(response: .spawn(SpawnResult(id: "mfly-boot", state: .booting, ip: nil)))

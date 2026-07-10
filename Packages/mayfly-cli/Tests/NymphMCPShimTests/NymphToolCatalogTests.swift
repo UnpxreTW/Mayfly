@@ -45,7 +45,7 @@ private final class NymphToolCatalogTests {
 		#expect(required["destroy"] == ["id"])
 	}
 
-	/// round-trip：`ListTools.Result` 過一趨 encode/decode 後，工具名稱與必填欄位不失真——
+	/// round-trip：`ListTools.Result` 過一趟 encode/decode 後，工具名稱與必填欄位不失真——
 	/// 這是 shim 實際會送上線的 JSON 形狀（`Server.send` 用同一個 `JSONEncoder`）。
 	@Test
 	private func `list tools result round trips through JSON`() throws {

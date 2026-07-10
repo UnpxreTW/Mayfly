@@ -68,7 +68,7 @@ private final class NymphMCPServerTests {
 	}
 
 	/// 未知工具名經完整 MCP round trip 仍回 `isError == true`（非協議層例外、client 端不會看到
-	/// 抛錯）。
+	/// 拋錯）。
 	@Test
 	private func `tools call unknown tool round trips as an error result`() async throws {
 		let harness = try await connectedClient(response: .list(ListResult(sessions: [])))
