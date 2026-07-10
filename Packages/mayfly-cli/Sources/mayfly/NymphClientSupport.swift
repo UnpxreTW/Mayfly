@@ -10,7 +10,7 @@ import ArgumentParser
 import Foundation
 import NymphKit
 
-/// daemon-client 動詞（spawn / exec / ps / status / destroy&lt;id&gt;）的共用執行——連 nymph
+/// daemon-client 動詞（spawn / exec / list / status / destroy&lt;id&gt;）的共用執行——連 nymph
 /// socket、送請求、把傳輸失敗與非預期回應收斂成一致的 stderr + 非零退出。薄殼紀律：真正的
 /// 編排在 daemon 的 `SessionStore`、CLI 只做 argv ↔ socket ↔ stdout 轉接。
 enum NymphClientSupport {

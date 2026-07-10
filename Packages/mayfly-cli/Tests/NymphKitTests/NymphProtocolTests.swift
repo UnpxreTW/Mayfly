@@ -28,7 +28,7 @@ private final class NymphProtocolTests {
 		let requests: [NymphRequest] = [
 			.spawn(SpawnParams(golden: "base", cpus: 6, memoryGiB: 8, wait: false, readinessTimeoutSeconds: 90)),
 			.exec(ExecParams(id: "mfly-1", command: ["ls", "-la"], timeoutSeconds: 30, standardInput: "in", workingDirectory: "/w", environment: ["K": "V"])),
-			.ps(PsParams(all: true)),
+			.list(ListParams(all: true)),
 			.status(StatusParams(id: "mfly-2")),
 			.destroy(DestroyParams(id: "mfly-3", force: false)),
 		]
@@ -44,7 +44,7 @@ private final class NymphProtocolTests {
 		let responses: [NymphResponse] = [
 			.spawn(SpawnResult(id: "mfly-1", state: .booting, ip: nil)),
 			.exec(ExecResult(standardOutput: "out\nline", standardError: "err", exit: 3)),
-			.ps(PsResult(sessions: [summary])),
+			.list(ListResult(sessions: [summary])),
 			.status(StatusResult(summary: summary, stopReason: "forced")),
 			.destroy(DestroyResult(id: "mfly-1")),
 			.toolError(ToolError(code: "no_such_id", message: "no such session id: mfly-x")),

@@ -9,7 +9,7 @@
 import Foundation
 
 /// nymph daemon 的落點慣例單一正本：state dir（穩定身份鑰、clone 登記檔）與 Unix domain
-/// socket 路徑——`mayfly nymph`（server）與 daemon-client 動詞（spawn/exec/ps/status/destroy）
+/// socket 路徑——`mayfly nymph`（server）與 daemon-client 動詞（spawn/exec/list/status/destroy）
 /// 消費同一組路徑，才連得上同一個 daemon。
 ///
 /// state dir 解析：環境變數 `MAYFLY_STATE_DIR` 覆寫，否則 `~/.mayfly`（短路徑——Unix

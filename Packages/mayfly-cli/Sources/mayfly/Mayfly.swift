@@ -17,8 +17,8 @@ import ArgumentParser
 /// - **standalone（無 daemon、直連引擎）**：`clone` / `run` / `ip` / `destroy <path>`——CI
 ///   custom-executor 的三段生命週期（prepare = clone + run + 等 READY、run = 呼叫端自行
 ///   SSH、cleanup = 結束 run 行程 + destroy）。
-/// - **daemon client（連 socket）**：`spawn` / `exec <id>` / `ps` / `status <id>` /
-///   `destroy <id>`——消費 nymph 的 session table。
+/// - **daemon client（連 socket）**：`spawn` / `exec <id>` / `list`（alias `ps`） /
+///   `status <id>` / `destroy <id>`——消費 nymph 的 session table。
 /// - **起 daemon**：`nymph`（常駐、開 socket）。
 ///
 /// `destroy` 過載依 socket 連通性消歧（NY-2、見 ``DestroyCommand``）。
@@ -36,7 +36,7 @@ struct Mayfly: AsyncParsableCommand {
 			NymphCommand.self,
 			SpawnCommand.self,
 			ExecCommand.self,
-			PsCommand.self,
+			ListCommand.self,
 			StatusCommand.self
 		]
 	)

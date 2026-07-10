@@ -11,7 +11,7 @@ import MachineKit
 
 /// nymph daemon 的核心：`id -> SessionEntry` 的 session table（設計 §4.1）。序列化所有對
 /// table 的存取（actor），每台 VM 各自活在自己的 ``GuestControl`` 內、彼此獨立。上層
-/// 五工具（spawn/exec/ps/status/destroy）皆為此 actor 的方法；socket 面經
+/// 五工具（spawn/exec/list/status/destroy）皆為此 actor 的方法；socket 面經
 /// ``RequestDispatching`` 把 ``NymphRequest`` 打進來。
 ///
 /// **不直接觸碰引擎**：全程走 ``GuestEngine`` / ``GuestControl`` 抽象，VM 生命週期與 exec
@@ -121,7 +121,7 @@ public actor SessionStore {
 	}
 
 	/// 列出 session（依 createdAt 穩定排序）。`all=false` 濾掉已 stopped 未回收者。
-	public func ps(all: Bool) async -> PsResult {
+	public func list(all: Bool) async -> ListResult {
 		var summaries: [SessionSummary] = []
 		for entry in table.values.sorted(by: { ($0.createdAt, $0.id) < ($1.createdAt, $1.id) }) {
 			let state: SessionState = await entry.control.currentState()
@@ -131,7 +131,7 @@ public actor SessionStore {
 			let ip: String? = await entry.control.currentIP() ?? entry.lastIP
 			summaries.append(summary(for: entry, state: state, ip: ip))
 		}
-		return PsResult(sessions: summaries)
+		return ListResult(sessions: summaries)
 	}
 
 	/// 查單一 session 狀態。no-such-id 擲錯。
@@ -281,8 +281,8 @@ extension SessionStore: RequestDispatching {
 					environment: params.environment
 				))
 
-			case let .ps(params):
-				return .ps(await ps(all: params.all))
+			case let .list(params):
+				return .list(await list(all: params.all))
 
 			case let .status(params):
 				return .status(try await status(id: params.id))

@@ -99,9 +99,9 @@ private final class SessionStoreTests {
 		}
 	}
 
-	/// ps：預設濾掉已 stopped 未回收者、`all` 全列。
+	/// list：預設濾掉已 stopped 未回收者、`all` 全列。
 	@Test
-	private func `ps hides stopped unless all`() async throws {
+	private func `list hides stopped unless all`() async throws {
 		let engine: FakeGuestEngine = .init { FakeGuestControl() }
 		let store: SessionStore = .init(engine: engine, makeHandle: sequentialHandles())
 		_ = try await store.spawn(golden: "live", cpus: 1, memoryGiB: 1, wait: true, readinessTimeout: .seconds(1))
@@ -109,9 +109,9 @@ private final class SessionStoreTests {
 		let stoppedEngine: FakeGuestEngine = .init { FakeGuestControl(stateOverride: .stopped) }
 		let store2: SessionStore = .init(engine: stoppedEngine, makeHandle: sequentialHandles())
 		_ = try await store2.spawn(golden: "gone", cpus: 1, memoryGiB: 1, wait: false, readinessTimeout: .seconds(1))
-		#expect(await store2.ps(all: false).sessions.isEmpty)
-		#expect(await store2.ps(all: true).sessions.count == 1)
-		#expect(await store.ps(all: false).sessions.count == 1)
+		#expect(await store2.list(all: false).sessions.isEmpty)
+		#expect(await store2.list(all: true).sessions.count == 1)
+		#expect(await store.list(all: false).sessions.count == 1)
 	}
 
 	/// status：回摘要（含 golden / cpus / mem）；未知 id → noSuchID。

@@ -26,7 +26,7 @@ public enum NymphRequest: Codable, Sendable, Equatable {
 	case exec(ExecParams)
 
 	/// 列出 session。
-	case ps(PsParams)
+	case list(ListParams)
 
 	/// 查單一 session 狀態。
 	case status(StatusParams)
@@ -44,8 +44,8 @@ public enum NymphResponse: Codable, Sendable, Equatable {
 	/// exec 成功（`exit` 是資料、非零不是 tool-error）。
 	case exec(ExecResult)
 
-	/// ps 成功。
-	case ps(PsResult)
+	/// list 成功。
+	case list(ListResult)
 
 	/// status 成功。
 	case status(StatusResult)
@@ -122,8 +122,8 @@ public struct ExecParams: Codable, Sendable, Equatable {
 	}
 }
 
-/// ps 參數。
-public struct PsParams: Codable, Sendable, Equatable {
+/// list 參數。
+public struct ListParams: Codable, Sendable, Equatable {
 
 	/// true 含已 stopped 未回收者；預設只列活的。
 	public let all: Bool
@@ -240,8 +240,8 @@ public struct SessionSummary: Codable, Sendable, Equatable {
 	}
 }
 
-/// ps 結果。
-public struct PsResult: Codable, Sendable, Equatable {
+/// list 結果。
+public struct ListResult: Codable, Sendable, Equatable {
 
 	/// session 摘要清單（空表為正常）。
 	public let sessions: [SessionSummary]

@@ -12,7 +12,7 @@ import Foundation
 import Darwin
 #endif
 
-/// daemon-client 端的 socket 客戶端——CLI 的 spawn/exec/ps/status/destroy 動詞（現在）與
+/// daemon-client 端的 socket 客戶端——CLI 的 spawn/exec/list/status/destroy 動詞（現在）與
 /// stdio shim（步③）皆經此連 nymph socket、送一個 ``NymphRequest``、收一個 ``NymphResponse``。
 /// 一次請求一條連線（連 → 寫一行 → 讀一行 → 關），簡單且與 server 的逐行協議對稱。
 public struct NymphClient: Sendable {

@@ -23,15 +23,15 @@ private final class NymphServerTests {
 	@Test
 	private func `request round trips over unix socket`() async throws {
 		let socketURL: URL = temporarySocketURL()
-		let expected: NymphResponse = .ps(PsResult(sessions: []))
+		let expected: NymphResponse = .list(ListResult(sessions: []))
 		let dispatcher: FakeDispatcher = .init(response: expected)
 		let server: NymphServer = .init(socketPath: socketURL, dispatcher: dispatcher)
 		try server.start()
 		defer { server.shutdown() }
 		let client: NymphClient = .init(socketPath: socketURL)
-		let response: NymphResponse = try await client.send(.ps(PsParams(all: true)))
+		let response: NymphResponse = try await client.send(.list(ListParams(all: true)))
 		#expect(response == expected)
-		#expect(dispatcher.received.current == [.ps(PsParams(all: true))])
+		#expect(dispatcher.received.current == [.list(ListParams(all: true))])
 	}
 
 	/// tool-error 回應也能經 socket 原樣送回（envelope 過線）。
@@ -51,7 +51,7 @@ private final class NymphServerTests {
 	private func `daemon presence tracks lifecycle`() async throws {
 		let socketURL: URL = temporarySocketURL()
 		#expect(NymphClient.isDaemonPresent(socketPath: socketURL) == false)
-		let server: NymphServer = .init(socketPath: socketURL, dispatcher: FakeDispatcher(response: .ps(PsResult(sessions: []))))
+		let server: NymphServer = .init(socketPath: socketURL, dispatcher: FakeDispatcher(response: .list(ListResult(sessions: []))))
 		try server.start()
 		#expect(NymphClient.isDaemonPresent(socketPath: socketURL) == true)
 		server.shutdown()
@@ -63,7 +63,7 @@ private final class NymphServerTests {
 	private func `send without daemon throws connect failed`() async {
 		let socketURL: URL = temporarySocketURL()
 		await #expect(throws: NymphTransportError.self) {
-			try await NymphClient(socketPath: socketURL).send(.ps(PsParams()))
+			try await NymphClient(socketPath: socketURL).send(.list(ListParams()))
 		}
 	}
 }

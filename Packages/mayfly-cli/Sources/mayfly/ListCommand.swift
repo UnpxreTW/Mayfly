@@ -10,13 +10,14 @@ import NymphKit
 
 import ArgumentParser
 
-/// `mayfly ps`（daemon client）：列出 session（tab 分隔表；不含 host 路徑）。預設只列活的、
-/// `--all` 含已 stopped 未回收者。空表為正常。
-struct PsCommand: AsyncParsableCommand {
+/// `mayfly list`（daemon client，別名 `ps`）：列出 session（tab 分隔表；不含 host 路徑）。
+/// 預設只列活的、`--all` 含已 stopped 未回收者。空表為正常。
+struct ListCommand: AsyncParsableCommand {
 
 	static let configuration: CommandConfiguration = .init(
-		commandName: "ps",
-		abstract: "List sessions (daemon)."
+		commandName: "list",
+		abstract: "List sessions (daemon).",
+		aliases: ["ps"]
 	)
 
 	/// 含已 stopped 未回收者。
@@ -24,8 +25,8 @@ struct PsCommand: AsyncParsableCommand {
 	var all = false
 
 	func run() async throws {
-		switch try await NymphClientSupport.send(.ps(PsParams(all: all))) {
-		case let .ps(result):
+		switch try await NymphClientSupport.send(.list(ListParams(all: all))) {
+		case let .list(result):
 			print("ID\tSTATE\tIP\tGOLDEN\tCPUS\tMEM_GIB\tUPTIME_S")
 			for session in result.sessions {
 				let columns: [String] = [
