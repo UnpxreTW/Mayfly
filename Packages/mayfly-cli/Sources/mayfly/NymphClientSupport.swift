@@ -50,26 +50,9 @@ enum NymphClientSupport {
 		return environment
 	}
 
-	/// 傳輸錯誤的人讀訊息。
+	/// 傳輸錯誤的人讀訊息（正本在 `NymphTransportError: CustomStringConvertible`、MCP shim 的
+	/// `NymphToolInvoker` 共用同一份措辭）。
 	private static func describe(_ error: NymphTransportError) -> String {
-		switch error {
-		case .connectFailed:
-			return "cannot reach the nymph daemon (is `mayfly nymph` running?)"
-
-		case .connectionClosed:
-			return "connection closed before a response arrived"
-
-		case let .pathTooLong(path):
-			return "socket path too long: \(path)"
-
-		case let .bindFailed(path, detail):
-			return "bind failed at \(path): \(detail)"
-
-		case let .socketCreationFailed(detail):
-			return "socket() failed: \(detail)"
-
-		case let .listenFailed(detail):
-			return "listen() failed: \(detail)"
-		}
+		error.description
 	}
 }
