@@ -35,6 +35,33 @@ public enum NymphTransportError: Error, Sendable, Equatable {
 	case connectionClosed
 }
 
+extension NymphTransportError: CustomStringConvertible {
+
+	/// 人讀訊息——CLI（`NymphClientSupport`）與 MCP shim（`NymphToolInvoker`）共用同一份措辭，
+	/// 不各自維護一份 switch。
+	public var description: String {
+		switch self {
+		case .connectFailed:
+			return "cannot reach the nymph daemon (is `mayfly nymph` running?)"
+
+		case .connectionClosed:
+			return "connection closed before a response arrived"
+
+		case let .pathTooLong(path):
+			return "socket path too long: \(path)"
+
+		case let .bindFailed(path, detail):
+			return "bind failed at \(path): \(detail)"
+
+		case let .socketCreationFailed(detail):
+			return "socket() failed: \(detail)"
+
+		case let .listenFailed(detail):
+			return "listen() failed: \(detail)"
+		}
+	}
+}
+
 /// POSIX Unix domain socket 的最小零依賴封裝（`AF_UNIX` / `SOCK_STREAM`）——daemon 核心
 /// 走我方協議、不引 NIO。只做 listen / connect / sockaddr 組裝與 SIGPIPE 抑制；讀寫分幀
 /// 由 ``NymphServer`` / ``NymphClient`` 以 `FileHandle` 行流處理。純 POSIX、無 arch gate。
