@@ -7,3 +7,16 @@
 ## 需求
 
 macOS 26+（Apple Silicon）、Xcode 26+、Tuist 4。
+
+## 開發
+
+專案分兩個 SwiftPM package（`Packages/MachineKit`、`Packages/mayfly-cli`），各自建置與測試：
+
+```shell
+swift build --package-path Packages/MachineKit
+swift build --package-path Packages/mayfly-cli
+swift test --package-path Packages/MachineKit
+swift test --package-path Packages/mayfly-cli
+```
+
+CI（GitHub Actions）跑上述指令，見 `.github/workflows/build.yml` 與 `test.yml`。
