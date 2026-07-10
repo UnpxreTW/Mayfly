@@ -9,6 +9,7 @@ let package = Package(
 	],
 	products: [
 		.executable(name: "mayfly", targets: ["mayfly"]),
+		.library(name: "NymphKit", targets: ["NymphKit"]),
 	],
 	dependencies: [
 		.package(path: "../MachineKit"),
@@ -16,16 +17,32 @@ let package = Package(
 		.package(url: "https://github.com/UnpxreTW/SwiftStyleKit.git", from: "2.0.0"),
 	],
 	targets: [
+		.target(
+			name: "NymphKit",
+			dependencies: [
+				.product(name: "MachineKit", package: "MachineKit"),
+			],
+			path: "Sources/NymphKit",
+			plugins: [
+				.plugin(name: "SwiftStyleLint", package: "SwiftStyleKit"),
+			]
+		),
 		.executableTarget(
 			name: "mayfly",
 			dependencies: [
 				.product(name: "MachineKit", package: "MachineKit"),
 				.product(name: "ArgumentParser", package: "swift-argument-parser"),
+				"NymphKit",
 			],
-			path: "Sources",
+			path: "Sources/mayfly",
 			plugins: [
 				.plugin(name: "SwiftStyleLint", package: "SwiftStyleKit"),
 			]
+		),
+		.testTarget(
+			name: "NymphKitTests",
+			dependencies: ["NymphKit"],
+			path: "Tests/NymphKitTests"
 		),
 	]
 )
