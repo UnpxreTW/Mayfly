@@ -20,6 +20,8 @@ import ArgumentParser
 /// - **daemon client（連 socket）**：`spawn` / `execute <id>`（alias `exec`） /
 ///   `list`（alias `ps`） / `status <id>` / `destroy <id>`——消費 nymph 的 session table。
 /// - **起 daemon**：`nymph`（常駐、開 socket）。
+/// - **MCP shim**：`mcp`（短命 stdio 轉接殼、橋接同一顆 socket；契約 #31 步③，見
+///   ``MCPCommand``）。
 ///
 /// `destroy` 過載依 socket 連通性消歧（NY-2、見 ``DestroyCommand``）。
 @main
@@ -37,7 +39,8 @@ struct Mayfly: AsyncParsableCommand {
 			SpawnCommand.self,
 			ExecuteCommand.self,
 			ListCommand.self,
-			StatusCommand.self
+			StatusCommand.self,
+			MCPCommand.self
 		]
 	)
 }
