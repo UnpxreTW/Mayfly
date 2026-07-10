@@ -161,8 +161,8 @@ private final class NymphToolInvokerTests {
 
 	// MARK: error mapping
 
-	/// daemon 的 tool-error（``ToolError``）原樣過線：code/message 映進 `structuredContent`、
-	/// `isError == true`。
+	/// daemon 的 tool-error（``ToolError``）：穩定 `code` 原樣過線、`isError == true`；`message`
+	/// 換成 shim 依 code 對映的**通稱化訊息**（不透傳 daemon 原始 message）。
 	@Test
 	private func `daemon tool error maps to isError result`() async throws {
 		let harness = makeHarness(response: .toolError(ToolError(code: "no_such_id", message: "no such session id: mfly-x")))
@@ -170,7 +170,55 @@ private final class NymphToolInvokerTests {
 		let result: CallTool.Result = await NymphToolInvoker.handle(.init(name: "status", arguments: ["id": "mfly-x"]), client: harness.client)
 
 		#expect(result.isError == true)
-		#expect(result.structuredContent == ["code": "no_such_id", "message": "no such session id: mfly-x"])
+		#expect(result.structuredContent == ["code": "no_such_id", "message": "no session with the requested id"])
+	}
+
+	/// daemon 原始訊息夾帶 host 絕對路徑（`clone_failed` 帶 `clone failed: <path>`）時，shim
+	/// **只放行通稱化訊息**——對外整份 `CallTool.Result`（`content` 人讀文字 + `structuredContent`
+	/// 機器可讀）序列化後**都不含**該 host 路徑，`code` 仍原樣 actionable。
+	@Test
+	private func `daemon error host path never leaks to the client`() async throws {
+		let secretPath = "/Users/aron/GoldenBundles/sequoia-base.bundle"
+		let harness = makeHarness(response: .toolError(ToolError(code: "clone_failed", message: "clone failed: \(secretPath)")))
+		defer { harness.server.shutdown() }
+		let result: CallTool.Result = await NymphToolInvoker.handle(.init(name: "spawn", arguments: ["golden": "sequoia-base"]), client: harness.client)
+
+		#expect(result.isError == true)
+		#expect(result.structuredContent?.objectValue?["code"] == "clone_failed")
+		#expect(result.structuredContent?.objectValue?["message"] == "failed to clone the golden bundle")
+		let serialized: String = try encodedResultText(result)
+		#expect(serialized.contains(secretPath) == false)
+		#expect(serialized.contains("/Users/") == false)
+	}
+
+	/// daemon `transport_failure` 原始訊息夾帶 guest IP / ssh stderr 時，shim 通稱化——對外整份
+	/// 結果不含 guest IP。
+	@Test
+	private func `daemon transport failure hides guest ip`() async throws {
+		let guestIP = "10.0.7.42"
+		let harness = makeHarness(response: .toolError(ToolError(code: "transport_failure", message: "ssh transport failure: connect to host \(guestIP): Connection refused")))
+		defer { harness.server.shutdown() }
+		let result: CallTool.Result = await NymphToolInvoker.handle(.init(name: "execute", arguments: ["id": "mfly-x", "cmd": ["ls"]]), client: harness.client)
+
+		#expect(result.structuredContent?.objectValue?["code"] == "transport_failure")
+		#expect(result.structuredContent?.objectValue?["message"] == "the SSH connection to the guest failed")
+		let serialized: String = try encodedResultText(result)
+		#expect(serialized.contains(guestIP) == false)
+	}
+
+	/// 傳輸層 `pathTooLong` 對外訊息**不帶 socket 路徑值**——過長 socket 路徑本身就是 host 路徑，
+	/// 不得外流；映成 `daemon_unreachable` + 通稱訊息。
+	@Test
+	private func `path too long does not leak the socket path`() async {
+		let longPath = "/tmp/nymph-" + String(repeating: "x", count: 160) + ".sock"
+		let client: NymphClient = .init(socketPath: URL(fileURLWithPath: longPath))
+		let result: CallTool.Result = await NymphToolInvoker.handle(.init(name: "list", arguments: [:]), client: client)
+
+		#expect(result.isError == true)
+		#expect(result.structuredContent?.objectValue?["code"] == "daemon_unreachable")
+		let message: String? = result.structuredContent?.objectValue?["message"]?.stringValue
+		#expect(message?.contains(longPath) == false)
+		#expect(message?.contains("/tmp/") == false)
 	}
 
 	/// 未知工具名 → tool-error `unknown_tool`（不是協議層 methodNotFound——`CallTool` handler
@@ -191,5 +239,54 @@ private final class NymphToolInvokerTests {
 		let result: CallTool.Result = await NymphToolInvoker.handle(.init(name: "list", arguments: [:]), client: client)
 		#expect(result.isError == true)
 		#expect(result.structuredContent?.objectValue?["code"] == "daemon_unreachable")
+	}
+
+	// MARK: argument validation
+
+	/// `cmd` 陣列含**非字串元素**（`["swift", 42]`）→ `invalid_arguments` tool-error，且**不送進**
+	/// daemon（不 `compactMap` 靜默丟棄、無聲改寫 argv）。
+	@Test
+	private func `execute cmd with a non string element is a tool error`() async {
+		let client: NymphClient = .init(socketPath: temporarySocketURL())
+		let params: CallTool.Parameters = .init(name: "execute", arguments: ["id": "mfly-x", "cmd": ["swift", 42, "test"]])
+		let result: CallTool.Result = await NymphToolInvoker.handle(params, client: client)
+		#expect(result.isError == true)
+		#expect(result.structuredContent?.objectValue?["code"] == "invalid_arguments")
+	}
+
+	/// 選填純量的**字串編碼**值以寬鬆轉型接受——`wait: "false"` → `false`、`memory_gib: "8"` → `8`
+	/// （不再無聲吞成預設 true / 4），原樣過線進 daemon。
+	@Test
+	private func `string encoded scalars are coerced not swallowed`() async throws {
+		let harness = makeHarness(response: .spawn(SpawnResult(id: "mfly-x", state: .booting, ip: nil)))
+		defer { harness.server.shutdown() }
+		let params: CallTool.Parameters = .init(name: "spawn", arguments: [
+			"golden": "sequoia-base",
+			"wait": "false",
+			"memory_gib": "8",
+		])
+		_ = await NymphToolInvoker.handle(params, client: harness.client)
+		let sent: [NymphRequest] = await harness.dispatcher.received
+		#expect(sent == [.spawn(SpawnParams(golden: "sequoia-base", cpus: 4, memoryGiB: 8, wait: false, readinessTimeoutSeconds: 180))])
+	}
+
+	/// 選填純量存在但**無法轉型**（`memory_gib: "abc"`）→ `invalid_arguments` tool-error，不靜默
+	/// 吞成預設（明示值被無聲忽略是 bug）。
+	@Test
+	private func `unparseable scalar is a tool error not a default`() async {
+		let client: NymphClient = .init(socketPath: temporarySocketURL())
+		let params: CallTool.Parameters = .init(name: "spawn", arguments: ["golden": "sequoia-base", "memory_gib": "abc"])
+		let result: CallTool.Result = await NymphToolInvoker.handle(params, client: client)
+		#expect(result.isError == true)
+		#expect(result.structuredContent?.objectValue?["code"] == "invalid_arguments")
+	}
+
+	// MARK: helpers
+
+	/// 把整份 ``CallTool/Result``（`content` 人讀文字 + `structuredContent` + 旗標）序列化成 JSON
+	/// 文字，供「敏感字串完全不外流」的斷言逐字掃描。
+	private func encodedResultText(_ result: CallTool.Result) throws -> String {
+		let data: Data = try JSONEncoder().encode(result)
+		return String(data: data, encoding: .utf8) ?? ""
 	}
 }
