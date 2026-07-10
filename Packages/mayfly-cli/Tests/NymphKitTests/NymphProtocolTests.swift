@@ -27,7 +27,7 @@ private final class NymphProtocolTests {
 	private func `requests round trip`() throws {
 		let requests: [NymphRequest] = [
 			.spawn(SpawnParams(golden: "base", cpus: 6, memoryGiB: 8, wait: false, readinessTimeoutSeconds: 90)),
-			.exec(ExecParams(id: "mfly-1", command: ["ls", "-la"], timeoutSeconds: 30, standardInput: "in", workingDirectory: "/w", environment: ["K": "V"])),
+			.execute(ExecuteParams(id: "mfly-1", command: ["ls", "-la"], timeoutSeconds: 30, standardInput: "in", workingDirectory: "/w", environment: ["K": "V"])),
 			.list(ListParams(all: true)),
 			.status(StatusParams(id: "mfly-2")),
 			.destroy(DestroyParams(id: "mfly-3", force: false)),
@@ -43,7 +43,7 @@ private final class NymphProtocolTests {
 		let summary: SessionSummary = .init(id: "mfly-1", state: .ready, ip: "10.0.0.9", golden: "base", cpus: 4, memoryGiB: 4, uptimeSeconds: 12)
 		let responses: [NymphResponse] = [
 			.spawn(SpawnResult(id: "mfly-1", state: .booting, ip: nil)),
-			.exec(ExecResult(standardOutput: "out\nline", standardError: "err", exit: 3)),
+			.execute(ExecuteResult(standardOutput: "out\nline", standardError: "err", exit: 3)),
 			.list(ListResult(sessions: [summary])),
 			.status(StatusResult(summary: summary, stopReason: "forced")),
 			.destroy(DestroyResult(id: "mfly-1")),
@@ -54,10 +54,10 @@ private final class NymphProtocolTests {
 		}
 	}
 
-	/// exec 輸出含換行也安全（JSON 字串轉義 `\n`、payload 保持單行、換行分幀不破）。
+	/// execute 輸出含換行也安全（JSON 字串轉義 `\n`、payload 保持單行、換行分幀不破）。
 	@Test
-	private func `exec output with newlines survives round trip`() throws {
-		let response: NymphResponse = .exec(ExecResult(standardOutput: "a\nb\nc\n", standardError: "", exit: 0))
+	private func `execute output with newlines survives round trip`() throws {
+		let response: NymphResponse = .execute(ExecuteResult(standardOutput: "a\nb\nc\n", standardError: "", exit: 0))
 		let encoded: Data = try JSONEncoder().encode(response)
 		let encodedString: String = String(decoding: encoded, as: UTF8.self)
 		#expect(!encodedString.contains("\n"))

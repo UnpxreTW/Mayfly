@@ -65,37 +65,37 @@ private final class SessionStoreTests {
 		#expect(await store.count == 1)
 	}
 
-	/// exec 路由到對應 control、回其結果；exit code 原樣（資料）。
+	/// execute 路由到對應 control、回其結果；exit code 原樣（資料）。
 	@Test
-	private func `exec routes to control and returns result`() async throws {
+	private func `execute routes to control and returns result`() async throws {
 		let outcome: Result<GuestExecResult, NymphError> = .success(GuestExecResult(standardOutput: "hi\n", standardError: "e", exitCode: 7))
 		let engine: FakeGuestEngine = .init { FakeGuestControl(execOutcome: outcome) }
 		let store: SessionStore = .init(engine: engine, makeHandle: sequentialHandles())
 		let spawn = try await store.spawn(golden: "base", cpus: 1, memoryGiB: 1, wait: true, readinessTimeout: .seconds(1))
-		let result = try await store.exec(id: spawn.id, command: ["echo", "hi"], timeout: nil, standardInput: nil, workingDirectory: nil, environment: [:])
+		let result = try await store.execute(id: spawn.id, command: ["echo", "hi"], timeout: nil, standardInput: nil, workingDirectory: nil, environment: [:])
 		#expect(result.standardOutput == "hi\n")
 		#expect(result.standardError == "e")
 		#expect(result.exit == 7)
 		#expect(engine.lastControl?.recorded.current.execCommands == [["echo", "hi"]])
 	}
 
-	/// exec 未知 id → noSuchID。
+	/// execute 未知 id → noSuchID。
 	@Test
-	private func `exec unknown id throws no such id`() async throws {
+	private func `execute unknown id throws no such id`() async throws {
 		let store: SessionStore = .init(engine: FakeGuestEngine())
 		await #expect(throws: NymphError.noSuchID("ghost")) {
-			try await store.exec(id: "ghost", command: ["x"], timeout: nil, standardInput: nil, workingDirectory: nil, environment: [:])
+			try await store.execute(id: "ghost", command: ["x"], timeout: nil, standardInput: nil, workingDirectory: nil, environment: [:])
 		}
 	}
 
-	/// exec 傳輸層失敗（control 擲 NymphError）原樣往上傳。
+	/// execute 傳輸層失敗（control 擲 NymphError）原樣往上傳。
 	@Test
-	private func `exec transport failure propagates`() async throws {
+	private func `execute transport failure propagates`() async throws {
 		let engine: FakeGuestEngine = .init { FakeGuestControl(execOutcome: .failure(.transportFailure("denied"))) }
 		let store: SessionStore = .init(engine: engine, makeHandle: sequentialHandles())
 		let spawn = try await store.spawn(golden: "base", cpus: 1, memoryGiB: 1, wait: true, readinessTimeout: .seconds(1))
 		await #expect(throws: NymphError.transportFailure("denied")) {
-			try await store.exec(id: spawn.id, command: ["x"], timeout: nil, standardInput: nil, workingDirectory: nil, environment: [:])
+			try await store.execute(id: spawn.id, command: ["x"], timeout: nil, standardInput: nil, workingDirectory: nil, environment: [:])
 		}
 	}
 

@@ -10,17 +10,19 @@ import ArgumentParser
 import Foundation
 import NymphKit
 
-/// `mayfly exec <id> <cmd…>`（daemon client）：在 session 內經 SSH 跑命令。**exit code 是
-/// 資料**——把遠端結束碼原樣當本行程退出碼（stdout / stderr 各自轉出）；只有「無法把命令
-/// 送進 VM」（no such id / 未 ready / 傳輸失敗 / 逾時）才走 tool-error（stderr + exit 1）。
+/// `mayfly execute <id> <cmd…>`（daemon client，別名 `exec`）：在 session 內經 SSH 跑命令。
+/// **exit code 是資料**——把遠端結束碼原樣當本行程退出碼（stdout / stderr 各自轉出）；只有
+/// 「無法把命令送進 VM」（no such id / 未 ready / 傳輸失敗 / 逾時）才走 tool-error（stderr +
+/// exit 1）。
 ///
 /// 選項須置於 id 之前（命令陣列 passthrough 捕獲其後全部 token）：
-/// `mayfly exec --timeout 30 <id> ls -la`。
-struct ExecCommand: AsyncParsableCommand {
+/// `mayfly execute --timeout 30 <id> ls -la`。
+struct ExecuteCommand: AsyncParsableCommand {
 
 	static let configuration: CommandConfiguration = .init(
-		commandName: "exec",
-		abstract: "Run a command inside a session over SSH (daemon)."
+		commandName: "execute",
+		abstract: "Run a command inside a session over SSH (daemon).",
+		aliases: ["exec"]
 	)
 
 	/// 目標 session id。
@@ -49,13 +51,13 @@ struct ExecCommand: AsyncParsableCommand {
 
 	func run() async throws {
 		guard !command.isEmpty else {
-			throw ValidationError("exec requires a command to run.")
+			throw ValidationError("execute requires a command to run.")
 		}
 		let environment: [String: String] = try NymphClientSupport.parseEnvironment(environmentPairs)
 		let standardInput: String? = forwardStdin
 			? String(decoding: FileHandle.standardInput.readDataToEndOfFile(), as: UTF8.self)
 			: nil
-		let request: NymphRequest = .exec(ExecParams(
+		let request: NymphRequest = .execute(ExecuteParams(
 			id: id,
 			command: command,
 			timeoutSeconds: timeoutSeconds,
@@ -64,7 +66,7 @@ struct ExecCommand: AsyncParsableCommand {
 			environment: environment
 		))
 		switch try await NymphClientSupport.send(request) {
-		case let .exec(result):
+		case let .execute(result):
 			FileHandle.standardOutput.write(Data(result.standardOutput.utf8))
 			FileHandle.standardError.write(Data(result.standardError.utf8))
 			throw ExitCode(result.exit)

@@ -11,7 +11,7 @@ import MachineKit
 
 /// nymph daemon 的核心：`id -> SessionEntry` 的 session table（設計 §4.1）。序列化所有對
 /// table 的存取（actor），每台 VM 各自活在自己的 ``GuestControl`` 內、彼此獨立。上層
-/// 五工具（spawn/exec/list/status/destroy）皆為此 actor 的方法；socket 面經
+/// 五工具（spawn/execute/list/status/destroy）皆為此 actor 的方法；socket 面經
 /// ``RequestDispatching`` 把 ``NymphRequest`` 打進來。
 ///
 /// **不直接觸碰引擎**：全程走 ``GuestEngine`` / ``GuestControl`` 抽象，VM 生命週期與 exec
@@ -97,16 +97,16 @@ public actor SessionStore {
 		return SpawnResult(id: id, state: ip != nil ? .ready : .booting, ip: ip)
 	}
 
-	/// 在既有 session 內 exec（SSH）。no-such-id 擲 ``NymphError/noSuchID(_:)``；傳輸層失敗
+	/// 在既有 session 內 execute（SSH）。no-such-id 擲 ``NymphError/noSuchID(_:)``；傳輸層失敗
 	/// 由 ``GuestControl`` 映成 ``NymphError``。exit code 是資料、非零照常回。
-	public func exec(
+	public func execute(
 		id: String,
 		command: [String],
 		timeout: Duration?,
 		standardInput: String?,
 		workingDirectory: String?,
 		environment: [String: String]
-	) async throws -> ExecResult {
+	) async throws -> ExecuteResult {
 		guard let entry = table[id] else {
 			throw NymphError.noSuchID(id)
 		}
@@ -117,7 +117,7 @@ public actor SessionStore {
 			workingDirectory: workingDirectory,
 			environment: environment
 		)
-		return ExecResult(standardOutput: result.standardOutput, standardError: result.standardError, exit: result.exitCode)
+		return ExecuteResult(standardOutput: result.standardOutput, standardError: result.standardError, exit: result.exitCode)
 	}
 
 	/// 列出 session（依 createdAt 穩定排序）。`all=false` 濾掉已 stopped 未回收者。
@@ -271,8 +271,8 @@ extension SessionStore: RequestDispatching {
 					readinessTimeout: .seconds(params.readinessTimeoutSeconds)
 				))
 
-			case let .exec(params):
-				return .exec(try await exec(
+			case let .execute(params):
+				return .execute(try await execute(
 					id: params.id,
 					command: params.command,
 					timeout: params.timeoutSeconds.map { .seconds($0) },

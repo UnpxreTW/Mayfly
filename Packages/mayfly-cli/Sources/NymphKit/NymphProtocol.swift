@@ -23,7 +23,7 @@ public enum NymphRequest: Codable, Sendable, Equatable {
 	case spawn(SpawnParams)
 
 	/// 在既有 session 內執行命令（SSH、經 ``GuestExec``）。
-	case exec(ExecParams)
+	case execute(ExecuteParams)
 
 	/// 列出 session。
 	case list(ListParams)
@@ -41,8 +41,8 @@ public enum NymphResponse: Codable, Sendable, Equatable {
 	/// spawn 成功。
 	case spawn(SpawnResult)
 
-	/// exec 成功（`exit` 是資料、非零不是 tool-error）。
-	case exec(ExecResult)
+	/// execute 成功（`exit` 是資料、非零不是 tool-error）。
+	case execute(ExecuteResult)
 
 	/// list 成功。
 	case list(ListResult)
@@ -84,8 +84,8 @@ public struct SpawnParams: Codable, Sendable, Equatable {
 	}
 }
 
-/// exec 參數。
-public struct ExecParams: Codable, Sendable, Equatable {
+/// execute 參數。
+public struct ExecuteParams: Codable, Sendable, Equatable {
 
 	/// 目標 session 的 opaque id。
 	public let id: String
@@ -178,8 +178,8 @@ public struct SpawnResult: Codable, Sendable, Equatable {
 	}
 }
 
-/// exec 結果（`exit` 是遠端命令真實退出碼、資料）。
-public struct ExecResult: Codable, Sendable, Equatable {
+/// execute 結果（`exit` 是遠端命令真實退出碼、資料）。
+public struct ExecuteResult: Codable, Sendable, Equatable {
 
 	/// 標準輸出。
 	public let standardOutput: String
@@ -321,7 +321,7 @@ public struct ToolError: Codable, Sendable, Equatable, Error {
 			self.init(code: "transport_failure", message: "ssh transport failure: \(detail)")
 
 		case .execTimedOut:
-			self.init(code: "timed_out", message: "exec timed out")
+			self.init(code: "timed_out", message: "execute timed out")
 
 		case .notAppleSilicon:
 			self.init(code: "not_apple_silicon", message: "nymph requires Apple Silicon")

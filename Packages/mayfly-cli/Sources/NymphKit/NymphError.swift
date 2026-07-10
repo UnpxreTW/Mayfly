@@ -8,7 +8,7 @@
 
 /// daemon 內部的失敗面——`SessionStore` / `GuestEngine` / `GuestControl` 擲此，於協議
 /// 邊界 ``ToolError/init(_:)`` 映成對外 ``ToolError``（tool-error envelope）。與**遠端命令
-/// 非零退出**互斥：後者是資料（回在 ``ExecResult/exit``）、不擲錯。契約通則見 #31：
+/// 非零退出**互斥：後者是資料（回在 ``ExecuteResult/exit``）、不擲錯。契約通則見 #31：
 /// no-such-id / 未 ready / SSH 傳輸失敗 / 逾時＝擲錯；命令非零 exit＝正常回傳。
 public enum NymphError: Error, Sendable, Equatable {
 
