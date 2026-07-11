@@ -1,1 +1,69 @@
-Ly8KLy8gIExpbnV4Tm9kZUtpdFRlc3RzCi8vCi8vICBDb3B5cmlnaHQgwqkgMjAyNiBVbnB4cmUKLy8gIExpY2Vuc2VkIHVuZGVyIHRoZSBBcGFjaGUgTGljZW5zZSAyLjAuIFNlZSBMSUNFTlNFIGZvciBkZXRhaWxzLgovLwovLyAgU1BEWC1MaWNlbnNlLUlkZW50aWZpZXI6IEFwYWNoZS0yLjAKCkB0ZXN0YWJsZSBpbXBvcnQgTGludXhOb2RlS2l0CmltcG9ydCBGb3VuZGF0aW9uCmltcG9ydCBOeW1waEtpdAppbXBvcnQgVGVzdGluZwoKLy8gTUFSSzogLSBMaW51eEltYWdlUmVzb2x2ZXJUZXN0cwoKcHJpdmF0ZSBmaW5hbCBjbGFzcyBMaW51eEltYWdlUmVzb2x2ZXJUZXN0cyB7CgoJLy8vIOWFp+W7uuWIpeWQje+8iGBhbHBpbmVg77yJ6Kej5Yiw5bCN5oeJIE9DSSBpbWFnZSDlj4Pnhacg77yLIOmgkOiorSBrZXJuZWzjgIIKCUBUZXN0Cglwcml2YXRlIGZ1bmMgYGJ1aWx0aW4gYWxpYXMgcmVzb2x2ZXMgdG8gaW1hZ2UgcmVmZXJlbmNlYCgpIHRocm93cyB7CgkJbGV0IHJlc29sdmVyOiBMaW51eEltYWdlUmVzb2x2ZXIgPSAuaW5pdCgpCgkJbGV0IHNwZWM6IExpbnV4R3Vlc3RTcGVjID0gdHJ5IHJlc29sdmVyLnJlc29sdmUoImFscGluZSIpCgkJI2V4cGVjdChzcGVjLmltYWdlUmVmZXJlbmNlID09ICJkb2NrZXIuaW8vbGlicmFyeS9hbHBpbmU6MyIpCgkJI2V4cGVjdChzcGVjLmtlcm5lbCA9PSBMaW51eEtlcm5lbEFyY2hpdmUuZGVmYXVsdCkKCX0KCgkvLy8g5ZCrIGAvYCDnmoTliKXlkI3oppbngrrlrozmlbQgT0NJIOWPg+eFp+OAgeWOn+aooyBwYXNzdGhyb3VnaOOAggoJQFRlc3QKCXByaXZhdGUgZnVuYyBgc2xhc2ggYWxpYXMgcGFzc2VzIHRocm91Z2ggYXMgbGl0ZXJhbCByZWZlcmVuY2VgKCkgdGhyb3dzIHsKCQlsZXQgcmVzb2x2ZXI6IExpbnV4SW1hZ2VSZXNvbHZlciA9IC5pbml0KCkKCQlsZXQgc3BlYzogTGludXhHdWVzdFNwZWMgPSB0cnkgcmVzb2x2ZXIucmVzb2x2ZSgiZ2hjci5pby9leGFtcGxlL2N1c3RvbS1yb290ZnMiKQoJCSNleHBlY3Qoc3BlYy5pbWFnZVJlZmVyZW5jZSA9PSAiZ2hjci5pby9leGFtcGxlL2N1c3RvbS1yb290ZnMiKQoJfQoKCS8vLyDlkKsgYDpgIOeahOWIpeWQje+8iOWmguW4tiB0YWcg55qE57Ch5a+r5Y+D54Wn77yJ5ZCM5qijIHBhc3N0aHJvdWdo44CB5LiN5p+l5YWn5bu66KGo44CCCglAVGVzdAoJcHJpdmF0ZSBmdW5jIGBjb2xvbiBhbGlhcyBwYXNzZXMgdGhyb3VnaCBhcyBsaXRlcmFsIHJlZmVyZW5jZWAoKSB0aHJvd3MgewoJCWxldCByZXNvbHZlcjogTGludXhJbWFnZVJlc29sdmVyID0gLmluaXQoKQoJCWxldCBzcGVjOiBMaW51eEd1ZXN0U3BlYyA9IHRyeSByZXNvbHZlci5yZXNvbHZlKCJ1YnVudHU6MjIuMDQiKQoJCSNleHBlY3Qoc3BlYy5pbWFnZVJlZmVyZW5jZSA9PSAidWJ1bnR1OjIyLjA0IikKCX0KCgkvLy8g5p+l54Sh55qE57SU5Yil5ZCN77yI54ShIGAvYCDnhKEgYDpg77yJ4oaSIGdvbGRlbk5vdEZvdW5k44CCCglAVGVzdAoJcHJpdmF0ZSBmdW5jIGB1bmtub3duIGFsaWFzIHRocm93cyBnb2xkZW5Ob3RGb3VuZGAoKSB7CgkJbGV0IHJlc29sdmVyOiBMaW51eEltYWdlUmVzb2x2ZXIgPSAuaW5pdCgpCgkJI2V4cGVjdCh0aHJvd3M6IE55bXBoRXJyb3IuZ29sZGVuTm90Rm91bmQoImdob3N0IikpIHsKCQkJdHJ5IHJlc29sdmVyLnJlc29sdmUoImdob3N0IikKCQl9Cgl9CgoJLy8vIOiHquioguWIpeWQjeihqOWPr+imhuWvq+WFp+W7uuihqOOAggoJQFRlc3QKCXByaXZhdGUgZnVuYyBgY3VzdG9tIGFsaWFzIHRhYmxlIG92ZXJyaWRlcyBidWlsdGluYCgpIHRocm93cyB7CgkJbGV0IGtlcm5lbDogTGludXhLZXJuZWxBcmNoaXZlID0gLmluaXQoCgkJCXZlcnNpb246ICI5LjkuOSIsCgkJCWFyY2hpdmVVUkw6IFVSTChzdHJpbmc6ICJodHRwczovL2V4YW1wbGUuY29tL2tlcm5lbC50YXIueHoiKSEsCgkJCWFyY2hpdmVTSEEyNTY6ICJkZWFkYmVlZiIsCgkJCWlubmVyUGF0aDogInZtbGludXgiCgkJKQoJCWxldCByZXNvbHZlcjogTGludXhJbWFnZVJlc29sdmVyID0gLmluaXQoYWxpYXNlczogWyJjdXN0b20iOiAiZXhhbXBsZS5jb20vY3VzdG9tOjEiXSwga2VybmVsOiBrZXJuZWwpCgkJbGV0IHNwZWM6IExpbnV4R3Vlc3RTcGVjID0gdHJ5IHJlc29sdmVyLnJlc29sdmUoImN1c3RvbSIpCgkJI2V4cGVjdChzcGVjLmltYWdlUmVmZXJlbmNlID09ICJleGFtcGxlLmNvbS9jdXN0b206MSIpCgkJI2V4cGVjdChzcGVjLmtlcm5lbCA9PSBrZXJuZWwpCgkJI2V4cGVjdCh0aHJvd3M6IE55bXBoRXJyb3IuZ29sZGVuTm90Rm91bmQoImFscGluZSIpKSB7CgkJCXRyeSByZXNvbHZlci5yZXNvbHZlKCJhbHBpbmUiKQoJCX0KCX0KfQo=
+//
+//  LinuxNodeKitTests
+//
+//  Copyright © 2026 Unpxre
+//  Licensed under the Apache License 2.0. See LICENSE for details.
+//
+//  SPDX-License-Identifier: Apache-2.0
+
+@testable import LinuxNodeKit
+import Foundation
+import NymphKit
+import Testing
+
+// MARK: - LinuxImageResolverTests
+
+private final class LinuxImageResolverTests {
+
+	/// 內建別名（`alpine`）解到對應 OCI image 參照 ＋ 預設 kernel。
+	@Test
+	private func `builtin alias resolves to image reference`() throws {
+		let resolver: LinuxImageResolver = .init()
+		let spec: LinuxGuestSpec = try resolver.resolve("alpine")
+		#expect(spec.imageReference == "docker.io/library/alpine:3")
+		#expect(spec.kernel == LinuxKernelArchive.default)
+	}
+
+	/// 含 `/` 的別名視為完整 OCI 參照、原樣 passthrough。
+	@Test
+	private func `slash alias passes through as literal reference`() throws {
+		let resolver: LinuxImageResolver = .init()
+		let spec: LinuxGuestSpec = try resolver.resolve("ghcr.io/example/custom-rootfs")
+		#expect(spec.imageReference == "ghcr.io/example/custom-rootfs")
+	}
+
+	/// 含 `:` 的別名（如帶 tag 的簡寫參照）同樣 passthrough、不查內建表。
+	@Test
+	private func `colon alias passes through as literal reference`() throws {
+		let resolver: LinuxImageResolver = .init()
+		let spec: LinuxGuestSpec = try resolver.resolve("ubuntu:22.04")
+		#expect(spec.imageReference == "ubuntu:22.04")
+	}
+
+	/// 查無的純別名（無 `/` 無 `:`）→ goldenNotFound。
+	@Test
+	private func `unknown alias throws goldenNotFound`() {
+		let resolver: LinuxImageResolver = .init()
+		#expect(throws: NymphError.goldenNotFound("ghost")) {
+			try resolver.resolve("ghost")
+		}
+	}
+
+	/// 自訂別名表可覆寫內建表。
+	@Test
+	private func `custom alias table overrides builtin`() throws {
+		let kernel: LinuxKernelArchive = .init(
+			version: "9.9.9",
+			archiveURL: URL(string: "https://example.com/kernel.tar.xz")!,
+			archiveSHA256: "deadbeef",
+			innerPath: "vmlinux"
+		)
+		let resolver: LinuxImageResolver = .init(aliases: ["custom": "example.com/custom:1"], kernel: kernel)
+		let spec: LinuxGuestSpec = try resolver.resolve("custom")
+		#expect(spec.imageReference == "example.com/custom:1")
+		#expect(spec.kernel == kernel)
+		#expect(throws: NymphError.goldenNotFound("alpine")) {
+			try resolver.resolve("alpine")
+		}
+	}
+}
