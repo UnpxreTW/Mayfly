@@ -1,1 +1,40 @@
-Ly8KLy8gIExpbnV4Tm9kZUtpdAovLwovLyAgQ29weXJpZ2h0IMKpIDIwMjYgVW5weHJlCi8vICBMaWNlbnNlZCB1bmRlciB0aGUgQXBhY2hlIExpY2Vuc2UgMi4wLiBTZWUgTElDRU5TRSBmb3IgZGV0YWlscy4KLy8KLy8gIFNQRFgtTGljZW5zZS1JZGVudGlmaWVyOiBBcGFjaGUtMi4wCgppbXBvcnQgQ29udGFpbmVyaXphdGlvbgppbXBvcnQgRm91bmRhdGlvbgoKLy8gV3JpdGVyIOaYryBDb250YWluZXJpemF0aW9uIOeahCBJTyDljZTlrprvvIzpmqjnnJ/lrrnlmaggQVBJIOS4gOi1tyBhcmNoIGdhdGXvvIjmr5TnhacKLy8gTGludXhHdWVzdENvbnRyb2wuc3dpZnTvvInjgIIKCiNpZiBhcmNoKGFybTY0KQoKLy8vIOaUtumbhiBgY29udGFpbmVyLmV4ZWNgIHN0ZG91dCAvIHN0ZGVyciDnmoToqJjmhrbpq5TlhacgYGBXcml0ZXJgYOOAgk5TTG9jayDorbflr6vlhaXigJTigJQKLy8vIENvbnRhaW5lcml6YXRpb24g5Y+v6IO95Zyo6IOM5pmvIElPIHJlbGF5IOWft+ihjOe3kuWRvOWPqyBgd3JpdGUoXzopYO+8jOmdnuWWruS4gOWRvOWPq+err+W6j+WIl+WMluOAggpmaW5hbCBjbGFzcyBCdWZmZXJlZE91dHB1dFdyaXRlcjogV3JpdGVyLCBAdW5jaGVja2VkIFNlbmRhYmxlIHsKCgl2YXIgZGF0YTogRGF0YSB7CgkJbG9jay5sb2NrKCkKCQlkZWZlciB7IGxvY2sudW5sb2NrKCkgfQoJCXJldHVybiBzdG9yYWdlCgl9CgoJZnVuYyB3cml0ZShfIGRhdGE6IERhdGEpIHRocm93cyB7CgkJbG9jay5sb2NrKCkKCQlzdG9yYWdlLmFwcGVuZChkYXRhKQoJCWxvY2sudW5sb2NrKCkKCX0KCglmdW5jIGNsb3NlKCkgdGhyb3dzIHt9CgoJcHJpdmF0ZSBsZXQgbG9jazogTlNMb2NrID0gLmluaXQoKQoKCXByaXZhdGUgdmFyIHN0b3JhZ2U6IERhdGEgPSAuaW5pdCgpCn0KCiNlbmRpZgo=
+//
+//  LinuxNodeKit
+//
+//  Copyright © 2026 Unpxre
+//  Licensed under the Apache License 2.0. See LICENSE for details.
+//
+//  SPDX-License-Identifier: Apache-2.0
+
+import Containerization
+import Foundation
+
+// Writer 是 Containerization 的 IO 協定，隨真容器 API 一起 arch gate（比照
+// LinuxGuestControl.swift）。
+
+#if arch(arm64)
+
+/// 收集 `container.exec` stdout / stderr 的記憶體內 ``Writer``。NSLock 護寫入——
+/// Containerization 可能在背景 IO relay 執行緒呼叫 `write(_:)`，非單一呼叫端序列化。
+final class BufferedOutputWriter: Writer, @unchecked Sendable {
+
+	var data: Data {
+		lock.lock()
+		defer { lock.unlock() }
+		return storage
+	}
+
+	func write(_ data: Data) throws {
+		lock.lock()
+		storage.append(data)
+		lock.unlock()
+	}
+
+	func close() throws {}
+
+	private let lock: NSLock = .init()
+
+	private var storage: Data = .init()
+}
+
+#endif
