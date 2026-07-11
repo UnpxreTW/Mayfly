@@ -1,1 +1,54 @@
-Ly8KLy8gIExpbnV4Tm9kZUtpdAovLwovLyAgQ29weXJpZ2h0IMKpIDIwMjYgVW5weHJlCi8vICBMaWNlbnNlZCB1bmRlciB0aGUgQXBhY2hlIExpY2Vuc2UgMi4wLiBTZWUgTElDRU5TRSBmb3IgZGV0YWlscy4KLy8KLy8gIFNQRFgtTGljZW5zZS1JZGVudGlmaWVyOiBBcGFjaGUtMi4wCgppbXBvcnQgQ3J5cHRvS2l0CmltcG9ydCBGb3VuZGF0aW9uCgovLy8ga2VybmVsIOS6jOmAsuS9jeeahOacrOapn+W/q+WPlu+8muebrumMhOeuoeeQhuOAgeS7peeJiOacrOWRveWQjeOAgeS4sua1gSBzaGEyNTbjgILntJQgRm91bmRhdGlvbiArCi8vLyBDcnlwdG9LaXTvvIznhKEgYXJjaCBnYXRl4oCU4oCU5b+r5Y+W6YKP6Lyv5pys6Lqr6LefIFZNIOahhuaetueEoemXnO+8jOWPr+eNqOeri+WWrua4rO+8iOavlOeFpyBNYWNoaW5lS2l0Ci8vLyDnmoQgYFJlc3RvcmVJbWFnZUNhY2hlYCDlkIzkuIDoqK3oqIjnkIbnlLHvvInjgIIKcHVibGljIHN0cnVjdCBMaW51eEtlcm5lbENhY2hlOiBTZW5kYWJsZSB7CgoJLy8gTUFSSzogUHVibGljCgoJLy8vIOW/q+WPluebrumMhO+8m+mgkOiorSBgPG55bXBoIHN0YXRlIGRpcj4va2VybmVsc2DvvIhgYExpbnV4Tm9kZVBhdGhzL2tlcm5lbENhY2hlRGlyZWN0b3J5KGVudmlyb25tZW50OilgYO+8ieOAggoJcHVibGljIGxldCBkaXJlY3Rvcnk6IFVSTAoKCXB1YmxpYyBpbml0KGRpcmVjdG9yeTogVVJMID0gTGludXhOb2RlUGF0aHMua2VybmVsQ2FjaGVEaXJlY3RvcnkoKSkgewoJCXNlbGYuZGlyZWN0b3J5ID0gZGlyZWN0b3J5Cgl9CgoJLy8vIOS+neeJiOacrOaOqOWwjueahOacrOapnyBrZXJuZWwg6JC96bue77yIYDxkaXJlY3Rvcnk+Lzx2ZXJzaW9uPi92bWxpbnV4LWFybTY0YO+8ieOAggoJcHVibGljIGZ1bmMga2VybmVsVVJMKHZlcnNpb246IFN0cmluZykgLT4gVVJMIHsKCQlkaXJlY3RvcnkuYXBwZW5kaW5nKGNvbXBvbmVudDogdmVyc2lvbikuYXBwZW5kaW5nKGNvbXBvbmVudDogInZtbGludXgtYXJtNjQiKQoJfQoKCS8vLyDlsI3mh4nniYjmnKznmoQga2VybmVsIOaYr+WQpuW3suWcqOW/q+WPluOAgioq5a2Y5Zyo5Y2z6KaW54K65a6M5pW0KirigJTigJTkuIvovInlrozmlbTmgKfpnaAgZmV0Y2hlcgoJLy8vIOOAjHRlbXAg6JC95Zyw5b6M5omNIHJlbmFtZSDmiJDmnIDntYLlkI3jgI3kv53orYnvvIjljYrmiJDlk4HkuI3mnIPku6XmnIDntYLlkI3lrZjlnKjvvIzlkIwKCS8vLyBgUmVzdG9yZUltYWdlQ2FjaGVgIOeahOWlkee0hO+8ieOAggoJcHVibGljIGZ1bmMgaXNDYWNoZWQodmVyc2lvbjogU3RyaW5nKSAtPiBCb29sIHsKCQlGaWxlTWFuYWdlci5kZWZhdWx0LmZpbGVFeGlzdHMoYXRQYXRoOiBrZXJuZWxVUkwodmVyc2lvbjogdmVyc2lvbikucGF0aCkKCX0KCgkvLy8g5Liy5rWB6KiI566X5qqU5qGIIHNoYTI1Nu+8iDggTWlCIGNodW5r77yJ77yM5Zue5bCP5a+rIGhleOOAguS4jeS+neiztCBpbnN0YW5jZSBzdGF0Ze+8jOioreioiOaIkAoJLy8vIHN0YXRpYyDkvpsgYGBTeXN0ZW1LZXJuZWxBcmNoaXZlRmV0Y2hlcmBgIOWFseeUqOWQjOS4gOS7veWvpuS9nO+8iOWWruS4gOato+acrO+8ieOAggoJcHVibGljIHN0YXRpYyBmdW5jIHNoYTI1NihvZiB1cmw6IFVSTCkgdGhyb3dzIC0+IFN0cmluZyB7CgkJbGV0IGhhbmRsZTogRmlsZUhhbmRsZSA9IHRyeSAuaW5pdChmb3JSZWFkaW5nRnJvbTogdXJsKQoJCWRlZmVyIHsgdHJ5PyBoYW5kbGUuY2xvc2UoKSB9CgkJdmFyIGhhc2hlcjogU0hBMjU2ID0gLmluaXQoKQoJCXdoaWxlIGxldCBjaHVuayA9IHRyeSBoYW5kbGUucmVhZCh1cFRvQ291bnQ6IExpbnV4S2VybmVsQ2FjaGUuY2h1bmtTaXplKSwgIWNodW5rLmlzRW1wdHkgewoJCQloYXNoZXIudXBkYXRlKGRhdGE6IGNodW5rKQoJCX0KCQlyZXR1cm4gaGFzaGVyLmZpbmFsaXplKCkubWFwIHsgU3RyaW5nKGZvcm1hdDogIiUwMngiLCAkMCkgfS5qb2luZWQoKQoJfQoKCS8vIE1BUks6IFByaXZhdGUKCgkvLy8gc2hhMjU2IOS4sua1gSBjaHVuayDlpKflsI/jgIIKCXByaXZhdGUgc3RhdGljIGxldCBjaHVua1NpemU6IEludCA9IDggKiAxMDI0ICogMTAyNAp9Cg==
+//
+//  LinuxNodeKit
+//
+//  Copyright © 2026 Unpxre
+//  Licensed under the Apache License 2.0. See LICENSE for details.
+//
+//  SPDX-License-Identifier: Apache-2.0
+
+import CryptoKit
+import Foundation
+
+/// kernel 二進位的本機快取：目錄管理、以版本命名、串流 sha256。純 Foundation +
+/// CryptoKit，無 arch gate——快取邏輯本身跟 VM 框架無關，可獨立單測（比照 MachineKit
+/// 的 `RestoreImageCache` 同一設計理由）。
+public struct LinuxKernelCache: Sendable {
+
+	// MARK: Public
+
+	/// 快取目錄；預設 `<nymph state dir>/kernels`（``LinuxNodePaths/kernelCacheDirectory(environment:)``）。
+	public let directory: URL
+
+	public init(directory: URL = LinuxNodePaths.kernelCacheDirectory()) {
+		self.directory = directory
+	}
+
+	/// 依版本推導的本機 kernel 落點（`<directory>/<version>/vmlinux-arm64`）。
+	public func kernelURL(version: String) -> URL {
+		directory.appending(component: version).appending(component: "vmlinux-arm64")
+	}
+
+	/// 對應版本的 kernel 是否已在快取。**存在即視為完整**——下載完整性靠 fetcher
+	/// 「temp 落地後才 rename 成最終名」保證（半成品不會以最終名存在，同
+	/// `RestoreImageCache` 的契約）。
+	public func isCached(version: String) -> Bool {
+		FileManager.default.fileExists(atPath: kernelURL(version: version).path)
+	}
+
+	/// 串流計算檔案 sha256（8 MiB chunk），回小寫 hex。不依賴 instance state，設計成
+	/// static 供 ``SystemKernelArchiveFetcher`` 共用同一份實作（單一正本）。
+	public static func sha256(of url: URL) throws -> String {
+		let handle: FileHandle = try .init(forReadingFrom: url)
+		defer { try? handle.close() }
+		var hasher: SHA256 = .init()
+		while let chunk = try handle.read(upToCount: LinuxKernelCache.chunkSize), !chunk.isEmpty {
+			hasher.update(data: chunk)
+		}
+		return hasher.finalize().map { String(format: "%02x", $0) }.joined()
+	}
+
+	// MARK: Private
+
+	/// sha256 串流 chunk 大小。
+	private static let chunkSize: Int = 8 * 1024 * 1024
+}
