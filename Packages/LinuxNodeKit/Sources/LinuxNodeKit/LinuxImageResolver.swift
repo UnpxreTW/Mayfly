@@ -1,1 +1,49 @@
-Ly8KLy8gIExpbnV4Tm9kZUtpdAovLwovLyAgQ29weXJpZ2h0IMKpIDIwMjYgVW5weHJlCi8vICBMaWNlbnNlZCB1bmRlciB0aGUgQXBhY2hlIExpY2Vuc2UgMi4wLiBTZWUgTElDRU5TRSBmb3IgZGV0YWlscy4KLy8KLy8gIFNQRFgtTGljZW5zZS1JZGVudGlmaWVyOiBBcGFjaGUtMi4wCgppbXBvcnQgTnltcGhLaXQKCi8vLyBnb2xkZW4g5Yil5ZCNIOKGkiBPQ0kgaW1hZ2Ug5Y+D54WnIO+8iyBrZXJuZWwg55qE6Kej5p6Q44CCCi8vLwovLy8gKirliKXlkI3op6PmnpAqKu+8iOS+neW6j++8ie+8mgovLy8gMS4g5Yil5ZCN5pys6LqrKirlg4/kuIDlgIsgT0NJIOWPg+eFpyoq77yI5ZCrIGAvYCDmiJYgYDpg77yJ4oaSIOWOn+aooyBwYXNzdGhyb3VnaO+8iOmAg+eUn+air++8jOiuk+mAsumajgovLy8gICAg55So6YCU55u05oyH5Lu75oSPIHJlZ2lzdHJ5IC8gcmVwbyAvIHRhZ++8jOWQjCBgYEdvbGRlblJlc29sdmVyYGAg5bCN57WV5bCN6Lev5b6R55qEIHBhc3N0aHJvdWdoCi8vLyAgICDnsr7npZ7vvInjgIIKLy8vIDIuIOWQpuWJh+afpeWFp+W7uuWIpeWQjeihqO+8jOafpeeEoeaTsiBgYE55bXBoRXJyb3IvZ29sZGVuTm90Rm91bmQoXzopYGDjgIIKLy8vCi8vLyBrZXJuZWwg6YG45Z6LIE0xIOeCuuWWruS4gOWFqOWfnyBwaW7vvIhgYExpbnV4S2VybmVsQXJjaGl2ZS9kZWZhdWx0YGDvvInigJTigJRwZXItYWxpYXMg5a6i6KO95YyWCi8vLyBrZXJuZWwg55WZ5b6M57qM77yI54++54Sh5q2k6ZyA5rGC77yJ44CCCnB1YmxpYyBzdHJ1Y3QgTGludXhJbWFnZVJlc29sdmVyOiBTZW5kYWJsZSB7CgoJLy8gTUFSSzogUHVibGljCgoJLy8vIOWFp+W7uuWIpeWQjeihqO+8mmFsaWFzIOKGkiBPQ0kgaW1hZ2Ug5Y+D54Wn44CCTTEg5Y+q5pS2IFBvQyDpqZforYnpgY7nmoQgYGFscGluZWDjgIIKCXB1YmxpYyBzdGF0aWMgbGV0IGRlZmF1bHRBbGlhc2VzOiBbU3RyaW5nOiBTdHJpbmddID0gWwoJCSJhbHBpbmUiOiAiZG9ja2VyLmlvL2xpYnJhcnkvYWxwaW5lOjMiLAoJXQoKCXB1YmxpYyBsZXQgYWxpYXNlczogW1N0cmluZzogU3RyaW5nXQoKCXB1YmxpYyBsZXQga2VybmVsOiBMaW51eEtlcm5lbEFyY2hpdmUKCglwdWJsaWMgaW5pdChhbGlhc2VzOiBbU3RyaW5nOiBTdHJpbmddID0gTGludXhJbWFnZVJlc29sdmVyLmRlZmF1bHRBbGlhc2VzLCBrZXJuZWw6IExpbnV4S2VybmVsQXJjaGl2ZSA9IC5kZWZhdWx0KSB7CgkJc2VsZi5hbGlhc2VzID0gYWxpYXNlcwoJCXNlbGYua2VybmVsID0ga2VybmVsCgl9CgoJLy8vIOino+aekOWIpeWQjeaIkCBgYExpbnV4R3Vlc3RTcGVjYGDvvIjopo/liYfopovlnovliKXoqLvop6PvvInjgIIKCXB1YmxpYyBmdW5jIHJlc29sdmUoXyBhbGlhczogU3RyaW5nKSB0aHJvd3MgLT4gTGludXhHdWVzdFNwZWMgewoJCWlmIGFsaWFzLmNvbnRhaW5zKCIvIikgfHwgYWxpYXMuY29udGFpbnMoIjoiKSB7CgkJCXJldHVybiBMaW51eEd1ZXN0U3BlYyhpbWFnZVJlZmVyZW5jZTogYWxpYXMsIGtlcm5lbDoga2VybmVsKQoJCX0KCQlndWFyZCBsZXQgcmVmZXJlbmNlID0gYWxpYXNlc1thbGlhc10gZWxzZSB7CgkJCXRocm93IE55bXBoRXJyb3IuZ29sZGVuTm90Rm91bmQoYWxpYXMpCgkJfQoJCXJldHVybiBMaW51eEd1ZXN0U3BlYyhpbWFnZVJlZmVyZW5jZTogcmVmZXJlbmNlLCBrZXJuZWw6IGtlcm5lbCkKCX0KfQo=
+//
+//  LinuxNodeKit
+//
+//  Copyright © 2026 Unpxre
+//  Licensed under the Apache License 2.0. See LICENSE for details.
+//
+//  SPDX-License-Identifier: Apache-2.0
+
+import NymphKit
+
+/// golden 別名 → OCI image 參照 ＋ kernel 的解析。
+///
+/// **別名解析**（依序）：
+/// 1. 別名本身**像一個 OCI 參照**（含 `/` 或 `:`）→ 原樣 passthrough（逃生梯，讓進階
+///    用途直指任意 registry / repo / tag，同 ``GoldenResolver`` 對絕對路徑的 passthrough
+///    精神）。
+/// 2. 否則查內建別名表，查無擲 ``NymphError/goldenNotFound(_:)``。
+///
+/// kernel 選型 M1 為單一全域 pin（``LinuxKernelArchive/default``）——per-alias 客製化
+/// kernel 留後續（現無此需求）。
+public struct LinuxImageResolver: Sendable {
+
+	// MARK: Public
+
+	/// 內建別名表：alias → OCI image 參照。M1 只收 PoC 驗證過的 `alpine`。
+	public static let defaultAliases: [String: String] = [
+		"alpine": "docker.io/library/alpine:3",
+	]
+
+	public let aliases: [String: String]
+
+	public let kernel: LinuxKernelArchive
+
+	public init(aliases: [String: String] = LinuxImageResolver.defaultAliases, kernel: LinuxKernelArchive = .default) {
+		self.aliases = aliases
+		self.kernel = kernel
+	}
+
+	/// 解析別名成 ``LinuxGuestSpec``（規則見型別註解）。
+	public func resolve(_ alias: String) throws -> LinuxGuestSpec {
+		if alias.contains("/") || alias.contains(":") {
+			return LinuxGuestSpec(imageReference: alias, kernel: kernel)
+		}
+		guard let reference = aliases[alias] else {
+			throw NymphError.goldenNotFound(alias)
+		}
+		return LinuxGuestSpec(imageReference: reference, kernel: kernel)
+	}
+}
