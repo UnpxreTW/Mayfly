@@ -66,6 +66,37 @@ private final class NymphToolInvokerTests {
 		#expect(result.structuredContent?.objectValue?["code"] == "invalid_arguments")
 	}
 
+	/// spawn 的 `golden` 是 `/` 開頭絕對路徑 → tool-error（`invalid_arguments`），連 daemon 都
+	/// 不連（無 socket harness）——MCP 邊界只收具名 alias、不開放絕對路徑逃生梯（#33 NY-3）；
+	/// 對外訊息通稱化、整份結果不回顯該路徑。
+	@Test
+	private func `spawn with absolute path golden is a tool error before reaching the daemon`() async throws {
+		let hostPath: String = "/Volumes/goldens/sequoia-base.bundle"
+		let client: NymphClient = .init(socketPath: temporarySocketURL())
+		let params: CallTool.Parameters = .init(name: "spawn", arguments: ["golden": .string(hostPath)])
+		let result: CallTool.Result = await NymphToolInvoker.handle(params, client: client)
+		#expect(result.isError == true)
+		#expect(result.structuredContent?.objectValue?["code"] == "invalid_arguments")
+		let serialized: String = try encodedResultText(result)
+		#expect(serialized.contains(hostPath) == false)
+		#expect(serialized.contains("/Volumes/") == false)
+	}
+
+	/// 具名 alias（非 `/` 開頭）不受影響、照常放行到 daemon——迴歸測試，避免絕對路徑 guard
+	/// 誤傷正常路徑。
+	@Test
+	private func `spawn with named alias golden passes through to the daemon`() async throws {
+		let harness = makeHarness(response: .spawn(SpawnResult(id: "mfly-ok1", state: .booting, ip: nil)))
+		defer { harness.server.shutdown() }
+		let result: CallTool.Result = await NymphToolInvoker.handle(
+			.init(name: "spawn", arguments: ["golden": "sa-ci-macos26", "wait": false]),
+			client: harness.client
+		)
+		#expect(result.isError == false)
+		let sent: [NymphRequest] = await harness.dispatcher.received
+		#expect(sent == [.spawn(SpawnParams(golden: "sa-ci-macos26", cpus: 4, memoryGiB: 4, wait: false, readinessTimeoutSeconds: 180))])
+	}
+
 	/// booting 逾時降級：`ip` 為 nil → JSON `null`（NY-1）。
 	@Test
 	private func `spawn booting result encodes null ip`() async throws {

@@ -120,15 +120,21 @@ enum NymphShimError: Error {
 	/// （如 `cmd` 陣列含非字串元素、`memory_gib` 是無法解析成整數的字串）。
 	case invalidArgument(String)
 
+	/// `spawn` 的 `golden` 是 `/` 開頭絕對路徑——MCP 邊界（不可信呼叫端）只收 golden root 下的
+	/// 具名 alias；``GoldenResolver`` 的絕對路徑逃生梯（#33 NY-3）留給受信任的 daemon socket
+	/// 直連方（CLI 等），不對 MCP 開放。
+	case invalidGoldenAlias
+
 	/// 對外穩定碼。
 	var code: String {
 		switch self {
-		case .missingArgument, .invalidArgument:
+		case .missingArgument, .invalidArgument, .invalidGoldenAlias:
 			return "invalid_arguments"
 		}
 	}
 
-	/// 人讀訊息——只含公開 schema 的欄位名、不含任何 host 內部資訊。
+	/// 人讀訊息——只含公開 schema 的欄位名、不含任何 host 內部資訊（含呼叫端送來的字串值：即使
+	/// 值是 client 自己送的、不算新洩漏，仍維持「shim 對外訊息一律通稱化」的紀律）。
 	var message: String {
 		switch self {
 		case let .missingArgument(field):
@@ -136,6 +142,9 @@ enum NymphShimError: Error {
 
 		case let .invalidArgument(field):
 			return "argument has an invalid type: \(field)"
+
+		case .invalidGoldenAlias:
+			return "golden must be a named alias, not a host path"
 		}
 	}
 }

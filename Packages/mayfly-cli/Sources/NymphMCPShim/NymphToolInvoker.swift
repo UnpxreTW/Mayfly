@@ -54,8 +54,15 @@ enum NymphToolInvoker {
 	private static func buildRequest(_ tool: ToolName, arguments: NymphToolArguments) throws -> NymphRequest {
 		switch tool {
 		case .spawn:
+			let golden: String = try arguments.requiredString("golden")
+			// MCP 邊界視為不可信呼叫端：golden 只收 golden root 下的具名 alias，擋
+			// ``GoldenResolver`` 的 `/` 開頭絕對路徑逃生梯（#33 NY-3）——逃生梯留給受信任的
+			// daemon socket 直連方（CLI 等），不對 MCP 開放。
+			guard !golden.hasPrefix("/") else {
+				throw NymphShimError.invalidGoldenAlias
+			}
 			return .spawn(SpawnParams(
-				golden: try arguments.requiredString("golden"),
+				golden: golden,
 				cpus: try arguments.int("cpus", default: 4),
 				memoryGiB: try arguments.int("memory_gib", default: 4),
 				wait: try arguments.bool("wait", default: true),
