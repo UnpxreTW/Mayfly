@@ -1,1 +1,100 @@
-Ly8KLy8gIExpbnV4Tm9kZUtpdAovLwovLyAgQ29weXJpZ2h0IMKpIDIwMjYgVW5weHJlCi8vICBMaWNlbnNlZCB1bmRlciB0aGUgQXBhY2hlIExpY2Vuc2UgMi4wLiBTZWUgTElDRU5TRSBmb3IgZGV0YWlscy4KLy8KLy8gIFNQRFgtTGljZW5zZS1JZGVudGlmaWVyOiBBcGFjaGUtMi4wCgppbXBvcnQgRm91bmRhdGlvbgoKLy8vIGBgS2VybmVsQXJjaGl2ZUZldGNoaW5nYGAg55qE55yf5qmf5a+m5L2c77yaYFVSTFNlc3Npb25gIOS4i+i8ieWwgeWtmCDihpIgc2hhMjU2IOmpl+itiSDihpIKLy8vIGAvdXNyL2Jpbi90YXJgIOino+WjkyDihpIg6KSH6KO9IGBgTGludXhLZXJuZWxBcmNoaXZlL2lubmVyUGF0aGBgIOWIsCBgZGVzdGluYXRpb25g44CC57SUCi8vLyBGb3VuZGF0aW9uICsg57O757WxIGB0YXJg77yIYnNkdGFyIOiHquWLlei+qOitmOWjk+e4ruagvOW8j++8jOS4jeW/hemhr+W8j+W4tiBgLUpg77yJ77yM54ShIGFyY2ggZ2F0ZeOAggpwdWJsaWMgc3RydWN0IFN5c3RlbUtlcm5lbEFyY2hpdmVGZXRjaGVyOiBLZXJuZWxBcmNoaXZlRmV0Y2hpbmcgewoKCS8vIE1BUks6IFB1YmxpYwoKCS8vLyBrZXJuZWwg5bCB5a2YIGZldGNoIOeahOWkseaVl+mdou+8mnNoYTI1NiDkuI3nrKbvvIjkvpvmh4npj4jlrozmlbTmgKfvvInvvI/op6Plo5Plvozmib7kuI3liLDpoJDmnJ/ot6/lvpEKCS8vLyDvvIjlsIHlrZjntZDmp4vot58gcGluIOeahCBgYExpbnV4S2VybmVsQXJjaGl2ZS9pbm5lclBhdGhgYCDlsI3kuI3kuIrvvInvvI9gdGFyYCDmnKzouqvlpLHmlZfjgIIKCXB1YmxpYyBlbnVtIEFyY2hpdmVFcnJvcjogRXJyb3IgewoKCQljYXNlIHNoYTI1Nk1pc21hdGNoKGV4cGVjdGVkOiBTdHJpbmcsIGFjdHVhbDogU3RyaW5nKQoKCQljYXNlIG1pc3NpbmdJbm5lckZpbGUoU3RyaW5nKQoKCQljYXNlIGV4dHJhY3RGYWlsZWQoc3RhdHVzOiBJbnQzMiwgc3RkZXJyOiBTdHJpbmcpCgl9CgoJcHVibGljIGluaXQoKSB7fQoKCXB1YmxpYyBmdW5jIGZldGNoKF8gYXJjaGl2ZTogTGludXhLZXJuZWxBcmNoaXZlLCB0byBkZXN0aW5hdGlvbjogVVJMKSBhc3luYyB0aHJvd3MgewoJCWxldCBtYW5hZ2VyOiBGaWxlTWFuYWdlciA9IC5kZWZhdWx0CgkJbGV0IHdvcmtEaXJlY3Rvcnk6IFVSTCA9IG1hbmFnZXIudGVtcG9yYXJ5RGlyZWN0b3J5LmFwcGVuZGluZyhjb21wb25lbnQ6ICJtYXlmbHkta2VybmVsLVwoVVVJRCgpLnV1aWRTdHJpbmcpIikKCQl0cnkgbWFuYWdlci5jcmVhdGVEaXJlY3RvcnkoYXQ6IHdvcmtEaXJlY3RvcnksIHdpdGhJbnRlcm1lZGlhdGVEaXJlY3RvcmllczogdHJ1ZSkKCQlkZWZlciB7IHRyeT8gbWFuYWdlci5yZW1vdmVJdGVtKGF0OiB3b3JrRGlyZWN0b3J5KSB9CgoJCWxldCBhcmNoaXZlUGF0aDogVVJMID0gd29ya0RpcmVjdG9yeS5hcHBlbmRpbmcoY29tcG9uZW50OiAiYXJjaGl2ZS50YXIueHoiKQoJCXRyeSBhd2FpdCBkb3dubG9hZChmcm9tOiBhcmNoaXZlLmFyY2hpdmVVUkwsIHRvOiBhcmNoaXZlUGF0aCkKCgkJbGV0IGFjdHVhbFNIQTI1NjogU3RyaW5nID0gdHJ5IExpbnV4S2VybmVsQ2FjaGUuc2hhMjU2KG9mOiBhcmNoaXZlUGF0aCkKCQlndWFyZCBhY3R1YWxTSEEyNTYgPT0gYXJjaGl2ZS5hcmNoaXZlU0hBMjU2IGVsc2UgewoJCQl0aHJvdyBBcmNoaXZlRXJyb3Iuc2hhMjU2TWlzbWF0Y2goZXhwZWN0ZWQ6IGFyY2hpdmUuYXJjaGl2ZVNIQTI1NiwgYWN0dWFsOiBhY3R1YWxTSEEyNTYpCgkJfQoKCQlsZXQgZXh0cmFjdERpcmVjdG9yeTogVVJMID0gd29ya0RpcmVjdG9yeS5hcHBlbmRpbmcoY29tcG9uZW50OiAiZXh0cmFjdGVkIikKCQl0cnkgbWFuYWdlci5jcmVhdGVEaXJlY3RvcnkoYXQ6IGV4dHJhY3REaXJlY3RvcnksIHdpdGhJbnRlcm1lZGlhdGVEaXJlY3RvcmllczogdHJ1ZSkKCQl0cnkgYXdhaXQgZXh0cmFjdChhcmNoaXZlUGF0aCwgdG86IGV4dHJhY3REaXJlY3RvcnkpCgoJCWxldCBleHRyYWN0ZWRLZXJuZWw6IFVSTCA9IGV4dHJhY3REaXJlY3RvcnkuYXBwZW5kaW5nKGNvbXBvbmVudDogYXJjaGl2ZS5pbm5lclBhdGgpCgkJZ3VhcmQgbWFuYWdlci5maWxlRXhpc3RzKGF0UGF0aDogZXh0cmFjdGVkS2VybmVsLnBhdGgpIGVsc2UgewoJCQl0aHJvdyBBcmNoaXZlRXJyb3IubWlzc2luZ0lubmVyRmlsZShhcmNoaXZlLmlubmVyUGF0aCkKCQl9CgoJCXRyeSBtYW5hZ2VyLmNyZWF0ZURpcmVjdG9yeShhdDogZGVzdGluYXRpb24uZGVsZXRpbmdMYXN0UGF0aENvbXBvbmVudCgpLCB3aXRoSW50ZXJtZWRpYXRlRGlyZWN0b3JpZXM6IHRydWUpCgkJbGV0IHN0YWdpbmc6IFVSTCA9IGRlc3RpbmF0aW9uLmRlbGV0aW5nTGFzdFBhdGhDb21wb25lbnQoKS5hcHBlbmRpbmcoY29tcG9uZW50OiAiLlwoZGVzdGluYXRpb24ubGFzdFBhdGhDb21wb25lbnQpLnBhcnRpYWwiKQoJCXRyeT8gbWFuYWdlci5yZW1vdmVJdGVtKGF0OiBzdGFnaW5nKQoJCWRlZmVyIHsgdHJ5PyBtYW5hZ2VyLnJlbW92ZUl0ZW0oYXQ6IHN0YWdpbmcpIH0KCQl0cnkgbWFuYWdlci5jb3B5SXRlbShhdDogZXh0cmFjdGVkS2VybmVsLCB0bzogc3RhZ2luZykKCQl0cnkgbWFuYWdlci5tb3ZlSXRlbShhdDogc3RhZ2luZywgdG86IGRlc3RpbmF0aW9uKQoJfQoKCS8vIE1BUks6IFByaXZhdGUKCgkvLy8g5LiL6LyJ5bCB5a2Y5Yiw5pys5qmf5pqr5a2Y6Lev5b6R77yI5ZG85Y+r56uv6LKg6LKs5riF55CGIHBhcmVudCDlt6XkvZznm67pjITvvInjgIIKCXByaXZhdGUgZnVuYyBkb3dubG9hZChmcm9tIHJlbW90ZVVSTDogVVJMLCB0byBsb2NhbFVSTDogVVJMKSBhc3luYyB0aHJvd3MgewoJCWxldCAodGVtcFVSTCwgXyk6IChVUkwsIFVSTFJlc3BvbnNlKSA9IHRyeSBhd2FpdCBVUkxTZXNzaW9uLnNoYXJlZC5kb3dubG9hZChmcm9tOiByZW1vdGVVUkwpCgkJZGVmZXIgeyB0cnk/IEZpbGVNYW5hZ2VyLmRlZmF1bHQucmVtb3ZlSXRlbShhdDogdGVtcFVSTCkgfQoJCXRyeSBGaWxlTWFuYWdlci5kZWZhdWx0Lm1vdmVJdGVtKGF0OiB0ZW1wVVJMLCB0bzogbG9jYWxVUkwpCgl9CgoJLy8vIOWRvOWPq+ezu+e1sSBgL3Vzci9iaW4vdGFyYCDop6Plo5PvvIhgLS1zdHJpcC1jb21wb25lbnRzPTFg77yM5q+U54Wn5LiK5ri4IGthdGEg5bCB5a2Y55qE6aCC5bGkCgkvLy8gYG9wdC9rYXRhLy4uLmAg57WQ5qeL5oWj5L6L77yJ44CCCglwcml2YXRlIGZ1bmMgZXh0cmFjdChfIGFyY2hpdmVQYXRoOiBVUkwsIHRvIGRlc3RpbmF0aW9uRGlyZWN0b3J5OiBVUkwpIGFzeW5jIHRocm93cyB7CgkJdHJ5IGF3YWl0IHdpdGhDaGVja2VkVGhyb3dpbmdDb250aW51YXRpb24geyAoY29udGludWF0aW9uOiBDaGVja2VkQ29udGludWF0aW9uPFZvaWQsIGFueSBFcnJvcj4pIGluCgkJCURpc3BhdGNoUXVldWUuZ2xvYmFsKCkuYXN5bmMgewoJCQkJbGV0IHByb2Nlc3M6IFByb2Nlc3MgPSAuaW5pdCgpCgkJCQlwcm9jZXNzLmV4ZWN1dGFibGVVUkwgPSBVUkwoZmlsZVVSTFdpdGhQYXRoOiAiL3Vzci9iaW4vdGFyIikKCQkJCXByb2Nlc3MuYXJndW1lbnRzID0gWyIteGYiLCBhcmNoaXZlUGF0aC5wYXRoLCAiLUMiLCBkZXN0aW5hdGlvbkRpcmVjdG9yeS5wYXRoLCAiLS1zdHJpcC1jb21wb25lbnRzPTEiXQoJCQkJbGV0IHN0ZGVyclBpcGU6IFBpcGUgPSAuaW5pdCgpCgkJCQlwcm9jZXNzLnN0YW5kYXJkRXJyb3IgPSBzdGRlcnJQaXBlCgkJCQlkbyB7CgkJCQkJdHJ5IHByb2Nlc3MucnVuKCkKCQkJCX0gY2F0Y2ggewoJCQkJCWNvbnRpbnVhdGlvbi5yZXN1bWUodGhyb3dpbmc6IGVycm9yKQoJCQkJCXJldHVybgoJCQkJfQoJCQkJcHJvY2Vzcy53YWl0VW50aWxFeGl0KCkKCQkJCWlmIHByb2Nlc3MudGVybWluYXRpb25TdGF0dXMgPT0gMCB7CgkJCQkJY29udGludWF0aW9uLnJlc3VtZSgpCgkJCQl9IGVsc2UgewoJCQkJCWxldCBzdGRlcnJEYXRhOiBEYXRhID0gc3RkZXJyUGlwZS5maWxlSGFuZGxlRm9yUmVhZGluZy5yZWFkRGF0YVRvRW5kT2ZGaWxlKCkKCQkJCQljb250aW51YXRpb24ucmVzdW1lKHRocm93aW5nOiBBcmNoaXZlRXJyb3IuZXh0cmFjdEZhaWxlZCgKCQkJCQkJc3RhdHVzOiBwcm9jZXNzLnRlcm1pbmF0aW9uU3RhdHVzLAoJCQkJCQlzdGRlcnI6IFN0cmluZyhkYXRhOiBzdGRlcnJEYXRhLCBlbmNvZGluZzogLnV0ZjgpID8/ICIiCgkJCQkJKSkKCQkJCX0KCQkJfQoJCX0KCX0KfQo=
+//
+//  LinuxNodeKit
+//
+//  Copyright © 2026 Unpxre
+//  Licensed under the Apache License 2.0. See LICENSE for details.
+//
+//  SPDX-License-Identifier: Apache-2.0
+
+import Foundation
+
+/// ``KernelArchiveFetching`` 的真機實作：`URLSession` 下載封存 → sha256 驗證 →
+/// `/usr/bin/tar` 解壓 → 複製 ``LinuxKernelArchive/innerPath`` 到 `destination`。純
+/// Foundation + 系統 `tar`（bsdtar 自動辨識壓縮格式，不必顯式帶 `-J`），無 arch gate。
+public struct SystemKernelArchiveFetcher: KernelArchiveFetching {
+
+	// MARK: Public
+
+	/// kernel 封存 fetch 的失敗面：sha256 不符（供應鏈完整性）／解壓後找不到預期路徑
+	/// （封存結構跟 pin 的 ``LinuxKernelArchive/innerPath`` 對不上）／`tar` 本身失敗。
+	public enum ArchiveError: Error {
+
+		case sha256Mismatch(expected: String, actual: String)
+
+		case missingInnerFile(String)
+
+		case extractFailed(status: Int32, stderr: String)
+	}
+
+	public init() {}
+
+	public func fetch(_ archive: LinuxKernelArchive, to destination: URL) async throws {
+		let manager: FileManager = .default
+		let workDirectory: URL = manager.temporaryDirectory.appending(component: "mayfly-kernel-\(UUID().uuidString)")
+		try manager.createDirectory(at: workDirectory, withIntermediateDirectories: true)
+		defer { try? manager.removeItem(at: workDirectory) }
+
+		let archivePath: URL = workDirectory.appending(component: "archive.tar.xz")
+		try await download(from: archive.archiveURL, to: archivePath)
+
+		let actualSHA256: String = try LinuxKernelCache.sha256(of: archivePath)
+		guard actualSHA256 == archive.archiveSHA256 else {
+			throw ArchiveError.sha256Mismatch(expected: archive.archiveSHA256, actual: actualSHA256)
+		}
+
+		let extractDirectory: URL = workDirectory.appending(component: "extracted")
+		try manager.createDirectory(at: extractDirectory, withIntermediateDirectories: true)
+		try await extract(archivePath, to: extractDirectory)
+
+		let extractedKernel: URL = extractDirectory.appending(component: archive.innerPath)
+		guard manager.fileExists(atPath: extractedKernel.path) else {
+			throw ArchiveError.missingInnerFile(archive.innerPath)
+		}
+
+		try manager.createDirectory(at: destination.deletingLastPathComponent(), withIntermediateDirectories: true)
+		let staging: URL = destination.deletingLastPathComponent().appending(component: ".\(destination.lastPathComponent).partial")
+		try? manager.removeItem(at: staging)
+		defer { try? manager.removeItem(at: staging) }
+		try manager.copyItem(at: extractedKernel, to: staging)
+		try manager.moveItem(at: staging, to: destination)
+	}
+
+	// MARK: Private
+
+	/// 下載封存到本機暫存路徑（呼叫端負責清理 parent 工作目錄）。
+	private func download(from remoteURL: URL, to localURL: URL) async throws {
+		let (tempURL, _): (URL, URLResponse) = try await URLSession.shared.download(from: remoteURL)
+		defer { try? FileManager.default.removeItem(at: tempURL) }
+		try FileManager.default.moveItem(at: tempURL, to: localURL)
+	}
+
+	/// 呼叫系統 `/usr/bin/tar` 解壓（`--strip-components=1`，比照上游 kata 封存的頂層
+	/// `opt/kata/...` 結構慣例）。
+	private func extract(_ archivePath: URL, to destinationDirectory: URL) async throws {
+		try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, any Error>) in
+			DispatchQueue.global().async {
+				let process: Process = .init()
+				process.executableURL = URL(fileURLWithPath: "/usr/bin/tar")
+				process.arguments = ["-xf", archivePath.path, "-C", destinationDirectory.path, "--strip-components=1"]
+				let stderrPipe: Pipe = .init()
+				process.standardError = stderrPipe
+				do {
+					try process.run()
+				} catch {
+					continuation.resume(throwing: error)
+					return
+				}
+				process.waitUntilExit()
+				if process.terminationStatus == 0 {
+					continuation.resume()
+				} else {
+					let stderrData: Data = stderrPipe.fileHandleForReading.readDataToEndOfFile()
+					continuation.resume(throwing: ArchiveError.extractFailed(
+						status: process.terminationStatus,
+						stderr: String(data: stderrData, encoding: .utf8) ?? ""
+					))
+				}
+			}
+		}
+	}
+}
