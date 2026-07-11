@@ -1,1 +1,47 @@
-Ly8KLy8gIExpbnV4Tm9kZUtpdAovLwovLyAgQ29weXJpZ2h0IMKpIDIwMjYgVW5weHJlCi8vICBMaWNlbnNlZCB1bmRlciB0aGUgQXBhY2hlIExpY2Vuc2UgMi4wLiBTZWUgTElDRU5TRSBmb3IgZGV0YWlscy4KLy8KLy8gIFNQRFgtTGljZW5zZS1JZGVudGlmaWVyOiBBcGFjaGUtMi4wCgppbXBvcnQgQ29udGFpbmVyaXphdGlvbkVycm9yCmltcG9ydCBOeW1waEtpdAoKLy8vIGBgQ29udGFpbmVyaXphdGlvbkVycm9yYGAg4oaSIGBgTnltcGhFcnJvcmBgIOeahOaYoOWwhOato+acrO+8iE0xIOWlkee0hO+8mumMr+iqpOaYoOWwhOmAsgovLy8gYE55bXBoRXJyb3JgIOaXouaciSBjYXNlIOezu++8jOS4jeaWsOmWi+mMr+iqpOmdou+8ieOAgue0lOWAvOi9ieaPm+OAgWFyY2gtbmV1dHJhbO+8iGBgQ29udGFpbmVyaXphdGlvbkVycm9yYGAKLy8vIOacrOi6q+S4jeWQqyBhcmNoIOmZkOWumuespuiZn++8ieKAlOKAlOWPr+mboumWi+ecn+WuueWZqOWWrua4rO+8jGBgTGludXhHdWVzdENvbnRyb2xgYCDlj6rmmK/lkbzlj6vnq6/jgIIKZW51bSBMaW51eEd1ZXN0RXJyb3JNYXBwaW5nIHsKCgkvLy8g5oqKIENvbnRhaW5lcml6YXRpb24g5bGk55qE6Yyv6Kqk5pS25paC6YCy5pei5pyJIGBgTnltcGhFcnJvcmBgIGNhc2XvvJoKCS8vLyAtIGAudGltZW91dGAg4oaSIGBgTnltcGhFcnJvci9leGVjVGltZWRPdXRgYO+8iDE6Me+8jGB3YWl0KHRpbWVvdXRJblNlY29uZHM6KWAg6YC+5pmC55qECgkvLy8gICBkb2N1bWVudGVkIOihjOeCuu+8ieOAggoJLy8vIC0gYC5ub3RGb3VuZGAgLyBgLmludmFsaWRTdGF0ZWAg4oaSIGBgTnltcGhFcnJvci9ub3RSZWFkeWBg77yI5a655Zmo55uu5YmN5LiN5Y+v5a6a5Z2AIC8KCS8vLyAgIOeLgOaFi+S4jeWwje+8jOWxrOOAjOeEoeazlemAo+WFpeWft+ihjOOAjeWQjOS4gOmhnu+8ieOAggoJLy8vIC0gYC5jYW5jZWxsZWRgIC8gYC5pbnRlcnJ1cHRlZGAg4oaSIGBgTnltcGhFcnJvci90cmFuc3BvcnRGYWlsdXJlKF86KWBg77yI5Z+36KGM6YCa6YGTCgkvLy8gICDkuK3pgJTooqvmiZPmlrfvvIzlkIwgbWFjT1Mg57ea44CMU1NIIOWCs+i8uOWxpOWkseaVl+OAjeeahOmMr+iqpOmdou+8ieOAggoJLy8vIC0g5YW26aSY77yIYC5pbnRlcm5hbEVycm9yYCAvIGAudW5rbm93bmAgLyBgLmV4aXN0c2AgLyBgLmludmFsaWRBcmd1bWVudGAgLwoJLy8vICAgYC51bnN1cHBvcnRlZGAgLyBgLmVtcHR5YO+8ieKGkiBgYE55bXBoRXJyb3IvaW50ZXJuYWxGYWlsdXJlKF86KWBg77yI5pei5pyJ55qECgkvLy8gICDjgIzlhbbppJjmnKrmrbjpoZ7nmoTlhafpg6jpjK/oqqTjgI1jYXRjaC1hbGzvvInjgIIKCS8vLyAtIOmdniBgYENvbnRhaW5lcml6YXRpb25FcnJvcmBg77yI5aaCIGBVUkxTZXNzaW9uYCAvIGBQcm9jZXNzYCDlpLHmlZfvvInihpIKCS8vLyAgIGBgTnltcGhFcnJvci90cmFuc3BvcnRGYWlsdXJlKF86KWBg44CCCglzdGF0aWMgZnVuYyBtYXAoXyBlcnJvcjogYW55IEVycm9yKSAtPiBOeW1waEVycm9yIHsKCQlndWFyZCBsZXQgY29udGFpbmVyaXphdGlvbkVycm9yID0gZXJyb3IgYXM/IENvbnRhaW5lcml6YXRpb25FcnJvciBlbHNlIHsKCQkJcmV0dXJuIC50cmFuc3BvcnRGYWlsdXJlKFN0cmluZyhkZXNjcmliaW5nOiBlcnJvcikpCgkJfQoJCXN3aXRjaCBjb250YWluZXJpemF0aW9uRXJyb3IuY29kZSB7CgkJY2FzZSAudGltZW91dDoKCQkJcmV0dXJuIC5leGVjVGltZWRPdXQKCgkJY2FzZSAubm90Rm91bmQsIC5pbnZhbGlkU3RhdGU6CgkJCXJldHVybiAubm90UmVhZHkKCgkJY2FzZSAuY2FuY2VsbGVkLCAuaW50ZXJydXB0ZWQ6CgkJCXJldHVybiAudHJhbnNwb3J0RmFpbHVyZShjb250YWluZXJpemF0aW9uRXJyb3IubWVzc2FnZSkKCgkJZGVmYXVsdDoKCQkJcmV0dXJuIC5pbnRlcm5hbEZhaWx1cmUoY29udGFpbmVyaXphdGlvbkVycm9yLm1lc3NhZ2UpCgkJfQoJfQp9Cg==
+//
+//  LinuxNodeKit
+//
+//  Copyright © 2026 Unpxre
+//  Licensed under the Apache License 2.0. See LICENSE for details.
+//
+//  SPDX-License-Identifier: Apache-2.0
+
+import ContainerizationError
+import NymphKit
+
+/// ``ContainerizationError`` → ``NymphError`` 的映射正本（M1 契約：錯誤映射進
+/// `NymphError` 既有 case 系，不新開錯誤面）。純值轉換、arch-neutral（``ContainerizationError``
+/// 本身不含 arch 限定符號）——可離開真容器單測，``LinuxGuestControl`` 只是呼叫端。
+enum LinuxGuestErrorMapping {
+
+	/// 把 Containerization 層的錯誤收斂進既有 ``NymphError`` case：
+	/// - `.timeout` → ``NymphError/execTimedOut``（1:1，`wait(timeoutInSeconds:)` 逾時的
+	///   documented 行為）。
+	/// - `.notFound` / `.invalidState` → ``NymphError/notReady``（容器目前不可定址 /
+	///   狀態不對，屬「無法連入執行」同一類）。
+	/// - `.cancelled` / `.interrupted` → ``NymphError/transportFailure(_:)``（執行通道
+	///   中途被打斷，同 macOS 線「SSH 傳輸層失敗」的錯誤面）。
+	/// - 其餘（`.internalError` / `.unknown` / `.exists` / `.invalidArgument` /
+	///   `.unsupported` / `.empty`）→ ``NymphError/internalFailure(_:)``（既有的
+	///   「其餘未歸類的內部錯誤」catch-all）。
+	/// - 非 ``ContainerizationError``（如 `URLSession` / `Process` 失敗）→
+	///   ``NymphError/transportFailure(_:)``。
+	static func map(_ error: any Error) -> NymphError {
+		guard let containerizationError = error as? ContainerizationError else {
+			return .transportFailure(String(describing: error))
+		}
+		switch containerizationError.code {
+		case .timeout:
+			return .execTimedOut
+
+		case .notFound, .invalidState:
+			return .notReady
+
+		case .cancelled, .interrupted:
+			return .transportFailure(containerizationError.message)
+
+		default:
+			return .internalFailure(containerizationError.message)
+		}
+	}
+}
