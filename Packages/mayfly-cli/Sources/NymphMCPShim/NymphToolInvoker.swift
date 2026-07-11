@@ -229,17 +229,25 @@ enum NymphToolInvoker {
 	}
 
 	/// `list` / `status` 共用的單一 session 摘要形狀：`{ id, state, ip, golden, cpus,
-	/// memory_gib, uptime_s }`。
+	/// memory_gib, uptime_s }`（`golden` 經 ``outwardGoldenValue(_:)`` 通稱化）。
 	private static func sessionSummaryFields(_ summary: SessionSummary) -> [String: Value] {
 		[
 			"id": .string(summary.id),
 			"state": .string(summary.state.rawValue),
 			"ip": summary.ip.map(Value.string) ?? .null,
-			"golden": .string(summary.golden),
+			"golden": .string(outwardGoldenValue(summary.golden)),
 			"cpus": .int(summary.cpus),
 			"memory_gib": .int(summary.memoryGiB),
 			"uptime_s": .int(summary.uptimeSeconds),
 		]
+	}
+
+	/// `golden` 欄位的對外值：具名 alias 原樣；`/` 開頭（受信任的 daemon socket 直連方以絕對
+	/// 路徑逃生梯 spawn 的 session、見 #33 NY-3）換成固定通稱字串。daemon socket 是跨管道
+	/// 共用的——直連方與 MCP shim 談同一張 session table，session 不保證源自 MCP、host 路徑
+	/// 不因來源不同而外流；縱深防禦，不依賴「兩者不共用 daemon」的部署拓樸保證。
+	private static func outwardGoldenValue(_ golden: String) -> String {
+		golden.hasPrefix("/") ? "<external-path>" : golden
 	}
 
 	// MARK: - result envelopes

@@ -178,6 +178,41 @@ private final class NymphToolInvokerTests {
 		])
 	}
 
+	/// 受信任管道（daemon socket 直連、如 CLI）以絕對路徑逃生梯 spawn 的 session 也在同一張
+	/// session table——`list` 回顯這類 session 時 `golden` 欄位換成固定通稱字串、對外整份結果
+	/// 不含該 host 路徑；具名 alias 的 session 原樣回顯。
+	@Test
+	private func `list genericises absolute path golden values`() async throws {
+		let hostPath: String = "/Volumes/goldens/sequoia-base.bundle"
+		let external: SessionSummary = .init(id: "mfly-ext", state: .ready, ip: "10.0.0.7", golden: hostPath, cpus: 4, memoryGiB: 4, uptimeSeconds: 5)
+		let aliased: SessionSummary = .init(id: "mfly-al", state: .ready, ip: nil, golden: "sequoia-base", cpus: 4, memoryGiB: 4, uptimeSeconds: 9)
+		let harness = makeHarness(response: .list(ListResult(sessions: [external, aliased])))
+		defer { harness.server.shutdown() }
+		let result: CallTool.Result = await NymphToolInvoker.handle(.init(name: "list", arguments: ["all": true]), client: harness.client)
+
+		let sessions: [Value]? = result.structuredContent?.objectValue?["sessions"]?.arrayValue
+		#expect(sessions?.first?.objectValue?["golden"] == "<external-path>")
+		#expect(sessions?.last?.objectValue?["golden"] == "sequoia-base")
+		let serialized: String = try encodedResultText(result)
+		#expect(serialized.contains(hostPath) == false)
+		#expect(serialized.contains("/Volumes/") == false)
+	}
+
+	/// status 同樣通稱化 `/` 開頭的 `golden` 值（與 list 共用摘要形狀）。
+	@Test
+	private func `status genericises absolute path golden values`() async throws {
+		let hostPath: String = "/Users/aron/GoldenBundles/sequoia-base.bundle"
+		let summary: SessionSummary = .init(id: "mfly-ext", state: .stopped, ip: nil, golden: hostPath, cpus: 8, memoryGiB: 6, uptimeSeconds: 77)
+		let harness = makeHarness(response: .status(StatusResult(summary: summary, stopReason: "guest")))
+		defer { harness.server.shutdown() }
+		let result: CallTool.Result = await NymphToolInvoker.handle(.init(name: "status", arguments: ["id": "mfly-ext"]), client: harness.client)
+
+		#expect(result.structuredContent?.objectValue?["golden"] == "<external-path>")
+		let serialized: String = try encodedResultText(result)
+		#expect(serialized.contains(hostPath) == false)
+		#expect(serialized.contains("/Users/") == false)
+	}
+
 	/// destroy：`force` 預設 true、透傳；成功回 `{ id, destroyed: true }`。
 	@Test
 	private func `destroy defaults force to true`() async throws {
