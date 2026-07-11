@@ -1,1 +1,30 @@
-Ly8KLy8gIExpbnV4Tm9kZUtpdAovLwovLyAgQ29weXJpZ2h0IMKpIDIwMjYgVW5weHJlCi8vICBMaWNlbnNlZCB1bmRlciB0aGUgQXBhY2hlIExpY2Vuc2UgMi4wLiBTZWUgTElDRU5TRSBmb3IgZGV0YWlscy4KLy8KLy8gIFNQRFgtTGljZW5zZS1JZGVudGlmaWVyOiBBcGFjaGUtMi4wCgppbXBvcnQgRm91bmRhdGlvbgppbXBvcnQgTnltcGhLaXQKCi8vLyBMaW51eCDnr4Dpu57ni4DmhYvokL3pu57igJTigJTmsr/nlKggTnltcGhLaXQg55qEIHN0YXRlIGRpciDmraPmnKzvvIhgYE55bXBoUGF0aHMvc3RhdGVEaXJlY3RvcnkoZW52aXJvbm1lbnQ6KWBg77yMCi8vLyDllq7kuIDnnJ/nm7jjgIHkuI3lj6bplovkuIDlpZfot6/lvpHmhaPkvovvvInjgILlrrnlmaggaW1hZ2Ugc3RvcmXvvI9yb290ZnMg6JC9IGA8c3RhdGVEaXI+L2xpbnV4YO+8mwovLy8ga2VybmVsIOW/q+WPluiQvSBgPHN0YXRlRGlyPi9rZXJuZWxzYO+8iGB+Ly5tYXlmbHkva2VybmVscy9g77yJ44CCCnB1YmxpYyBlbnVtIExpbnV4Tm9kZVBhdGhzIHsKCgkvLy8g5a655ZmoIGltYWdlIHN0b3JlIC8gcm9vdGZzIOagueebrumMhO+8iGA8c3RhdGVEaXI+L2xpbnV4YO+8ieOAggoJcHVibGljIHN0YXRpYyBmdW5jIGNvbnRhaW5lclJvb3QoCgkJZW52aXJvbm1lbnQ6IFtTdHJpbmc6IFN0cmluZ10gPSBQcm9jZXNzSW5mby5wcm9jZXNzSW5mby5lbnZpcm9ubWVudAoJKSAtPiBVUkwgewoJCU55bXBoUGF0aHMuc3RhdGVEaXJlY3RvcnkoZW52aXJvbm1lbnQ6IGVudmlyb25tZW50KS5hcHBlbmRpbmcoY29tcG9uZW50OiAibGludXgiKQoJfQoKCS8vLyBrZXJuZWwg5b+r5Y+W5qC555uu6YyE77yIYDxzdGF0ZURpcj4va2VybmVsc2DvvInjgIIKCXB1YmxpYyBzdGF0aWMgZnVuYyBrZXJuZWxDYWNoZURpcmVjdG9yeSgKCQllbnZpcm9ubWVudDogW1N0cmluZzogU3RyaW5nXSA9IFByb2Nlc3NJbmZvLnByb2Nlc3NJbmZvLmVudmlyb25tZW50CgkpIC0+IFVSTCB7CgkJTnltcGhQYXRocy5zdGF0ZURpcmVjdG9yeShlbnZpcm9ubWVudDogZW52aXJvbm1lbnQpLmFwcGVuZGluZyhjb21wb25lbnQ6ICJrZXJuZWxzIikKCX0KfQo=
+//
+//  LinuxNodeKit
+//
+//  Copyright © 2026 Unpxre
+//  Licensed under the Apache License 2.0. See LICENSE for details.
+//
+//  SPDX-License-Identifier: Apache-2.0
+
+import Foundation
+import NymphKit
+
+/// Linux 節點狀態落點——沿用 NymphKit 的 state dir 正本（``NymphPaths/stateDirectory(environment:)``，
+/// 單一真相、不另開一套路徑慣例）。容器 image store／rootfs 落 `<stateDir>/linux`；
+/// kernel 快取落 `<stateDir>/kernels`（`~/.mayfly/kernels/`）。
+public enum LinuxNodePaths {
+
+	/// 容器 image store / rootfs 根目錄（`<stateDir>/linux`）。
+	public static func containerRoot(
+		environment: [String: String] = ProcessInfo.processInfo.environment
+	) -> URL {
+		NymphPaths.stateDirectory(environment: environment).appending(component: "linux")
+	}
+
+	/// kernel 快取根目錄（`<stateDir>/kernels`）。
+	public static func kernelCacheDirectory(
+		environment: [String: String] = ProcessInfo.processInfo.environment
+	) -> URL {
+		NymphPaths.stateDirectory(environment: environment).appending(component: "kernels")
+	}
+}
