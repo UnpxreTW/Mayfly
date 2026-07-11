@@ -1,1 +1,28 @@
-Ly8KLy8gIExpbnV4Tm9kZUtpdAovLwovLyAgQ29weXJpZ2h0IMKpIDIwMjYgVW5weHJlCi8vICBMaWNlbnNlZCB1bmRlciB0aGUgQXBhY2hlIExpY2Vuc2UgMi4wLiBTZWUgTElDRU5TRSBmb3IgZGV0YWlscy4KLy8KLy8gIFNQRFgtTGljZW5zZS1JZGVudGlmaWVyOiBBcGFjaGUtMi4wCgppbXBvcnQgQ29udGFpbmVyaXphdGlvbgppbXBvcnQgRm91bmRhdGlvbgoKI2lmIGFyY2goYXJtNjQpCgovLy8g5oqK5LiA5q615Zu65a6a5a2X5Liy5YyF5oiQ5LiA5qyh5oCnIGBgUmVhZGVyU3RyZWFtYGDigJTigJRgZXhlY2Ag55qEIGBzdGFuZGFyZElucHV0YCDlj4PmlbjovYnmjqXnlKjvvJoKLy8vIOWWruasoSB5aWVsZCDlhajmloflvozljbPpl5zplonjgILlpKDnlKjljbPlj6/jgIHpnZ7pgJrnlKggc3RkaW4gcGlwZe+8iOaykuacieS6kuWLleW8j+i8uOWFpemcgOaxgu+8ieOAggpzdHJ1Y3QgU3RhdGljSW5wdXRTdHJlYW06IFJlYWRlclN0cmVhbSB7CgoJbGV0IGRhdGE6IERhdGEKCglmdW5jIHN0cmVhbSgpIC0+IEFzeW5jU3RyZWFtPERhdGE+IHsKCQlBc3luY1N0cmVhbSB7IGNvbnRpbnVhdGlvbiBpbgoJCQljb250aW51YXRpb24ueWllbGQoZGF0YSkKCQkJY29udGludWF0aW9uLmZpbmlzaCgpCgkJfQoJfQp9CgojZW5kaWYK
+//
+//  LinuxNodeKit
+//
+//  Copyright © 2026 Unpxre
+//  Licensed under the Apache License 2.0. See LICENSE for details.
+//
+//  SPDX-License-Identifier: Apache-2.0
+
+import Containerization
+import Foundation
+
+#if arch(arm64)
+
+/// 把一段固定字串包成一次性 ``ReaderStream``——`exec` 的 `standardInput` 參數轉接用：
+/// 單次 yield 全文後即關閉。夠用即可、非通用 stdin pipe（沒有互動式輸入需求）。
+struct StaticInputStream: ReaderStream {
+
+	let data: Data
+
+	func stream() -> AsyncStream<Data> {
+		AsyncStream { continuation in
+			continuation.yield(data)
+			continuation.finish()
+		}
+	}
+}
+
+#endif
