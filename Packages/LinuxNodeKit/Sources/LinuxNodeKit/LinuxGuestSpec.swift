@@ -1,1 +1,22 @@
-Ly8KLy8gIExpbnV4Tm9kZUtpdAovLwovLyAgQ29weXJpZ2h0IMKpIDIwMjYgVW5weHJlCi8vICBMaWNlbnNlZCB1bmRlciB0aGUgQXBhY2hlIExpY2Vuc2UgMi4wLiBTZWUgTElDRU5TRSBmb3IgZGV0YWlscy4KLy8KLy8gIFNQRFgtTGljZW5zZS1JZGVudGlmaWVyOiBBcGFjaGUtMi4wCgovLy8gYGBMaW51eEltYWdlUmVzb2x2ZXIvcmVzb2x2ZShfOilgYCDnmoTnlKLnianvvJpPQ0kgaW1hZ2Ug5Y+D54WnIO+8iyDopoHphY3nmoQga2VybmVs44CCCnB1YmxpYyBzdHJ1Y3QgTGludXhHdWVzdFNwZWM6IFNlbmRhYmxlLCBFcXVhdGFibGUgewoKCS8vLyBPQ0kgaW1hZ2Ug5Y+D54Wn77yI5aaCIGBkb2NrZXIuaW8vbGlicmFyeS9hbHBpbmU6M2DvvInjgIIKCXB1YmxpYyBsZXQgaW1hZ2VSZWZlcmVuY2U6IFN0cmluZwoKCS8vLyDopoHplovmqZ/nlKjnmoQga2VybmVs44CCCglwdWJsaWMgbGV0IGtlcm5lbDogTGludXhLZXJuZWxBcmNoaXZlCgoJcHVibGljIGluaXQoaW1hZ2VSZWZlcmVuY2U6IFN0cmluZywga2VybmVsOiBMaW51eEtlcm5lbEFyY2hpdmUpIHsKCQlzZWxmLmltYWdlUmVmZXJlbmNlID0gaW1hZ2VSZWZlcmVuY2UKCQlzZWxmLmtlcm5lbCA9IGtlcm5lbAoJfQp9Cg==
+//
+//  LinuxNodeKit
+//
+//  Copyright © 2026 Unpxre
+//  Licensed under the Apache License 2.0. See LICENSE for details.
+//
+//  SPDX-License-Identifier: Apache-2.0
+
+/// ``LinuxImageResolver/resolve(_:)`` 的產物：OCI image 參照 ＋ 要配的 kernel。
+public struct LinuxGuestSpec: Sendable, Equatable {
+
+	/// OCI image 參照（如 `docker.io/library/alpine:3`）。
+	public let imageReference: String
+
+	/// 要開機用的 kernel。
+	public let kernel: LinuxKernelArchive
+
+	public init(imageReference: String, kernel: LinuxKernelArchive) {
+		self.imageReference = imageReference
+		self.kernel = kernel
+	}
+}
