@@ -32,9 +32,7 @@ public struct EphemeralBundle: Sendable {
 		} catch {
 			throw EphemeralBundleError.metadataUndecodable(metadataURL)
 		}
-		guard metadata.ephemeral == true else {
-			throw EphemeralBundleError.notEphemeral(bundle)
-		}
+		guard metadata.ephemeral == true else { throw EphemeralBundleError.notEphemeral(bundle) }
 		return EphemeralBundle(bundle: bundle)
 	}
 

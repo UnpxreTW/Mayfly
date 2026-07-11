@@ -50,19 +50,13 @@ public enum BootDiskImage {
 		nominalBytes: UInt64 = defaultNominalBytes,
 		overwrite: Bool = false
 	) throws {
-		guard nominalBytes >= blockSize, nominalBytes % blockSize == 0 else {
-			throw Error.misalignedSize(nominalBytes)
-		}
+		guard nominalBytes >= blockSize, nominalBytes % blockSize == 0 else { throw Error.misalignedSize(nominalBytes) }
 		let manager: FileManager = .default
 		if manager.fileExists(atPath: url.path) {
-			guard overwrite else {
-				throw Error.alreadyExists(url)
-			}
+			guard overwrite else { throw Error.alreadyExists(url) }
 		}
 		// createFile 在檔已存在時截斷重建，對 overwrite 路徑剛好；回 false = 不可寫。
-		guard manager.createFile(atPath: url.path, contents: nil) else {
-			throw Error.createFailed(url)
-		}
+		guard manager.createFile(atPath: url.path, contents: nil) else { throw Error.createFailed(url) }
 		// createFile 成功後 open / truncate 若失敗（disk-full、EFBIG…）會留一顆
 		// 0-byte 殘檔——移除再上拋，讓 create 對外 all-or-nothing；否則殘檔會被
 		// 後續非 overwrite 的 create 誤判成 alreadyExists。

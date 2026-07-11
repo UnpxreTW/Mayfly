@@ -127,9 +127,7 @@ public struct DslocalUser: Sendable {
 	private static func randomBytes(count: Int) throws -> Data {
 		var bytes: [UInt8] = .init(repeating: 0, count: count)
 		let status: Int32 = SecRandomCopyBytes(kSecRandomDefault, count, &bytes)
-		guard status == errSecSuccess else {
-			throw DslocalUserError.randomGenerationFailed(status: status)
-		}
+		guard status == errSecSuccess else { throw DslocalUserError.randomGenerationFailed(status: status) }
 		return Data(bytes)
 	}
 
@@ -154,9 +152,7 @@ public struct DslocalUser: Sendable {
 				&derived, derived.count
 			)
 		}
-		guard status == Int32(kCCSuccess) else {
-			throw DslocalUserError.keyDerivationFailed(status: status)
-		}
+		guard status == Int32(kCCSuccess) else { throw DslocalUserError.keyDerivationFailed(status: status) }
 		return Data(derived)
 	}
 }

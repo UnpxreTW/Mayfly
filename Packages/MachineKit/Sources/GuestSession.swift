@@ -51,9 +51,7 @@ public actor GuestSession {
 	/// 建 guest、開機，並啟動 readiness 與停機兩路觀察。一次性：重呼（含首次失敗
 	/// 後）擲 ``GuestSessionError/alreadyStarted``。
 	public func start() async throws {
-		guard !started else {
-			throw GuestSessionError.alreadyStarted
-		}
+		guard !started else { throw GuestSessionError.alreadyStarted }
 		started = true
 		let spec: MacGuestSpec = GuestBundleLayout.spec(
 			for: bundle.bundle,
@@ -93,34 +91,26 @@ public actor GuestSession {
 	/// 等 readiness 收斂：回解出的 guest IP；gate 逾時無 IP 回 nil（best-effort）、
 	/// guest 提早停止亦回 nil。未 start 擲 ``GuestSessionError/notStarted``。
 	public func waitUntilReady() async throws -> String? {
-		guard let readinessTask else {
-			throw GuestSessionError.notStarted
-		}
+		guard let readinessTask else { throw GuestSessionError.notStarted }
 		return await readinessTask.value
 	}
 
 	/// 等 guest 停止、回停止原因（單一真相；語義同 ``MacGuest/waitUntilStopped()``）。
 	public func waitUntilStopped() async throws -> GuestStopReason {
-		guard let guest else {
-			throw GuestSessionError.notStarted
-		}
+		guard let guest else { throw GuestSessionError.notStarted }
 		return try await guest.waitUntilStopped()
 	}
 
 	/// 等 guest 自行停止、逾時 fallback 硬停（語義同 ``MacGuest/ensureStopped(within:)``；
 	/// guest 內關機仍由呼叫端驅動、例如 SSH `sudo shutdown -h now`）。
 	public func ensureStopped(within gracePeriod: Duration) async throws -> GuestStopReason {
-		guard let guest else {
-			throw GuestSessionError.notStarted
-		}
+		guard let guest else { throw GuestSessionError.notStarted }
 		return try await guest.ensureStopped(within: gracePeriod)
 	}
 
 	/// host 硬停（destructive；ephemeral 複本本就可拋，這是 CI cleanup 的預設收法）。
 	public func forceStop() async throws {
-		guard let guest else {
-			throw GuestSessionError.notStarted
-		}
+		guard let guest else { throw GuestSessionError.notStarted }
 		try await guest.forceStop()
 	}
 
@@ -245,9 +235,7 @@ public actor GuestSession {
 
 	/// booting → ready 的單向轉移；已 stopped 則不回退。
 	private func markReady(ip: String?) {
-		guard state == .booting else {
-			return
-		}
+		guard state == .booting else { return }
 		state = .ready(ip: ip)
 	}
 

@@ -21,9 +21,7 @@ public enum GuestLease {
 	/// `ip_address` 的區塊誤用前一塊的值。找不到 / MAC 空 / MAC 非法回 nil。純函式。
 	public static func resolveIP(fromLeases content: String, matching macAddress: String) -> String? {
 		let target = normalizedMAC(macAddress)
-		guard !target.isEmpty else {
-			return nil
-		}
+		guard !target.isEmpty else { return nil }
 		var currentIP: String?
 		for rawLine in content.split(whereSeparator: \.isNewline) {
 			let line = rawLine.trimmingCharacters(in: .whitespaces)
@@ -47,9 +45,7 @@ public enum GuestLease {
 		macAddress: String,
 		leasesFile: URL = URL(fileURLWithPath: "/var/db/dhcpd_leases")
 	) -> String? {
-		guard let content = try? String(contentsOf: leasesFile, encoding: .utf8) else {
-			return nil
-		}
+		guard let content = try? String(contentsOf: leasesFile, encoding: .utf8) else { return nil }
 		return resolveIP(fromLeases: content, matching: macAddress)
 	}
 
@@ -60,9 +56,7 @@ public enum GuestLease {
 	private static func normalizedMAC(_ mac: String) -> [Int] {
 		let segments = mac.split(separator: ":")
 		let bytes = segments.compactMap { Int($0, radix: 16) }
-		guard bytes.count == segments.count else {
-			return []
-		}
+		guard bytes.count == segments.count else { return [] }
 		return bytes
 	}
 }

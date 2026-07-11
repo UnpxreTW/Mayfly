@@ -60,9 +60,7 @@ public struct ReadinessGate: Sendable {
 	/// 從一行 console 輸出解 `PROVISIONING_READY` marker 的 user + ip（`ip=none` → `nil`）。
 	/// 以 whitespace 分詞找 `user=` / `ip=`、容忍行首雜訊；非 marker 行或缺 user 回 nil。純函式。
 	static func parseMarker(line: String) -> (user: String, ip: String?)? {
-		guard line.contains("PROVISIONING_READY") else {
-			return nil
-		}
+		guard line.contains("PROVISIONING_READY") else { return nil }
 		var user: String?
 		var ip: String?
 		for token in line.split(whereSeparator: \.isWhitespace) {
@@ -73,9 +71,7 @@ public struct ReadinessGate: Sendable {
 				ip = value == "none" ? nil : value
 			}
 		}
-		guard let user, !user.isEmpty else {
-			return nil
-		}
+		guard let user, !user.isEmpty else { return nil }
 		return (user: user, ip: ip)
 	}
 
@@ -130,9 +126,7 @@ public struct ReadinessGate: Sendable {
 	/// console marker 路徑：偵到 marker 且帶 ip 即回；`ip=none` 或流結束回 nil（IP 交給 lease 路）。
 	private func consoleMarkerIP(consoleLines: AsyncStream<String>) async -> String? {
 		for await line in consoleLines {
-			guard let marker = Self.parseMarker(line: line) else {
-				continue
-			}
+			guard let marker = Self.parseMarker(line: line) else { continue }
 			return marker.ip
 		}
 		return nil
@@ -145,9 +139,7 @@ public struct ReadinessGate: Sendable {
 			if let ip = GuestLease.resolveIP(fromLeases: readLeases() ?? "", matching: macAddress ?? "") {
 				return ip
 			}
-			guard elapsedMS < leaseResolveTimeoutMilliseconds else {
-				return nil
-			}
+			guard elapsedMS < leaseResolveTimeoutMilliseconds else { return nil }
 			do {
 				try await Task.sleep(for: .milliseconds(leaseResolvePollMilliseconds))
 			} catch {
