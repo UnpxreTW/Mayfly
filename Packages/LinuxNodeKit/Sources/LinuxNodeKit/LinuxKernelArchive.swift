@@ -1,1 +1,47 @@
-Ly8KLy8gIExpbnV4Tm9kZUtpdAovLwovLyAgQ29weXJpZ2h0IMKpIDIwMjYgVW5weHJlCi8vICBMaWNlbnNlZCB1bmRlciB0aGUgQXBhY2hlIExpY2Vuc2UgMi4wLiBTZWUgTElDRU5TRSBmb3IgZGV0YWlscy4KLy8KLy8gIFNQRFgtTGljZW5zZS1JZGVudGlmaWVyOiBBcGFjaGUtMi4wCgppbXBvcnQgRm91bmRhdGlvbgoKLy8vIGthdGEtY29udGFpbmVycyDpoJDlu7ogTGludXgga2VybmVsIHJlbGVhc2Ug55qE5LiL6LyJ6KaP5qC877ya5L6G5rqQIFVSTOOAgeeJiOacrOOAgeWwgeWtmOaqlCBzaGEyNTYKLy8vIHBpbu+8jOiIh+WwgeWtmOWFpyBrZXJuZWwg5LqM6YCy5L2N55qE55u45bCN6Lev5b6R44CC57SU5YC85Z6L5Yil44CB6IiHIGFyY2gg54Sh6Zec77yI5LiL6LyJ77yP5qCh6amX77yP6Kej5aOT5LiN56KwCi8vLyBWaXJ0dWFsaXphdGlvbiAvIENvbnRhaW5lcml6YXRpb27vvInjgIIKLy8vCi8vLyAqKuaOiOasiumdoioq77yaa2VybmVsIOS6jOmAsuS9jeeCuiBHUEwtMi4w77yMKirln7fooYzmnJ8gZmV0Y2jjgIHmsLjkuI3pmqggTWF5Zmx5IOeZvOS9iOeJqSAvIHJlcG8g5omT5YyFKioKLy8vIOKAlOKAlOaVo+W4g+e+qeWLmeeVmeWcqOS4iua4uCBrYXRhLWNvbnRhaW5lcnMgcmVsZWFzZe+8jE1heWZseSDoh6rouqvntq3mjIHntJQgQXBhY2hlLTIuMO+8iOWWrue0lOiBmuWQiOOAgQovLy8g5LiNIGxpbmsg6YCyIGhvc3Qg6KGM56iL77yM5Y+q5ZyoIGd1ZXN0IFZNIOWFp+eVtiBPUyDot5HvvInjgIIKcHVibGljIHN0cnVjdCBMaW51eEtlcm5lbEFyY2hpdmU6IFNlbmRhYmxlLCBFcXVhdGFibGUgewoKCS8vLyBrYXRhLWNvbnRhaW5lcnMgcmVsZWFzZSDniYjmnKzomZ/vvIjlv6vlj5blrZDnm67pjITlkb3lkI3vvInjgIIKCXB1YmxpYyBsZXQgdmVyc2lvbjogU3RyaW5nCgoJLy8vIOWwgeWtmOaqlO+8iGAudGFyLnh6YO+8ieS4i+i8ieS+hua6kOOAggoJcHVibGljIGxldCBhcmNoaXZlVVJMOiBVUkwKCgkvLy8g5bCB5a2Y5qqU55qEIHNoYTI1Nu+8iOWwj+WvqyBoZXjvvInigJTigJTkuIvovInlvozpqZforYnvvIzkuI3nrKbljbPmk7LmuIXmpZrpjK/oqqTjgIIKCXB1YmxpYyBsZXQgYXJjaGl2ZVNIQTI1NjogU3RyaW5nCgoJLy8vIOWwgeWtmOino+Wjk++8iGAtLXN0cmlwLWNvbXBvbmVudHM9MWDvvInlvozvvIxrZXJuZWwg5LqM6YCy5L2N55qE55u45bCN6Lev5b6R44CCCglwdWJsaWMgbGV0IGlubmVyUGF0aDogU3RyaW5nCgoJcHVibGljIGluaXQodmVyc2lvbjogU3RyaW5nLCBhcmNoaXZlVVJMOiBVUkwsIGFyY2hpdmVTSEEyNTY6IFN0cmluZywgaW5uZXJQYXRoOiBTdHJpbmcpIHsKCQlzZWxmLnZlcnNpb24gPSB2ZXJzaW9uCgkJc2VsZi5hcmNoaXZlVVJMID0gYXJjaGl2ZVVSTAoJCXNlbGYuYXJjaGl2ZVNIQTI1NiA9IGFyY2hpdmVTSEEyNTYKCQlzZWxmLmlubmVyUGF0aCA9IGlubmVyUGF0aAoJfQoKCS8vLyBNMSDokL3lnLDpoJDoqK3vvJprYXRhLWNvbnRhaW5lcnMgMy4xNy4wIGFybTY04oCU4oCUUG9DIOWvpua4rOi3kemAmueahOe1hOWQiO+8iGNvbnRhaW5lcml6YXRpb24KCS8vLyAwLjM3LjDjgIFhbHBpbmU6MyByb290ZnPvvInvvIxzaGEyNTYg54K655W25pmC5LiL6LyJ5a+m5ris5YC844CCCglwdWJsaWMgc3RhdGljIGxldCBgZGVmYXVsdGA6IExpbnV4S2VybmVsQXJjaGl2ZSA9IC5pbml0KAoJCXZlcnNpb246ICIzLjE3LjAiLAoJCWFyY2hpdmVVUkw6IFVSTChzdHJpbmc6ICJodHRwczovL2dpdGh1Yi5jb20va2F0YS1jb250YWluZXJzL2thdGEtY29udGFpbmVycy9yZWxlYXNlcy9kb3dubG9hZC8zLjE3LjAva2F0YS1zdGF0aWMtMy4xNy4wLWFybTY0LnRhci54eiIpISwKCQlhcmNoaXZlU0hBMjU2OiAiNjQ3Yzc2MTJlNmVkZjc4OWQ1ZTE0Njk4YzQ4Yzk5ZDhiYWMxNWFkMTM5ZmZhYTFjOGJiN2QyMjlmNzQ4ZDE4MSIsCgkJaW5uZXJQYXRoOiAib3B0L2thdGEvc2hhcmUva2F0YS1jb250YWluZXJzL3ZtbGludXguY29udGFpbmVyIgoJKQp9Cg==
+//
+//  LinuxNodeKit
+//
+//  Copyright © 2026 Unpxre
+//  Licensed under the Apache License 2.0. See LICENSE for details.
+//
+//  SPDX-License-Identifier: Apache-2.0
+
+import Foundation
+
+/// kata-containers 預建 Linux kernel release 的下載規格：來源 URL、版本、封存檔 sha256
+/// pin，與封存內 kernel 二進位的相對路徑。純值型別、與 arch 無關（下載／校驗／解壓不碰
+/// Virtualization / Containerization）。
+///
+/// **授權面**：kernel 二進位為 GPL-2.0，**執行期 fetch、永不隨 Mayfly 發佈物 / repo 打包**
+/// ——散布義務留在上游 kata-containers release，Mayfly 自身維持純 Apache-2.0（單純聚合、
+/// 不 link 進 host 行程，只在 guest VM 內當 OS 跑）。
+public struct LinuxKernelArchive: Sendable, Equatable {
+
+	/// kata-containers release 版本號（快取子目錄命名）。
+	public let version: String
+
+	/// 封存檔（`.tar.xz`）下載來源。
+	public let archiveURL: URL
+
+	/// 封存檔的 sha256（小寫 hex）——下載後驗證，不符即擲清楚錯誤。
+	public let archiveSHA256: String
+
+	/// 封存解壓（`--strip-components=1`）後，kernel 二進位的相對路徑。
+	public let innerPath: String
+
+	public init(version: String, archiveURL: URL, archiveSHA256: String, innerPath: String) {
+		self.version = version
+		self.archiveURL = archiveURL
+		self.archiveSHA256 = archiveSHA256
+		self.innerPath = innerPath
+	}
+
+	/// M1 落地預設：kata-containers 3.17.0 arm64——PoC 實測跑通的組合（containerization
+	/// 0.37.0、alpine:3 rootfs），sha256 為當時下載實測值。
+	public static let `default`: LinuxKernelArchive = .init(
+		version: "3.17.0",
+		archiveURL: URL(string: "https://github.com/kata-containers/kata-containers/releases/download/3.17.0/kata-static-3.17.0-arm64.tar.xz")!,
+		archiveSHA256: "647c7612e6edf789d5e14698c48c99d8bac15ad139ffaa1c8bb7d229f748d181",
+		innerPath: "opt/kata/share/kata-containers/vmlinux.container"
+	)
+}
