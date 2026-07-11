@@ -1,1 +1,93 @@
-Ly8KLy8gIExpbnV4Tm9kZUtpdFRlc3RzCi8vCi8vICBDb3B5cmlnaHQgwqkgMjAyNiBVbnB4cmUKLy8gIExpY2Vuc2VkIHVuZGVyIHRoZSBBcGFjaGUgTGljZW5zZSAyLjAuIFNlZSBMSUNFTlNFIGZvciBkZXRhaWxzLgovLwovLyAgU1BEWC1MaWNlbnNlLUlkZW50aWZpZXI6IEFwYWNoZS0yLjAKCkB0ZXN0YWJsZSBpbXBvcnQgTGludXhOb2RlS2l0CmltcG9ydCBGb3VuZGF0aW9uCmltcG9ydCBOeW1waEtpdAppbXBvcnQgVGVzdGluZwoKLy8gTUFSSzogLSBMaW51eEtlcm5lbFByb3Zpc2lvbmVyVGVzdHMKCnByaXZhdGUgZmluYWwgY2xhc3MgTGludXhLZXJuZWxQcm92aXNpb25lclRlc3RzIHsKCglwcml2YXRlIGZ1bmMgbWFrZUFyY2hpdmUoKSAtPiBMaW51eEtlcm5lbEFyY2hpdmUgewoJCS5pbml0KAoJCQl2ZXJzaW9uOiAidGVzdC0xIiwKCQkJYXJjaGl2ZVVSTDogVVJMKHN0cmluZzogImh0dHBzOi8vZXhhbXBsZS5jb20va2VybmVsLnRhci54eiIpISwKCQkJYXJjaGl2ZVNIQTI1NjogImlycmVsZXZhbnQtZm9yLWZha2UiLAoJCQlpbm5lclBhdGg6ICJ2bWxpbnV4IgoJCSkKCX0KCgkvLy8g5b+r5Y+W5ZG95LitIOKGkiDnm7TmjqXlm57lv6vlj5bot6/lvpHvvIzkuI3lkbzlj6sgZmV0Y2hlcu+8iGZldGNoLW9uLWRlbWFuZCDnmoTjgIzlkb3kuK3kuI3ph43mipPjgI3ljYrmrrXvvInjgIIKCUBUZXN0Cglwcml2YXRlIGZ1bmMgYGNhY2hlIGhpdCBza2lwcyBmZXRjaGVyYCgpIGFzeW5jIHRocm93cyB7CgkJbGV0IGRpcmVjdG9yeTogVVJMID0gRmlsZU1hbmFnZXIuZGVmYXVsdC50ZW1wb3JhcnlEaXJlY3RvcnkuYXBwZW5kaW5nKGNvbXBvbmVudDogImxpbnV4bm9kZWtpdHRlc3QtXChVVUlEKCkudXVpZFN0cmluZykiKQoJCXRyeSBGaWxlTWFuYWdlci5kZWZhdWx0LmNyZWF0ZURpcmVjdG9yeShhdDogZGlyZWN0b3J5LCB3aXRoSW50ZXJtZWRpYXRlRGlyZWN0b3JpZXM6IHRydWUpCgkJZGVmZXIgeyB0cnk/IEZpbGVNYW5hZ2VyLmRlZmF1bHQucmVtb3ZlSXRlbShhdDogZGlyZWN0b3J5KSB9CgoJCWxldCBjYWNoZTogTGludXhLZXJuZWxDYWNoZSA9IC5pbml0KGRpcmVjdG9yeTogZGlyZWN0b3J5KQoJCWxldCBhcmNoaXZlOiBMaW51eEtlcm5lbEFyY2hpdmUgPSBtYWtlQXJjaGl2ZSgpCgkJbGV0IGRlc3RpbmF0aW9uOiBVUkwgPSBjYWNoZS5rZXJuZWxVUkwodmVyc2lvbjogYXJjaGl2ZS52ZXJzaW9uKQoJCXRyeSBGaWxlTWFuYWdlci5kZWZhdWx0LmNyZWF0ZURpcmVjdG9yeShhdDogZGVzdGluYXRpb24uZGVsZXRpbmdMYXN0UGF0aENvbXBvbmVudCgpLCB3aXRoSW50ZXJtZWRpYXRlRGlyZWN0b3JpZXM6IHRydWUpCgkJdHJ5IERhdGEoImNhY2hlZCIudXRmOCkud3JpdGUodG86IGRlc3RpbmF0aW9uKQoKCQlsZXQgZmV0Y2hlcjogRmFrZUtlcm5lbEFyY2hpdmVGZXRjaGVyID0gLmluaXQoKQoJCWxldCBwcm92aXNpb25lcjogTGludXhLZXJuZWxQcm92aXNpb25lciA9IC5pbml0KGNhY2hlOiBjYWNoZSwgZmV0Y2hlcjogZmV0Y2hlcikKCQlsZXQgcmVzb2x2ZWQ6IFVSTCA9IHRyeSBhd2FpdCBwcm92aXNpb25lci5wcmVwYXJlKGFyY2hpdmUpCgoJCSNleHBlY3QocmVzb2x2ZWQgPT0gZGVzdGluYXRpb24pCgkJI2V4cGVjdChmZXRjaGVyLmNhbGxzLmN1cnJlbnQuaXNFbXB0eSkKCX0KCgkvLy8g5b+r5Y+W5pyq5ZG95LitIOKGkiDlkbzlj6sgZmV0Y2hlcuOAgeW4tuato+eiuiBhcmNoaXZlIC8gZGVzdGluYXRpb27vvIhmZXRjaC1vbi1kZW1hbmQg55qECgkvLy8g44CM5pyq5ZG95Lit5omN5oqT44CN5Y2K5q6177yJ44CCCglAVGVzdAoJcHJpdmF0ZSBmdW5jIGBjYWNoZSBtaXNzIGludm9rZXMgZmV0Y2hlciB3aXRoIGV4cGVjdGVkIGRlc3RpbmF0aW9uYCgpIGFzeW5jIHRocm93cyB7CgkJbGV0IGRpcmVjdG9yeTogVVJMID0gRmlsZU1hbmFnZXIuZGVmYXVsdC50ZW1wb3JhcnlEaXJlY3RvcnkuYXBwZW5kaW5nKGNvbXBvbmVudDogImxpbnV4bm9kZWtpdHRlc3QtXChVVUlEKCkudXVpZFN0cmluZykiKQoJCXRyeSBGaWxlTWFuYWdlci5kZWZhdWx0LmNyZWF0ZURpcmVjdG9yeShhdDogZGlyZWN0b3J5LCB3aXRoSW50ZXJtZWRpYXRlRGlyZWN0b3JpZXM6IHRydWUpCgkJZGVmZXIgeyB0cnk/IEZpbGVNYW5hZ2VyLmRlZmF1bHQucmVtb3ZlSXRlbShhdDogZGlyZWN0b3J5KSB9CgoJCWxldCBjYWNoZTogTGludXhLZXJuZWxDYWNoZSA9IC5pbml0KGRpcmVjdG9yeTogZGlyZWN0b3J5KQoJCWxldCBhcmNoaXZlOiBMaW51eEtlcm5lbEFyY2hpdmUgPSBtYWtlQXJjaGl2ZSgpCgkJbGV0IGZldGNoZXI6IEZha2VLZXJuZWxBcmNoaXZlRmV0Y2hlciA9IC5pbml0KCkKCQlsZXQgcHJvdmlzaW9uZXI6IExpbnV4S2VybmVsUHJvdmlzaW9uZXIgPSAuaW5pdChjYWNoZTogY2FjaGUsIGZldGNoZXI6IGZldGNoZXIpCgoJCWxldCByZXNvbHZlZDogVVJMID0gdHJ5IGF3YWl0IHByb3Zpc2lvbmVyLnByZXBhcmUoYXJjaGl2ZSkKCgkJI2V4cGVjdChyZXNvbHZlZCA9PSBjYWNoZS5rZXJuZWxVUkwodmVyc2lvbjogYXJjaGl2ZS52ZXJzaW9uKSkKCQkjZXhwZWN0KGZldGNoZXIuY2FsbHMuY3VycmVudC5jb3VudCA9PSAxKQoJCSNleHBlY3QoZmV0Y2hlci5jYWxscy5jdXJyZW50LmZpcnN0Py5hcmNoaXZlID09IGFyY2hpdmUpCgkJI2V4cGVjdChmZXRjaGVyLmNhbGxzLmN1cnJlbnQuZmlyc3Q/LmRlc3RpbmF0aW9uID09IGNhY2hlLmtlcm5lbFVSTCh2ZXJzaW9uOiBhcmNoaXZlLnZlcnNpb24pKQoJfQoKCS8vLyBmZXRjaGVyIOWkseaVlyDihpIg5pS25paC6YCyIGBOeW1waEVycm9yLmludGVybmFsRmFpbHVyZWDvvIjmuIXmpZrpjK/oqqToqIrmga/nmoTokL3lnLDvvInjgIHkuI3lpJbmtKkKCS8vLyDlupXlsaTpjK/oqqTlnovliKXjgIIKCUBUZXN0Cglwcml2YXRlIGZ1bmMgYGZldGNoIGZhaWx1cmUgbWFwcyB0byBpbnRlcm5hbEZhaWx1cmVgKCkgYXN5bmMgdGhyb3dzIHsKCQlzdHJ1Y3QgRmFrZUZhaWx1cmU6IEVycm9yIHt9CgkJbGV0IGRpcmVjdG9yeTogVVJMID0gRmlsZU1hbmFnZXIuZGVmYXVsdC50ZW1wb3JhcnlEaXJlY3RvcnkuYXBwZW5kaW5nKGNvbXBvbmVudDogImxpbnV4bm9kZWtpdHRlc3QtXChVVUlEKCkudXVpZFN0cmluZykiKQoJCXRyeSBGaWxlTWFuYWdlci5kZWZhdWx0LmNyZWF0ZURpcmVjdG9yeShhdDogZGlyZWN0b3J5LCB3aXRoSW50ZXJtZWRpYXRlRGlyZWN0b3JpZXM6IHRydWUpCgkJZGVmZXIgeyB0cnk/IEZpbGVNYW5hZ2VyLmRlZmF1bHQucmVtb3ZlSXRlbShhdDogZGlyZWN0b3J5KSB9CgoJCWxldCBjYWNoZTogTGludXhLZXJuZWxDYWNoZSA9IC5pbml0KGRpcmVjdG9yeTogZGlyZWN0b3J5KQoJCWxldCBhcmNoaXZlOiBMaW51eEtlcm5lbEFyY2hpdmUgPSBtYWtlQXJjaGl2ZSgpCgkJbGV0IGZldGNoZXI6IEZha2VLZXJuZWxBcmNoaXZlRmV0Y2hlciA9IC5pbml0KGZhaWx1cmU6IEZha2VGYWlsdXJlKCkpCgkJbGV0IHByb3Zpc2lvbmVyOiBMaW51eEtlcm5lbFByb3Zpc2lvbmVyID0gLmluaXQoY2FjaGU6IGNhY2hlLCBmZXRjaGVyOiBmZXRjaGVyKQoKCQlkbyB7CgkJCV8gPSB0cnkgYXdhaXQgcHJvdmlzaW9uZXIucHJlcGFyZShhcmNoaXZlKQoJCQlJc3N1ZS5yZWNvcmQoImV4cGVjdGVkIHByZXBhcmUgdG8gdGhyb3ciKQoJCX0gY2F0Y2ggbGV0IGVycm9yIGFzIE55bXBoRXJyb3IgewoJCQlndWFyZCBjYXNlIC5pbnRlcm5hbEZhaWx1cmUgPSBlcnJvciBlbHNlIHsKCQkJCUlzc3VlLnJlY29yZCgiZXhwZWN0ZWQgaW50ZXJuYWxGYWlsdXJlLCBnb3QgXChlcnJvcikiKQoJCQkJcmV0dXJuCgkJCX0KCQl9Cgl9Cn0K
+//
+//  LinuxNodeKitTests
+//
+//  Copyright © 2026 Unpxre
+//  Licensed under the Apache License 2.0. See LICENSE for details.
+//
+//  SPDX-License-Identifier: Apache-2.0
+
+@testable import LinuxNodeKit
+import Foundation
+import NymphKit
+import Testing
+
+// MARK: - LinuxKernelProvisionerTests
+
+private final class LinuxKernelProvisionerTests {
+
+	private func makeArchive() -> LinuxKernelArchive {
+		.init(
+			version: "test-1",
+			archiveURL: URL(string: "https://example.com/kernel.tar.xz")!,
+			archiveSHA256: "irrelevant-for-fake",
+			innerPath: "vmlinux"
+		)
+	}
+
+	/// 快取命中 → 直接回快取路徑，不呼叫 fetcher（fetch-on-demand 的「命中不重抓」半段）。
+	@Test
+	private func `cache hit skips fetcher`() async throws {
+		let directory: URL = FileManager.default.temporaryDirectory.appending(component: "linuxnodekittest-\(UUID().uuidString)")
+		try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+		defer { try? FileManager.default.removeItem(at: directory) }
+
+		let cache: LinuxKernelCache = .init(directory: directory)
+		let archive: LinuxKernelArchive = makeArchive()
+		let destination: URL = cache.kernelURL(version: archive.version)
+		try FileManager.default.createDirectory(at: destination.deletingLastPathComponent(), withIntermediateDirectories: true)
+		try Data("cached".utf8).write(to: destination)
+
+		let fetcher: FakeKernelArchiveFetcher = .init()
+		let provisioner: LinuxKernelProvisioner = .init(cache: cache, fetcher: fetcher)
+		let resolved: URL = try await provisioner.prepare(archive)
+
+		#expect(resolved == destination)
+		#expect(fetcher.calls.current.isEmpty)
+	}
+
+	/// 快取未命中 → 呼叫 fetcher、帶正確 archive / destination（fetch-on-demand 的
+	/// 「未命中才抓」半段）。
+	@Test
+	private func `cache miss invokes fetcher with expected destination`() async throws {
+		let directory: URL = FileManager.default.temporaryDirectory.appending(component: "linuxnodekittest-\(UUID().uuidString)")
+		try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+		defer { try? FileManager.default.removeItem(at: directory) }
+
+		let cache: LinuxKernelCache = .init(directory: directory)
+		let archive: LinuxKernelArchive = makeArchive()
+		let fetcher: FakeKernelArchiveFetcher = .init()
+		let provisioner: LinuxKernelProvisioner = .init(cache: cache, fetcher: fetcher)
+
+		let resolved: URL = try await provisioner.prepare(archive)
+
+		#expect(resolved == cache.kernelURL(version: archive.version))
+		#expect(fetcher.calls.current.count == 1)
+		#expect(fetcher.calls.current.first?.archive == archive)
+		#expect(fetcher.calls.current.first?.destination == cache.kernelURL(version: archive.version))
+	}
+
+	/// fetcher 失敗 → 收斂進 `NymphError.internalFailure`（清楚錯誤訊息的落地）、不外洩
+	/// 底層錯誤型別。
+	@Test
+	private func `fetch failure maps to internalFailure`() async throws {
+		struct FakeFailure: Error {}
+		let directory: URL = FileManager.default.temporaryDirectory.appending(component: "linuxnodekittest-\(UUID().uuidString)")
+		try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+		defer { try? FileManager.default.removeItem(at: directory) }
+
+		let cache: LinuxKernelCache = .init(directory: directory)
+		let archive: LinuxKernelArchive = makeArchive()
+		let fetcher: FakeKernelArchiveFetcher = .init(failure: FakeFailure())
+		let provisioner: LinuxKernelProvisioner = .init(cache: cache, fetcher: fetcher)
+
+		do {
+			_ = try await provisioner.prepare(archive)
+			Issue.record("expected prepare to throw")
+		} catch let error as NymphError {
+			guard case .internalFailure = error else {
+				Issue.record("expected internalFailure, got \(error)")
+				return
+			}
+		}
+	}
+}
