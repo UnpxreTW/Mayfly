@@ -69,7 +69,7 @@ public final class MacGuestInstaller: @unchecked Sendable {
 				}
 			} onCancel: {
 				// 與 operation 閉包同在 serial vmQueue 上序列化：起跑後才 cancel
-				// progress、未起跑只立旗標、讓 operation 閉包以 .cancelled 收束。
+				// progress，未起跑只立旗標、讓 operation 閉包以 .cancelled 收束。
 				vmQueue.async {
 					if self.installStarted {
 						self.installer?.progress.cancel()
