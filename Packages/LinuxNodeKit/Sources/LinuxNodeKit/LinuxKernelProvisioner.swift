@@ -1,1 +1,49 @@
-Ly8KLy8gIExpbnV4Tm9kZUtpdAovLwovLyAgQ29weXJpZ2h0IMKpIDIwMjYgVW5weHJlCi8vICBMaWNlbnNlZCB1bmRlciB0aGUgQXBhY2hlIExpY2Vuc2UgMi4wLiBTZWUgTElDRU5TRSBmb3IgZGV0YWlscy4KLy8KLy8gIFNQRFgtTGljZW5zZS1JZGVudGlmaWVyOiBBcGFjaGUtMi4wCgppbXBvcnQgRm91bmRhdGlvbgppbXBvcnQgTnltcGhLaXQKCi8vLyBrZXJuZWwg55qEIGZldGNoLW9uLWRlbWFuZCDnt6jmjpLvvJrlv6vlj5blkb3kuK3nm7TmjqXlm57ot6/lvpHvvIzlkKbliYfmipPvvIvpqZfvvIvokL3lnLDigJTigJTnmbzkvYjniakgLyByZXBvCi8vLyDmsLjkuI0gYnVuZGxlIGtlcm5lbOOAgeS4gOW+i+Wft+ihjOacnyBmZXRjaO+8i3NoYTI1NiBwaW7vvIzlpLHmlZfntabmuIXmpZrpjK/oqqToqIrmga/jgIJhcmNoLW5ldXRyYWzjgIEKLy8vIOWPr+eUqOWBhyBgYEtlcm5lbEFyY2hpdmVGZXRjaGluZ2BgIOWWrua4rO+8iOS4jeW/heecn+mAo+e2su+8ie+8jOecn+apn+aOpee3muimiyBgYExpbnV4R3Vlc3RFbmdpbmVgYOOAggpwdWJsaWMgc3RydWN0IExpbnV4S2VybmVsUHJvdmlzaW9uZXI6IFNlbmRhYmxlIHsKCgkvLyBNQVJLOiBQdWJsaWMKCglwdWJsaWMgbGV0IGNhY2hlOiBMaW51eEtlcm5lbENhY2hlCgoJcHVibGljIGluaXQoCgkJY2FjaGU6IExpbnV4S2VybmVsQ2FjaGUgPSAuaW5pdCgpLAoJCWZldGNoZXI6IGFueSBLZXJuZWxBcmNoaXZlRmV0Y2hpbmcgPSBTeXN0ZW1LZXJuZWxBcmNoaXZlRmV0Y2hlcigpCgkpIHsKCQlzZWxmLmNhY2hlID0gY2FjaGUKCQlzZWxmLmZldGNoZXIgPSBmZXRjaGVyCgl9CgoJLy8vIOWCmeWmpSBgYXJjaGl2ZWAg5oyH5a6a55qEIGtlcm5lbOOAgeWbnuacrOapn+i3r+W+keOAguW/q+WPluWRveS4reWNs+WbnuOAgeS4jemHjeaKk+OAggoJLy8vCgkvLy8gLSBUaHJvd3M6IOaKk+WPliAvIOino+WjkyAvIHNoYTI1NiDpqZforYnlpLHmlZfkuIDlvovmlLbmloLpgLIKCS8vLyAgIGBgTnltcGhFcnJvci9pbnRlcm5hbEZhaWx1cmUoXzopYGDvvIjluLblupXlsaTmj4/ov7DigJTigJTjgIzmuIXmpZrpjK/oqqToqIrmga/jgI3nmoTokL3lnLDvvInjgIIKCXB1YmxpYyBmdW5jIHByZXBhcmUoXyBhcmNoaXZlOiBMaW51eEtlcm5lbEFyY2hpdmUgPSAuZGVmYXVsdCkgYXN5bmMgdGhyb3dzIC0+IFVSTCB7CgkJbGV0IGRlc3RpbmF0aW9uOiBVUkwgPSBjYWNoZS5rZXJuZWxVUkwodmVyc2lvbjogYXJjaGl2ZS52ZXJzaW9uKQoJCWd1YXJkICFjYWNoZS5pc0NhY2hlZCh2ZXJzaW9uOiBhcmNoaXZlLnZlcnNpb24pIGVsc2UgewoJCQlyZXR1cm4gZGVzdGluYXRpb24KCQl9CgkJZG8gewoJCQl0cnkgYXdhaXQgZmV0Y2hlci5mZXRjaChhcmNoaXZlLCB0bzogZGVzdGluYXRpb24pCgkJfSBjYXRjaCB7CgkJCXRocm93IE55bXBoRXJyb3IuaW50ZXJuYWxGYWlsdXJlKCJsaW51eCBrZXJuZWwgZmV0Y2ggZmFpbGVkIChcKGFyY2hpdmUudmVyc2lvbikpOiBcKGVycm9yKSIpCgkJfQoJCXJldHVybiBkZXN0aW5hdGlvbgoJfQoKCS8vIE1BUks6IFByaXZhdGUKCglwcml2YXRlIGxldCBmZXRjaGVyOiBhbnkgS2VybmVsQXJjaGl2ZUZldGNoaW5nCn0K
+//
+//  LinuxNodeKit
+//
+//  Copyright © 2026 Unpxre
+//  Licensed under the Apache License 2.0. See LICENSE for details.
+//
+//  SPDX-License-Identifier: Apache-2.0
+
+import Foundation
+import NymphKit
+
+/// kernel 的 fetch-on-demand 編排：快取命中直接回路徑，否則抓＋驗＋落地——發佈物 / repo
+/// 永不 bundle kernel、一律執行期 fetch＋sha256 pin，失敗給清楚錯誤訊息。arch-neutral、
+/// 可用假 ``KernelArchiveFetching`` 單測（不必真連網），真機接線見 ``LinuxGuestEngine``。
+public struct LinuxKernelProvisioner: Sendable {
+
+	// MARK: Public
+
+	public let cache: LinuxKernelCache
+
+	public init(
+		cache: LinuxKernelCache = .init(),
+		fetcher: any KernelArchiveFetching = SystemKernelArchiveFetcher()
+	) {
+		self.cache = cache
+		self.fetcher = fetcher
+	}
+
+	/// 備妥 `archive` 指定的 kernel、回本機路徑。快取命中即回、不重抓。
+	///
+	/// - Throws: 抓取 / 解壓 / sha256 驗證失敗一律收斂進
+	///   ``NymphError/internalFailure(_:)``（帶底層描述——「清楚錯誤訊息」的落地）。
+	public func prepare(_ archive: LinuxKernelArchive = .default) async throws -> URL {
+		let destination: URL = cache.kernelURL(version: archive.version)
+		guard !cache.isCached(version: archive.version) else {
+			return destination
+		}
+		do {
+			try await fetcher.fetch(archive, to: destination)
+		} catch {
+			throw NymphError.internalFailure("linux kernel fetch failed (\(archive.version)): \(error)")
+		}
+		return destination
+	}
+
+	// MARK: Private
+
+	private let fetcher: any KernelArchiveFetching
+}
