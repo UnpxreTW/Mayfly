@@ -1,1 +1,19 @@
-Ly8KLy8gIExpbnV4Tm9kZUtpdAovLwovLyAgQ29weXJpZ2h0IMKpIDIwMjYgVW5weHJlCi8vICBMaWNlbnNlZCB1bmRlciB0aGUgQXBhY2hlIExpY2Vuc2UgMi4wLiBTZWUgTElDRU5TRSBmb3IgZGV0YWlscy4KLy8KLy8gIFNQRFgtTGljZW5zZS1JZGVudGlmaWVyOiBBcGFjaGUtMi4wCgppbXBvcnQgRm91bmRhdGlvbgoKLy8vIOaKk++8i+mpl++8i+ino+Wjk+S4gOS7vSBgYExpbnV4S2VybmVsQXJjaGl2ZWBg44CB5oqKIGtlcm5lbCDkuozpgLLkvY3okL3lnLDliLAgYGRlc3RpbmF0aW9uYCDnmoTli5XkvZzjgIIKLy8vIOaKveaIkCBwcm90b2NvbCDorpMgYGBMaW51eEtlcm5lbFByb3Zpc2lvbmVyYGAg55qEIGZldGNoLW9uLWRlbWFuZCDnt6jmjpLlj6/nlKjlgYflr6bkvZzllq7muKwKLy8vIO+8iOS4jeW/heecn+mAo+e2siAvIOecn+ino+Wjk++8ie+8m+ecn+apn+WvpuS9nOimiyBgYFN5c3RlbUtlcm5lbEFyY2hpdmVGZXRjaGVyYGDjgIIKcHVibGljIHByb3RvY29sIEtlcm5lbEFyY2hpdmVGZXRjaGluZzogU2VuZGFibGUgewoKCS8vLyDmipMgYGFyY2hpdmVg44CB6amXIHNoYTI1NuOAgeino+Wjk+WPluWHuiBrZXJuZWwg5LqM6YCy5L2N44CB5a+r5YWlIGBkZXN0aW5hdGlvbmDvvIjlkbzlj6vnq6/lt7Lkv53orYkKCS8vLyBwYXJlbnQg55uu6YyE5a2Y5Zyo77yJ44CC5Lu75L2V5q2l6amf5aSx5pWX5Y2z5pOy6Yyv77yM5LiN55WZ5Y2K5oiQ5ZOB5pa8IGBkZXN0aW5hdGlvbmDjgIIKCWZ1bmMgZmV0Y2goXyBhcmNoaXZlOiBMaW51eEtlcm5lbEFyY2hpdmUsIHRvIGRlc3RpbmF0aW9uOiBVUkwpIGFzeW5jIHRocm93cwp9Cg==
+//
+//  LinuxNodeKit
+//
+//  Copyright © 2026 Unpxre
+//  Licensed under the Apache License 2.0. See LICENSE for details.
+//
+//  SPDX-License-Identifier: Apache-2.0
+
+import Foundation
+
+/// 抓＋驗＋解壓一份 ``LinuxKernelArchive``、把 kernel 二進位落地到 `destination` 的動作。
+/// 抽成 protocol 讓 ``LinuxKernelProvisioner`` 的 fetch-on-demand 編排可用假實作單測
+/// （不必真連網 / 真解壓）；真機實作見 ``SystemKernelArchiveFetcher``。
+public protocol KernelArchiveFetching: Sendable {
+
+	/// 抓 `archive`、驗 sha256、解壓取出 kernel 二進位、寫入 `destination`（呼叫端已保證
+	/// parent 目錄存在）。任何步驟失敗即擲錯，不留半成品於 `destination`。
+	func fetch(_ archive: LinuxKernelArchive, to destination: URL) async throws
+}
