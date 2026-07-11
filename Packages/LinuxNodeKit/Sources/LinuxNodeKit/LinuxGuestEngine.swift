@@ -1,1 +1,120 @@
-Ly8KLy8gIExpbnV4Tm9kZUtpdAovLwovLyAgQ29weXJpZ2h0IMKpIDIwMjYgVW5weHJlCi8vICBMaWNlbnNlZCB1bmRlciB0aGUgQXBhY2hlIExpY2Vuc2UgMi4wLiBTZWUgTElDRU5TRSBmb3IgZGV0YWlscy4KLy8KLy8gIFNQRFgtTGljZW5zZS1JZGVudGlmaWVyOiBBcGFjaGUtMi4wCgppbXBvcnQgQ29udGFpbmVyaXphdGlvbgppbXBvcnQgQ29udGFpbmVyaXphdGlvbk9TCmltcG9ydCBGb3VuZGF0aW9uCmltcG9ydCBOeW1waEtpdAoKLy8gTGludXhHdWVzdEVuZ2luZSDop7jnorAgQ29udGFpbmVyaXphdGlvbiDnmoTnnJ/lrrnlmaggQVBJ4oCU4oCU5pW05qqUIGFyY2ggZ2F0Ze+8jOavlOeFpwovLyBSZWFsR3Vlc3RFbmdpbmUuc3dpZnTvvIhOeW1waEtpdC9SZWFsR3Vlc3RFbmdpbmUuc3dpZnTvvInvvJrmoLjlv4Ppgo/ovK/vvIhMaW51eEltYWdlUmVzb2x2ZXLvvI8KLy8gTGludXhLZXJuZWxDYWNoZe+8j0xpbnV4S2VybmVsUHJvdmlzaW9uZXLvvI9MaW51eEd1ZXN0RXJyb3JNYXBwaW5n77yJYXJjaC1uZXV0cmFs44CB5Y+v6LeoCi8vIGFyY2gg5LulIGZha2Ug5ris77yb5Y+q5pyJ6YCZ5bGk6IiHIGBgTGludXhHdWVzdENvbnRyb2xgYCDnnJ/mjqXlvJXmk47jgILpnZ4gYXJtNjQg55SxIGBtYXlmbHkgbnltcGhgCi8vIOWRveS7pOWxpOaTi+S4i++8iOavlOeFpyBSZWFsR3Vlc3RFbmdpbmUg55qE5pei5pyJ5oWj5L6L77yJ44CCCgojaWYgYXJjaChhcm02NCkKCi8vLyBgYEd1ZXN0RW5naW5lYGAg55qEIExpbnV4IOWvpuS9nO+8mmdvbGRlbiDliKXlkI0g4oaSIE9DSSBpbWFnZSDlj4Pnhacg77yLIGtlcm5lbAovLy8g77yIYGBMaW51eEltYWdlUmVzb2x2ZXJgYO+8ieKGkiBrZXJuZWwgZmV0Y2gtb24tZGVtYW5k77yIYGBMaW51eEtlcm5lbFByb3Zpc2lvbmVyYGDvvInihpIKLy8vIGBDb250YWluZXJNYW5hZ2VyLmNyZWF0ZWAg5oqKIHJvb3RmcyDop6PljIXlgpnlpqXvvIjmnKogc3RhcnTvvInihpIg5YyF5oiQIGBgTGludXhHdWVzdENvbnRyb2xgYOOAggovLy8g6IiHIGBgUmVhbEd1ZXN0RW5naW5lYGAg5bCN56ix77ya5pys5bGk5Y+q5YGa5Yil5ZCN6Kej5p6Q44CBa2VybmVsIOiQveWcsOOAgeWuueWZqOeJqeS7tuW7uueri+eahOaOpee3mu+8jAovLy8g5LiN5pS5IENvbnRhaW5lcml6YXRpb24g5pys6Lqr44CCCnB1YmxpYyBzdHJ1Y3QgTGludXhHdWVzdEVuZ2luZTogR3Vlc3RFbmdpbmUgewoKCS8vIE1BUks6IFB1YmxpYwoKCS8vLyB2bWluaXRkIOeJiOacrOmcgOiIhyBjb250YWluZXJpemF0aW9uIOWll+S7tueJiOacrOWwjem9iuKAlOKAlEdIQ1Ig5LiK6KmyIGltYWdlIOeEoSBgbGF0ZXN0YAoJLy8vIHRhZ++8jOWPquaciemAkOeJiOacrCB0YWfjgIIKCXB1YmxpYyBzdGF0aWMgbGV0IGRlZmF1bHRJbml0ZnNSZWZlcmVuY2U6IFN0cmluZyA9ICJnaGNyLmlvL2FwcGxlL2NvbnRhaW5lcml6YXRpb24vdm1pbml0OjAuMzcuMCIKCgkvLy8gLSBQYXJhbWV0ZXJzOgoJLy8vICAgLSByZXNvbHZlcjogZ29sZGVuIOWIpeWQjSDihpIgT0NJIGltYWdlIOWPg+eFpyDvvIsga2VybmVsIOeahOino+aekOOAggoJLy8vICAgLSBrZXJuZWxQcm92aXNpb25lcjoga2VybmVsIGZldGNoLW9uLWRlbWFuZO+8iOW/q+WPluWRveS4reebtOaOpeWbnuOAgeWQpuWJh+aKk++8i+mpl++8i+iQveWcsO+8ieOAggoJLy8vICAgLSBzdGF0ZVJvb3Q6IOWuueWZqCBpbWFnZSBzdG9yZe+8j3Jvb3RmcyDmoLnnm67pjITvvIzpoJDoqK0gYGBMaW51eE5vZGVQYXRocy9jb250YWluZXJSb290KGVudmlyb25tZW50OilgYOOAggoJLy8vICAgLSBpbml0ZnNSZWZlcmVuY2U6IHZtaW5pdGQgZ3Vlc3QgYWdlbnQg55qEIE9DSSDlj4PnhafjgIIKCS8vLyAgIC0gcm9vdGZzU2l6ZUluQnl0ZXM6IOWuueWZqCByb290ZnMg5LiK6ZmQ77yMTTEg5rK/55SoIFBvQyDpqZforYnpgY7nmoQgMSBHaULjgIIKCXB1YmxpYyBpbml0KAoJCXJlc29sdmVyOiBMaW51eEltYWdlUmVzb2x2ZXIgPSAuaW5pdCgpLAoJCWtlcm5lbFByb3Zpc2lvbmVyOiBMaW51eEtlcm5lbFByb3Zpc2lvbmVyID0gLmluaXQoKSwKCQlzdGF0ZVJvb3Q6IFVSTCA9IExpbnV4Tm9kZVBhdGhzLmNvbnRhaW5lclJvb3QoKSwKCQlpbml0ZnNSZWZlcmVuY2U6IFN0cmluZyA9IExpbnV4R3Vlc3RFbmdpbmUuZGVmYXVsdEluaXRmc1JlZmVyZW5jZSwKCQlyb290ZnNTaXplSW5CeXRlczogVUludDY0ID0gMS5naWIoKQoJKSB7CgkJc2VsZi5yZXNvbHZlciA9IHJlc29sdmVyCgkJc2VsZi5rZXJuZWxQcm92aXNpb25lciA9IGtlcm5lbFByb3Zpc2lvbmVyCgkJc2VsZi5zdGF0ZVJvb3QgPSBzdGF0ZVJvb3QKCQlzZWxmLmluaXRmc1JlZmVyZW5jZSA9IGluaXRmc1JlZmVyZW5jZQoJCXNlbGYucm9vdGZzU2l6ZUluQnl0ZXMgPSByb290ZnNTaXplSW5CeXRlcwoJfQoKCXB1YmxpYyBmdW5jIHByb3Zpc2lvbigKCQlnb2xkZW46IFN0cmluZywKCQljcHVzOiBJbnQsCgkJbWVtb3J5R2lCOiBJbnQsCgkJcmVhZGluZXNzVGltZW91dDogRHVyYXRpb24KCSkgYXN5bmMgdGhyb3dzIC0+IFByb3Zpc2lvbmVkR3Vlc3QgewoJCWd1YXJkIG1lbW9yeUdpQiA+IDAsIFVJbnQ2NChtZW1vcnlHaUIpIDw9IFVJbnQ2NC5tYXggPj4gMzAgZWxzZSB7CgkJCXRocm93IE55bXBoRXJyb3IuaW50ZXJuYWxGYWlsdXJlKCJtZW1vcnlfZ2liIG91dCBvZiByYW5nZTogXChtZW1vcnlHaUIpIikKCQl9CgkJbGV0IHNwZWM6IExpbnV4R3Vlc3RTcGVjID0gdHJ5IHJlc29sdmVyLnJlc29sdmUoZ29sZGVuKQoJCWxldCBrZXJuZWxQYXRoOiBVUkwgPSB0cnkgYXdhaXQga2VybmVsUHJvdmlzaW9uZXIucHJlcGFyZShzcGVjLmtlcm5lbCkKCQlsZXQga2VybmVsOiBLZXJuZWwgPSAuaW5pdChwYXRoOiBrZXJuZWxQYXRoLCBwbGF0Zm9ybTogLmxpbnV4QXJtKQoJCWxldCBjb250YWluZXJJRDogU3RyaW5nID0gTGludXhHdWVzdEVuZ2luZS5tYWtlQ29udGFpbmVySUQoKQoKCQl2YXIgbWFuYWdlcjogQ29udGFpbmVyTWFuYWdlcgoJCWRvIHsKCQkJbWFuYWdlciA9IHRyeSBhd2FpdCBDb250YWluZXJNYW5hZ2VyKGtlcm5lbDoga2VybmVsLCBpbml0ZnNSZWZlcmVuY2U6IGluaXRmc1JlZmVyZW5jZSwgcm9vdDogc3RhdGVSb290KQoJCX0gY2F0Y2ggewoJCQl0aHJvdyBOeW1waEVycm9yLmludGVybmFsRmFpbHVyZSgibGludXggY29udGFpbmVyIG1hbmFnZXIgaW5pdCBmYWlsZWQ6IFwoZXJyb3IpIikKCQl9CgoJCWxldCBjb250YWluZXI6IExpbnV4Q29udGFpbmVyCgkJZG8gewoJCQljb250YWluZXIgPSB0cnkgYXdhaXQgbWFuYWdlci5jcmVhdGUoCgkJCQljb250YWluZXJJRCwKCQkJCXJlZmVyZW5jZTogc3BlYy5pbWFnZVJlZmVyZW5jZSwKCQkJCXJvb3Rmc1NpemVJbkJ5dGVzOiByb290ZnNTaXplSW5CeXRlcywKCQkJCW5ldHdvcmtpbmc6IGZhbHNlCgkJCSkgeyBjb25maWd1cmF0aW9uIGluCgkJCQljb25maWd1cmF0aW9uLmNwdXMgPSBjcHVzCgkJCQljb25maWd1cmF0aW9uLm1lbW9yeUluQnl0ZXMgPSBtZW1vcnlHaUIuZ2liKCkKCQkJCWNvbmZpZ3VyYXRpb24ucHJvY2Vzcy5hcmd1bWVudHMgPSBMaW51eEd1ZXN0Q29udHJvbC5rZWVwQWxpdmVBcmd1bWVudHMKCQkJfQoJCX0gY2F0Y2ggewoJCQl0aHJvdyBOeW1waEVycm9yLmNsb25lRmFpbGVkKCJsaW51eCBjb250YWluZXIgY3JlYXRlIGZhaWxlZDogXChlcnJvcikiKQoJCX0KCgkJbGV0IGNvbnRyb2w6IExpbnV4R3Vlc3RDb250cm9sID0gLmluaXQoCgkJCW1hbmFnZXI6IG1hbmFnZXIsCgkJCWNvbnRhaW5lcjogY29udGFpbmVyLAoJCQljb250YWluZXJJRDogY29udGFpbmVySUQsCgkJCXJlYWRpbmVzc1RpbWVvdXQ6IHJlYWRpbmVzc1RpbWVvdXQKCQkpCgkJbGV0IGNsb25lUGF0aDogVVJMID0gc3RhdGVSb290LmFwcGVuZGluZyhjb21wb25lbnQ6ICJjb250YWluZXJzIikuYXBwZW5kaW5nKGNvbXBvbmVudDogY29udGFpbmVySUQpCgkJcmV0dXJuIFByb3Zpc2lvbmVkR3Vlc3QoY29udHJvbDogY29udHJvbCwgZ29sZGVuQWxpYXM6IGdvbGRlbiwgY2xvbmVQYXRoOiBjbG9uZVBhdGgpCgl9CgoJLy8gTUFSSzogUHJpdmF0ZQoKCXByaXZhdGUgbGV0IHJlc29sdmVyOiBMaW51eEltYWdlUmVzb2x2ZXIKCglwcml2YXRlIGxldCBrZXJuZWxQcm92aXNpb25lcjogTGludXhLZXJuZWxQcm92aXNpb25lcgoKCXByaXZhdGUgbGV0IHN0YXRlUm9vdDogVVJMCgoJcHJpdmF0ZSBsZXQgaW5pdGZzUmVmZXJlbmNlOiBTdHJpbmcKCglwcml2YXRlIGxldCByb290ZnNTaXplSW5CeXRlczogVUludDY0CgoJLy8vIOWuueWZqCBpZO+8mmBtZmx5LWxpbnV4LWAg5YmN57a0ICsgVVVJRO+8jOmBv+WFjeiIh+WFtuS7liBMaW51eCDnr4Dpu57miJbkuKbooYwgcHJvdmlzaW9uIOaSnuiZn+OAggoJcHJpdmF0ZSBzdGF0aWMgZnVuYyBtYWtlQ29udGFpbmVySUQoKSAtPiBTdHJpbmcgewoJCSJtZmx5LWxpbnV4LSIgKyBVVUlEKCkudXVpZFN0cmluZy5sb3dlcmNhc2VkKCkKCX0KfQoKI2VuZGlmCg==
+//
+//  LinuxNodeKit
+//
+//  Copyright © 2026 Unpxre
+//  Licensed under the Apache License 2.0. See LICENSE for details.
+//
+//  SPDX-License-Identifier: Apache-2.0
+
+import Containerization
+import ContainerizationOS
+import Foundation
+import NymphKit
+
+// LinuxGuestEngine 觸碰 Containerization 的真容器 API——整檔 arch gate，比照
+// RealGuestEngine.swift（NymphKit/RealGuestEngine.swift）：核心邏輯（LinuxImageResolver／
+// LinuxKernelCache／LinuxKernelProvisioner／LinuxGuestErrorMapping）arch-neutral、可跨
+// arch 以 fake 測；只有這層與 ``LinuxGuestControl`` 真接引擎。非 arm64 由 `mayfly nymph`
+// 命令層擋下（比照 RealGuestEngine 的既有慣例）。
+
+#if arch(arm64)
+
+/// ``GuestEngine`` 的 Linux 實作：golden 別名 → OCI image 參照 ＋ kernel
+/// （``LinuxImageResolver``）→ kernel fetch-on-demand（``LinuxKernelProvisioner``）→
+/// `ContainerManager.create` 把 rootfs 解包備妥（未 start）→ 包成 ``LinuxGuestControl``。
+/// 與 ``RealGuestEngine`` 對稱：本層只做別名解析、kernel 落地、容器物件建立的接線，
+/// 不改 Containerization 本身。
+public struct LinuxGuestEngine: GuestEngine {
+
+	// MARK: Public
+
+	/// vminitd 版本需與 containerization 套件版本對齊——GHCR 上該 image 無 `latest`
+	/// tag，只有逐版本 tag。
+	public static let defaultInitfsReference: String = "ghcr.io/apple/containerization/vminit:0.37.0"
+
+	/// - Parameters:
+	///   - resolver: golden 別名 → OCI image 參照 ＋ kernel 的解析。
+	///   - kernelProvisioner: kernel fetch-on-demand（快取命中直接回、否則抓＋驗＋落地）。
+	///   - stateRoot: 容器 image store／rootfs 根目錄，預設 ``LinuxNodePaths/containerRoot(environment:)``。
+	///   - initfsReference: vminitd guest agent 的 OCI 參照。
+	///   - rootfsSizeInBytes: 容器 rootfs 上限，M1 沿用 PoC 驗證過的 1 GiB。
+	public init(
+		resolver: LinuxImageResolver = .init(),
+		kernelProvisioner: LinuxKernelProvisioner = .init(),
+		stateRoot: URL = LinuxNodePaths.containerRoot(),
+		initfsReference: String = LinuxGuestEngine.defaultInitfsReference,
+		rootfsSizeInBytes: UInt64 = 1.gib()
+	) {
+		self.resolver = resolver
+		self.kernelProvisioner = kernelProvisioner
+		self.stateRoot = stateRoot
+		self.initfsReference = initfsReference
+		self.rootfsSizeInBytes = rootfsSizeInBytes
+	}
+
+	public func provision(
+		golden: String,
+		cpus: Int,
+		memoryGiB: Int,
+		readinessTimeout: Duration
+	) async throws -> ProvisionedGuest {
+		guard memoryGiB > 0, UInt64(memoryGiB) <= UInt64.max >> 30 else {
+			throw NymphError.internalFailure("memory_gib out of range: \(memoryGiB)")
+		}
+		let spec: LinuxGuestSpec = try resolver.resolve(golden)
+		let kernelPath: URL = try await kernelProvisioner.prepare(spec.kernel)
+		let kernel: Kernel = .init(path: kernelPath, platform: .linuxArm)
+		let containerID: String = LinuxGuestEngine.makeContainerID()
+
+		var manager: ContainerManager
+		do {
+			manager = try await ContainerManager(kernel: kernel, initfsReference: initfsReference, root: stateRoot)
+		} catch {
+			throw NymphError.internalFailure("linux container manager init failed: \(error)")
+		}
+
+		let container: LinuxContainer
+		do {
+			container = try await manager.create(
+				containerID,
+				reference: spec.imageReference,
+				rootfsSizeInBytes: rootfsSizeInBytes,
+				networking: false
+			) { configuration in
+				configuration.cpus = cpus
+				configuration.memoryInBytes = memoryGiB.gib()
+				configuration.process.arguments = LinuxGuestControl.keepAliveArguments
+			}
+		} catch {
+			throw NymphError.cloneFailed("linux container create failed: \(error)")
+		}
+
+		let control: LinuxGuestControl = .init(
+			manager: manager,
+			container: container,
+			containerID: containerID,
+			readinessTimeout: readinessTimeout
+		)
+		let clonePath: URL = stateRoot.appending(component: "containers").appending(component: containerID)
+		return ProvisionedGuest(control: control, goldenAlias: golden, clonePath: clonePath)
+	}
+
+	// MARK: Private
+
+	private let resolver: LinuxImageResolver
+
+	private let kernelProvisioner: LinuxKernelProvisioner
+
+	private let stateRoot: URL
+
+	private let initfsReference: String
+
+	private let rootfsSizeInBytes: UInt64
+
+	/// 容器 id：`mfly-linux-` 前綴 + UUID，避免與其他 Linux 節點或並行 provision 撞號。
+	private static func makeContainerID() -> String {
+		"mfly-linux-" + UUID().uuidString.lowercased()
+	}
+}
+
+#endif
