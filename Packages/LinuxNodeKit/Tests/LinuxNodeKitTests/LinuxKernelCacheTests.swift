@@ -1,1 +1,55 @@
-Ly8KLy8gIExpbnV4Tm9kZUtpdFRlc3RzCi8vCi8vICBDb3B5cmlnaHQgwqkgMjAyNiBVbnB4cmUKLy8gIExpY2Vuc2VkIHVuZGVyIHRoZSBBcGFjaGUgTGljZW5zZSAyLjAuIFNlZSBMSUNFTlNFIGZvciBkZXRhaWxzLgovLwovLyAgU1BEWC1MaWNlbnNlLUlkZW50aWZpZXI6IEFwYWNoZS0yLjAKCkB0ZXN0YWJsZSBpbXBvcnQgTGludXhOb2RlS2l0CmltcG9ydCBGb3VuZGF0aW9uCmltcG9ydCBUZXN0aW5nCgovLyBNQVJLOiAtIExpbnV4S2VybmVsQ2FjaGVUZXN0cwoKcHJpdmF0ZSBmaW5hbCBjbGFzcyBMaW51eEtlcm5lbENhY2hlVGVzdHMgewoKCXByaXZhdGUgZnVuYyB3aXRoVGVtcG9yYXJ5RGlyZWN0b3J5KF8gYm9keTogKFVSTCkgdGhyb3dzIC0+IFZvaWQpIHRocm93cyB7CgkJbGV0IGRpcmVjdG9yeTogVVJMID0gRmlsZU1hbmFnZXIuZGVmYXVsdC50ZW1wb3JhcnlEaXJlY3RvcnkuYXBwZW5kaW5nKGNvbXBvbmVudDogImxpbnV4bm9kZWtpdHRlc3QtXChVVUlEKCkudXVpZFN0cmluZykiKQoJCXRyeSBGaWxlTWFuYWdlci5kZWZhdWx0LmNyZWF0ZURpcmVjdG9yeShhdDogZGlyZWN0b3J5LCB3aXRoSW50ZXJtZWRpYXRlRGlyZWN0b3JpZXM6IHRydWUpCgkJZGVmZXIgeyB0cnk/IEZpbGVNYW5hZ2VyLmRlZmF1bHQucmVtb3ZlSXRlbShhdDogZGlyZWN0b3J5KSB9CgkJdHJ5IGJvZHkoZGlyZWN0b3J5KQoJfQoKCS8vLyBga2VybmVsVVJMYCDkvp3niYjmnKzmjqjlsI4gYDxkaXJlY3Rvcnk+Lzx2ZXJzaW9uPi92bWxpbnV4LWFybTY0YOOAggoJQFRlc3QKCXByaXZhdGUgZnVuYyBga2VybmVsIHVybCBkZXJpdmVzIGZyb20gdmVyc2lvbmAoKSB7CgkJbGV0IGNhY2hlOiBMaW51eEtlcm5lbENhY2hlID0gLmluaXQoZGlyZWN0b3J5OiBVUkwoZmlsZVVSTFdpdGhQYXRoOiAiL3RtcC9rZXJuZWxzIikpCgkJbGV0IHVybDogVVJMID0gY2FjaGUua2VybmVsVVJMKHZlcnNpb246ICIzLjE3LjAiKQoJCSNleHBlY3QodXJsLnBhdGggPT0gIi90bXAva2VybmVscy8zLjE3LjAvdm1saW51eC1hcm02NCIpCgl9CgoJLy8vIOaqlOahiOS4jeWtmOWcqCDihpIgaXNDYWNoZWQg54K6IGZhbHNl77yb5a+r5YWl5b6MIOKGkiB0cnVl77yI5a2Y5Zyo5Y2z6KaW54K65a6M5pW055qE5b+r5Y+W5aWR57SE77yJ44CCCglAVGVzdAoJcHJpdmF0ZSBmdW5jIGBpc0NhY2hlZCByZWZsZWN0cyBmaWxlIHByZXNlbmNlYCgpIHRocm93cyB7CgkJdHJ5IHdpdGhUZW1wb3JhcnlEaXJlY3RvcnkgeyBkaXJlY3RvcnkgaW4KCQkJbGV0IGNhY2hlOiBMaW51eEtlcm5lbENhY2hlID0gLmluaXQoZGlyZWN0b3J5OiBkaXJlY3RvcnkpCgkJCSNleHBlY3QoIWNhY2hlLmlzQ2FjaGVkKHZlcnNpb246ICIzLjE3LjAiKSkKCQkJbGV0IHVybDogVVJMID0gY2FjaGUua2VybmVsVVJMKHZlcnNpb246ICIzLjE3LjAiKQoJCQl0cnkgRmlsZU1hbmFnZXIuZGVmYXVsdC5jcmVhdGVEaXJlY3RvcnkoYXQ6IHVybC5kZWxldGluZ0xhc3RQYXRoQ29tcG9uZW50KCksIHdpdGhJbnRlcm1lZGlhdGVEaXJlY3RvcmllczogdHJ1ZSkKCQkJdHJ5IERhdGEoInBsYWNlaG9sZGVyIi51dGY4KS53cml0ZSh0bzogdXJsKQoJCQkjZXhwZWN0KGNhY2hlLmlzQ2FjaGVkKHZlcnNpb246ICIzLjE3LjAiKSkKCQl9Cgl9CgoJLy8vIHNoYTI1NiDlsI3lt7Lnn6Xlhaflrrnnrpflh7rlt7Lnn6Xpm5zmuYrigJTigJTpqZfkuLLmtYHlr6bkvZzmraPnorrvvIzkuI3lj6rmmK/jgIzkuI3ltKnmvbDjgI3jgIIKCUBUZXN0Cglwcml2YXRlIGZ1bmMgYHNoYTI1NiBtYXRjaGVzIGtub3duIGRpZ2VzdGAoKSB0aHJvd3MgewoJCXRyeSB3aXRoVGVtcG9yYXJ5RGlyZWN0b3J5IHsgZGlyZWN0b3J5IGluCgkJCWxldCBmaWxlVVJMOiBVUkwgPSBkaXJlY3RvcnkuYXBwZW5kaW5nKGNvbXBvbmVudDogInNhbXBsZS50eHQiKQoJCQl0cnkgRGF0YSgiaGVsbG8gbWF5Zmx5XG4iLnV0ZjgpLndyaXRlKHRvOiBmaWxlVVJMKQoJCQlsZXQgZGlnZXN0OiBTdHJpbmcgPSB0cnkgTGludXhLZXJuZWxDYWNoZS5zaGEyNTYob2Y6IGZpbGVVUkwpCgkJCSNleHBlY3QoZGlnZXN0ID09ICIyOGZkMGRhOWZjMWEwZDdhOWY5NDI4YTBiZDk3ZmFkZjkxYWMyYmM0ZjgyMGNiZDgxMjM2MGVlNGQzZGM4MTExIikKCQl9Cgl9Cn0K
+//
+//  LinuxNodeKitTests
+//
+//  Copyright © 2026 Unpxre
+//  Licensed under the Apache License 2.0. See LICENSE for details.
+//
+//  SPDX-License-Identifier: Apache-2.0
+
+@testable import LinuxNodeKit
+import Foundation
+import Testing
+
+// MARK: - LinuxKernelCacheTests
+
+private final class LinuxKernelCacheTests {
+
+	private func withTemporaryDirectory(_ body: (URL) throws -> Void) throws {
+		let directory: URL = FileManager.default.temporaryDirectory.appending(component: "linuxnodekittest-\(UUID().uuidString)")
+		try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+		defer { try? FileManager.default.removeItem(at: directory) }
+		try body(directory)
+	}
+
+	/// `kernelURL` 依版本推導 `<directory>/<version>/vmlinux-arm64`。
+	@Test
+	private func `kernel url derives from version`() {
+		let cache: LinuxKernelCache = .init(directory: URL(fileURLWithPath: "/tmp/kernels"))
+		let url: URL = cache.kernelURL(version: "3.17.0")
+		#expect(url.path == "/tmp/kernels/3.17.0/vmlinux-arm64")
+	}
+
+	/// 檔案不存在 → isCached 為 false；寫入後 → true（存在即視為完整的快取契約）。
+	@Test
+	private func `isCached reflects file presence`() throws {
+		try withTemporaryDirectory { directory in
+			let cache: LinuxKernelCache = .init(directory: directory)
+			#expect(!cache.isCached(version: "3.17.0"))
+			let url: URL = cache.kernelURL(version: "3.17.0")
+			try FileManager.default.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
+			try Data("placeholder".utf8).write(to: url)
+			#expect(cache.isCached(version: "3.17.0"))
+		}
+	}
+
+	/// sha256 對已知內容算出已知雜湊——驗串流實作正確，不只是「不崩潰」。
+	@Test
+	private func `sha256 matches known digest`() throws {
+		try withTemporaryDirectory { directory in
+			let fileURL: URL = directory.appending(component: "sample.txt")
+			try Data("hello mayfly\n".utf8).write(to: fileURL)
+			let digest: String = try LinuxKernelCache.sha256(of: fileURL)
+			#expect(digest == "28fd0da9fc1a0d7a9f9428a0bd97fadf91ac2bc4f820cbd812360ee4d3dc8111")
+		}
+	}
+}
