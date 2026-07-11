@@ -43,9 +43,9 @@ enum NymphToolInvoker {
 		} catch let error as NymphShimError {
 			return errorResult(code: error.code, message: error.message)
 		} catch let error as NymphTransportError {
-			return errorResult(code: "daemon_unreachable", message: error.description)
+			return errorResult(code: "daemon_unreachable", message: transportErrorMessage(for: error))
 		} catch {
-			return errorResult(code: "internal_error", message: "\(error)")
+			return errorResult(code: "internal_error", message: "an internal shim error occurred")
 		}
 	}
 
@@ -54,26 +54,33 @@ enum NymphToolInvoker {
 	private static func buildRequest(_ tool: ToolName, arguments: NymphToolArguments) throws -> NymphRequest {
 		switch tool {
 		case .spawn:
+			let golden: String = try arguments.requiredString("golden")
+			// MCP 邊界視為不可信呼叫端：golden 只收 golden root 下的具名 alias，擋
+			// ``GoldenResolver`` 的 `/` 開頭絕對路徑逃生梯（#33 NY-3）——逃生梯留給受信任的
+			// daemon socket 直連方（CLI 等），不對 MCP 開放。
+			guard !golden.hasPrefix("/") else {
+				throw NymphShimError.invalidGoldenAlias
+			}
 			return .spawn(SpawnParams(
-				golden: try arguments.requiredString("golden"),
-				cpus: arguments.int("cpus", default: 4),
-				memoryGiB: arguments.int("memory_gib", default: 4),
-				wait: arguments.bool("wait", default: true),
-				readinessTimeoutSeconds: arguments.int("readiness_timeout_s", default: 180)
+				golden: golden,
+				cpus: try arguments.int("cpus", default: 4),
+				memoryGiB: try arguments.int("memory_gib", default: 4),
+				wait: try arguments.bool("wait", default: true),
+				readinessTimeoutSeconds: try arguments.int("readiness_timeout_s", default: 180)
 			))
 
 		case .execute:
 			return .execute(ExecuteParams(
 				id: try arguments.requiredString("id"),
 				command: try arguments.requiredStringArray("cmd"),
-				timeoutSeconds: arguments.optionalInt("timeout_s"),
+				timeoutSeconds: try arguments.optionalInt("timeout_s"),
 				standardInput: arguments.string("stdin"),
 				workingDirectory: arguments.string("cwd"),
 				environment: arguments.stringDictionary("env")
 			))
 
 		case .list:
-			return .list(ListParams(all: arguments.bool("all", default: false)))
+			return .list(ListParams(all: try arguments.bool("all", default: false)))
 
 		case .status:
 			return .status(StatusParams(id: try arguments.requiredString("id")))
@@ -81,7 +88,7 @@ enum NymphToolInvoker {
 		case .destroy:
 			return .destroy(DestroyParams(
 				id: try arguments.requiredString("id"),
-				force: arguments.bool("force", default: true)
+				force: try arguments.bool("force", default: true)
 			))
 		}
 	}
@@ -106,7 +113,80 @@ enum NymphToolInvoker {
 			return successResult(destroyValue(result))
 
 		case let .toolError(error):
-			return errorResult(code: error.code, message: error.message)
+			return errorResult(code: error.code, message: daemonErrorMessage(for: error.code))
+		}
+	}
+
+	// MARK: - outward error genericisation
+
+	/// daemon ``ToolError`` 的對外訊息：**只依穩定 `code` 給通稱化訊息、丟棄 daemon 原始
+	/// `message`**。daemon 訊息可能夾帶 host 絕對路徑（`clone_failed` 帶 `clone failed: <path>`）、
+	/// guest IP／ssh stderr／known_hosts（`transport_failure`）、或 `String(describing:)` 內部細節
+	/// （`internal_error`）——這些留在 daemon 自己的 host-side log，不外流給 MCP client。LLM 拿到
+	/// actionable 的 `code` 已足夠判斷下一步。未知／未來新增的 code 落 `default` 的通稱訊息、
+	/// 不外流。
+	private static func daemonErrorMessage(for code: String) -> String {
+		switch code {
+		case "no_such_id":
+			return "no session with the requested id"
+
+		case "admission_denied":
+			return "the concurrent session limit has been reached"
+
+		case "golden_not_found":
+			return "the requested golden alias was not found"
+
+		case "clone_failed":
+			return "failed to clone the golden bundle"
+
+		case "not_ready":
+			return "the session is not ready"
+
+		case "ip_unavailable":
+			return "the session is ready but no IP is resolvable yet"
+
+		case "transport_failure":
+			return "the SSH connection to the guest failed"
+
+		case "timed_out":
+			return "the operation timed out"
+
+		case "not_apple_silicon":
+			return "nymph requires Apple Silicon"
+
+		case "bad_request":
+			return "the request was malformed"
+
+		case "internal_error":
+			return "the nymph daemon reported an internal error"
+
+		default:
+			return "the nymph daemon reported an error"
+		}
+	}
+
+	/// 傳輸失敗的對外訊息：**去掉 path／errno**。``NymphTransportError/description`` 帶 socket
+	/// 路徑（`pathTooLong`）與 errno 供 host-side triage／CLI（host 使用者看自機路徑無妨），但
+	/// MCP client 不該看到 host 檔案系統路徑——只給通稱化的 per-case 訊息，不帶任何值。
+	private static func transportErrorMessage(for error: NymphTransportError) -> String {
+		switch error {
+		case .connectFailed:
+			return "cannot reach the nymph daemon (is `mayfly nymph` running?)"
+
+		case .connectionClosed:
+			return "the connection to the nymph daemon closed before a response arrived"
+
+		case .pathTooLong:
+			return "the nymph socket path is too long"
+
+		case .socketCreationFailed:
+			return "failed to create the nymph socket"
+
+		case .bindFailed:
+			return "failed to bind the nymph socket"
+
+		case .listenFailed:
+			return "failed to listen on the nymph socket"
 		}
 	}
 
@@ -149,17 +229,25 @@ enum NymphToolInvoker {
 	}
 
 	/// `list` / `status` 共用的單一 session 摘要形狀：`{ id, state, ip, golden, cpus,
-	/// memory_gib, uptime_s }`。
+	/// memory_gib, uptime_s }`（`golden` 經 ``outwardGoldenValue(_:)`` 通稱化）。
 	private static func sessionSummaryFields(_ summary: SessionSummary) -> [String: Value] {
 		[
 			"id": .string(summary.id),
 			"state": .string(summary.state.rawValue),
 			"ip": summary.ip.map(Value.string) ?? .null,
-			"golden": .string(summary.golden),
+			"golden": .string(outwardGoldenValue(summary.golden)),
 			"cpus": .int(summary.cpus),
 			"memory_gib": .int(summary.memoryGiB),
 			"uptime_s": .int(summary.uptimeSeconds),
 		]
+	}
+
+	/// `golden` 欄位的對外值：具名 alias 原樣；`/` 開頭（受信任的 daemon socket 直連方以絕對
+	/// 路徑逃生梯 spawn 的 session、見 #33 NY-3）換成固定通稱字串。daemon socket 是跨管道
+	/// 共用的——直連方與 MCP shim 談同一張 session table，session 不保證源自 MCP、host 路徑
+	/// 不因來源不同而外流；縱深防禦，不依賴「兩者不共用 daemon」的部署拓樸保證。
+	private static func outwardGoldenValue(_ golden: String) -> String {
+		golden.hasPrefix("/") ? "<external-path>" : golden
 	}
 
 	// MARK: - result envelopes
