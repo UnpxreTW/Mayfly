@@ -1,1 +1,62 @@
-Ly8KLy8gIExpbnV4Tm9kZUtpdFRlc3RzCi8vCi8vICBDb3B5cmlnaHQgwqkgMjAyNiBVbnB4cmUKLy8gIExpY2Vuc2VkIHVuZGVyIHRoZSBBcGFjaGUgTGljZW5zZSAyLjAuIFNlZSBMSUNFTlNFIGZvciBkZXRhaWxzLgovLwovLyAgU1BEWC1MaWNlbnNlLUlkZW50aWZpZXI6IEFwYWNoZS0yLjAKCkB0ZXN0YWJsZSBpbXBvcnQgTGludXhOb2RlS2l0CmltcG9ydCBDb250YWluZXJpemF0aW9uRXJyb3IKaW1wb3J0IE55bXBoS2l0CmltcG9ydCBUZXN0aW5nCgovLyBNQVJLOiAtIExpbnV4R3Vlc3RFcnJvck1hcHBpbmdUZXN0cwoKcHJpdmF0ZSBmaW5hbCBjbGFzcyBMaW51eEd1ZXN0RXJyb3JNYXBwaW5nVGVzdHMgewoKCS8vLyBgLnRpbWVvdXRgIOKGkiBgZXhlY1RpbWVkT3V0YO+8iGB3YWl0KHRpbWVvdXRJblNlY29uZHM6KWAg6YC+5pmC55qEIDE6MSDlsI3mmKDvvInjgIIKCUBUZXN0Cglwcml2YXRlIGZ1bmMgYHRpbWVvdXQgbWFwcyB0byBleGVjVGltZWRPdXRgKCkgewoJCWxldCBlcnJvcjogQ29udGFpbmVyaXphdGlvbkVycm9yID0gLmluaXQoLnRpbWVvdXQsIG1lc3NhZ2U6ICJwcm9jZXNzIHdhaXQgdGltZWQgb3V0IikKCQkjZXhwZWN0KExpbnV4R3Vlc3RFcnJvck1hcHBpbmcubWFwKGVycm9yKSA9PSAuZXhlY1RpbWVkT3V0KQoJfQoKCS8vLyBgLm5vdEZvdW5kYCDihpIgYG5vdFJlYWR5YO+8iOWuueWZqOebruWJjeS4jeWPr+WumuWdgO+8ieOAggoJQFRlc3QKCXByaXZhdGUgZnVuYyBgbm90Rm91bmQgbWFwcyB0byBub3RSZWFkeWAoKSB7CgkJbGV0IGVycm9yOiBDb250YWluZXJpemF0aW9uRXJyb3IgPSAuaW5pdCgubm90Rm91bmQsIG1lc3NhZ2U6ICJubyBzdWNoIGNvbnRhaW5lciIpCgkJI2V4cGVjdChMaW51eEd1ZXN0RXJyb3JNYXBwaW5nLm1hcChlcnJvcikgPT0gLm5vdFJlYWR5KQoJfQoKCS8vLyBgLmludmFsaWRTdGF0ZWAg4oaSIGBub3RSZWFkeWDvvIjni4DmhYvkuI3lsI3jgIHnhKHms5XpgKPlhaXln7fooYzvvInjgIIKCUBUZXN0Cglwcml2YXRlIGZ1bmMgYGludmFsaWRTdGF0ZSBtYXBzIHRvIG5vdFJlYWR5YCgpIHsKCQlsZXQgZXJyb3I6IENvbnRhaW5lcml6YXRpb25FcnJvciA9IC5pbml0KC5pbnZhbGlkU3RhdGUsIG1lc3NhZ2U6ICJjb250YWluZXIgbm90IHN0YXJ0ZWQiKQoJCSNleHBlY3QoTGludXhHdWVzdEVycm9yTWFwcGluZy5tYXAoZXJyb3IpID09IC5ub3RSZWFkeSkKCX0KCgkvLy8gYC5jYW5jZWxsZWRgIOKGkiBgdHJhbnNwb3J0RmFpbHVyZWDvvIjln7fooYzpgJrpgZPkuK3pgJTooqvmiZPmlrfvvInjgIIKCUBUZXN0Cglwcml2YXRlIGZ1bmMgYGNhbmNlbGxlZCBtYXBzIHRvIHRyYW5zcG9ydEZhaWx1cmVgKCkgewoJCWxldCBlcnJvcjogQ29udGFpbmVyaXphdGlvbkVycm9yID0gLmluaXQoLmNhbmNlbGxlZCwgbWVzc2FnZTogImNhbmNlbGxlZCBieSBjYWxsZXIiKQoJCSNleHBlY3QoTGludXhHdWVzdEVycm9yTWFwcGluZy5tYXAoZXJyb3IpID09IC50cmFuc3BvcnRGYWlsdXJlKCJjYW5jZWxsZWQgYnkgY2FsbGVyIikpCgl9CgoJLy8vIOWFtumkmOacqueJueWIpeatuOmhnueahCBjb2Rl77yI5aaCIGAuaW50ZXJuYWxFcnJvcmDvvInihpIgYGludGVybmFsRmFpbHVyZWAgY2F0Y2gtYWxs44CCCglAVGVzdAoJcHJpdmF0ZSBmdW5jIGB1bmNhdGVnb3JpemVkIGNvZGUgbWFwcyB0byBpbnRlcm5hbEZhaWx1cmVgKCkgewoJCWxldCBlcnJvcjogQ29udGFpbmVyaXphdGlvbkVycm9yID0gLmluaXQoLmludGVybmFsRXJyb3IsIG1lc3NhZ2U6ICJib29tIikKCQkjZXhwZWN0KExpbnV4R3Vlc3RFcnJvck1hcHBpbmcubWFwKGVycm9yKSA9PSAuaW50ZXJuYWxGYWlsdXJlKCJib29tIikpCgl9CgoJLy8vIOmdniBgQ29udGFpbmVyaXphdGlvbkVycm9yYO+8iOWmguW6leWxpCBgVVJMU2Vzc2lvbmAgLyBgUHJvY2Vzc2Ag5aSx5pWX77yJ4oaSIGB0cmFuc3BvcnRGYWlsdXJlYO+8jAoJLy8vIOW4tuWOn+Wni+mMr+iqpOaPj+i/sOOAgeS4jeWQnuaOieizh+ioiuOAggoJQFRlc3QKCXByaXZhdGUgZnVuYyBgbm9uIGNvbnRhaW5lcml6YXRpb24gZXJyb3IgbWFwcyB0byB0cmFuc3BvcnRGYWlsdXJlYCgpIHsKCQlzdHJ1Y3QgT3RoZXJFcnJvcjogRXJyb3IsIEN1c3RvbVN0cmluZ0NvbnZlcnRpYmxlIHsKCQkJdmFyIGRlc2NyaXB0aW9uOiBTdHJpbmcgeyAib3RoZXItZXJyb3IiIH0KCQl9CgkJI2V4cGVjdChMaW51eEd1ZXN0RXJyb3JNYXBwaW5nLm1hcChPdGhlckVycm9yKCkpID09IC50cmFuc3BvcnRGYWlsdXJlKCJvdGhlci1lcnJvciIpKQoJfQp9Cg==
+//
+//  LinuxNodeKitTests
+//
+//  Copyright © 2026 Unpxre
+//  Licensed under the Apache License 2.0. See LICENSE for details.
+//
+//  SPDX-License-Identifier: Apache-2.0
+
+@testable import LinuxNodeKit
+import ContainerizationError
+import NymphKit
+import Testing
+
+// MARK: - LinuxGuestErrorMappingTests
+
+private final class LinuxGuestErrorMappingTests {
+
+	/// `.timeout` → `execTimedOut`（`wait(timeoutInSeconds:)` 逾時的 1:1 對映）。
+	@Test
+	private func `timeout maps to execTimedOut`() {
+		let error: ContainerizationError = .init(.timeout, message: "process wait timed out")
+		#expect(LinuxGuestErrorMapping.map(error) == .execTimedOut)
+	}
+
+	/// `.notFound` → `notReady`（容器目前不可定址）。
+	@Test
+	private func `notFound maps to notReady`() {
+		let error: ContainerizationError = .init(.notFound, message: "no such container")
+		#expect(LinuxGuestErrorMapping.map(error) == .notReady)
+	}
+
+	/// `.invalidState` → `notReady`（狀態不對、無法連入執行）。
+	@Test
+	private func `invalidState maps to notReady`() {
+		let error: ContainerizationError = .init(.invalidState, message: "container not started")
+		#expect(LinuxGuestErrorMapping.map(error) == .notReady)
+	}
+
+	/// `.cancelled` → `transportFailure`（執行通道中途被打斷）。
+	@Test
+	private func `cancelled maps to transportFailure`() {
+		let error: ContainerizationError = .init(.cancelled, message: "cancelled by caller")
+		#expect(LinuxGuestErrorMapping.map(error) == .transportFailure("cancelled by caller"))
+	}
+
+	/// 其餘未特別歸類的 code（如 `.internalError`）→ `internalFailure` catch-all。
+	@Test
+	private func `uncategorized code maps to internalFailure`() {
+		let error: ContainerizationError = .init(.internalError, message: "boom")
+		#expect(LinuxGuestErrorMapping.map(error) == .internalFailure("boom"))
+	}
+
+	/// 非 `ContainerizationError`（如底層 `URLSession` / `Process` 失敗）→ `transportFailure`，
+	/// 帶原始錯誤描述、不吞掉資訊。
+	@Test
+	private func `non containerization error maps to transportFailure`() {
+		struct OtherError: Error, CustomStringConvertible {
+			var description: String { "other-error" }
+		}
+		#expect(LinuxGuestErrorMapping.map(OtherError()) == .transportFailure("other-error"))
+	}
+}
