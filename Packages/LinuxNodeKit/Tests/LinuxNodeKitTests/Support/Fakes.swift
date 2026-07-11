@@ -1,1 +1,67 @@
-Ly8KLy8gIExpbnV4Tm9kZUtpdFRlc3RzCi8vCi8vICBDb3B5cmlnaHQgwqkgMjAyNiBVbnB4cmUKLy8gIExpY2Vuc2VkIHVuZGVyIHRoZSBBcGFjaGUgTGljZW5zZSAyLjAuIFNlZSBMSUNFTlNFIGZvciBkZXRhaWxzLgovLwovLyAgU1BEWC1MaWNlbnNlLUlkZW50aWZpZXI6IEFwYWNoZS0yLjAKCmltcG9ydCBGb3VuZGF0aW9uCkB0ZXN0YWJsZSBpbXBvcnQgTGludXhOb2RlS2l0CgovLy8g5qW157Ch5LiK6Y6W5bCB5aWX4oCU4oCUZmFrZSDpnIDlnKjot6jpmpTpm6LvvIhgYXN5bmNgIOWRvOWPq++8iemWk+e0r+epjeWRvOWPq+e0gOmMhO+8jOeUqCBOU0xvY2sg6K235LiA5Lu95Y+v6K6KCi8vLyDlgLzljbPlj6/vvIzpgb/lhY3muKzoqabkvp3os7Tlhbfpq5TkuKbooYzljp/oqp7vvIjlkIwgTnltcGhLaXRUZXN0cy9TdXBwb3J0L0Zha2VzLnN3aWZ0IOeahOaXouacieaooeW8j++8ieOAggpmaW5hbCBjbGFzcyBMb2NrZWQ8VmFsdWU+OiBAdW5jaGVja2VkIFNlbmRhYmxlIHsKCglpbml0KF8gdmFsdWU6IFZhbHVlKSB7CgkJc2VsZi52YWx1ZSA9IHZhbHVlCgl9CgoJQGRpc2NhcmRhYmxlUmVzdWx0CglmdW5jIHdpdGhMb2NrPFJlc3VsdD4oXyBib2R5OiAoaW5vdXQgVmFsdWUpIC0+IFJlc3VsdCkgLT4gUmVzdWx0IHsKCQlsb2NrLmxvY2soKQoJCWRlZmVyIHsgbG9jay51bmxvY2soKSB9CgkJcmV0dXJuIGJvZHkoJnZhbHVlKQoJfQoKCXZhciBjdXJyZW50OiBWYWx1ZSB7CgkJd2l0aExvY2sgeyAkMCB9Cgl9CgoJcHJpdmF0ZSBsZXQgbG9jazogTlNMb2NrID0gLmluaXQoKQoKCXByaXZhdGUgdmFyIHZhbHVlOiBWYWx1ZQp9CgovLy8g5YGHIGBgS2VybmVsQXJjaGl2ZUZldGNoaW5nYGDvvJroqJjpjITmlLbliLDnmoQgYXJjaGl2ZSAvIGRlc3RpbmF0aW9u77yM5Y+v6YWN5oiQ5Yqf5a+r5YWlCi8vLyDkvZTkvY3mqpTmiJbmk7Llm7rlrprpjK/oqqTigJTigJTmioogYGBMaW51eEtlcm5lbFByb3Zpc2lvbmVyYGAg55qEIGZldGNoLW9uLWRlbWFuZCDnt6jmjpLoiIfnnJ/pgKPntrIKLy8vIC8g55yfIHRhciDop6Plo5PpmpTplovkvobmuKzjgIIKZmluYWwgY2xhc3MgRmFrZUtlcm5lbEFyY2hpdmVGZXRjaGVyOiBLZXJuZWxBcmNoaXZlRmV0Y2hpbmcsIEB1bmNoZWNrZWQgU2VuZGFibGUgewoKCWluaXQoZmFpbHVyZTogKGFueSBFcnJvcik/ID0gbmlsLCB3cml0dGVuQ29udGVudHM6IFN0cmluZyA9ICJmYWtlLWtlcm5lbC1ieXRlcyIpIHsKCQlzZWxmLmZhaWx1cmUgPSBmYWlsdXJlCgkJc2VsZi53cml0dGVuQ29udGVudHMgPSB3cml0dGVuQ29udGVudHMKCX0KCglzdHJ1Y3QgRmV0Y2hDYWxsIHsKCgkJbGV0IGFyY2hpdmU6IExpbnV4S2VybmVsQXJjaGl2ZQoKCQlsZXQgZGVzdGluYXRpb246IFVSTAoJfQoKCWxldCBjYWxsczogTG9ja2VkPFtGZXRjaENhbGxdPiA9IC5pbml0KFtdKQoKCWZ1bmMgZmV0Y2goXyBhcmNoaXZlOiBMaW51eEtlcm5lbEFyY2hpdmUsIHRvIGRlc3RpbmF0aW9uOiBVUkwpIGFzeW5jIHRocm93cyB7CgkJY2FsbHMud2l0aExvY2sgeyAkMC5hcHBlbmQoRmV0Y2hDYWxsKGFyY2hpdmU6IGFyY2hpdmUsIGRlc3RpbmF0aW9uOiBkZXN0aW5hdGlvbikpIH0KCQlpZiBsZXQgZmFpbHVyZSB7CgkJCXRocm93IGZhaWx1cmUKCQl9CgkJdHJ5IEZpbGVNYW5hZ2VyLmRlZmF1bHQuY3JlYXRlRGlyZWN0b3J5KGF0OiBkZXN0aW5hdGlvbi5kZWxldGluZ0xhc3RQYXRoQ29tcG9uZW50KCksIHdpdGhJbnRlcm1lZGlhdGVEaXJlY3RvcmllczogdHJ1ZSkKCQl0cnkgRGF0YSh3cml0dGVuQ29udGVudHMudXRmOCkud3JpdGUodG86IGRlc3RpbmF0aW9uKQoJfQoKCXByaXZhdGUgbGV0IGZhaWx1cmU6IChhbnkgRXJyb3IpPwoKCXByaXZhdGUgbGV0IHdyaXR0ZW5Db250ZW50czogU3RyaW5nCn0K
+//
+//  LinuxNodeKitTests
+//
+//  Copyright © 2026 Unpxre
+//  Licensed under the Apache License 2.0. See LICENSE for details.
+//
+//  SPDX-License-Identifier: Apache-2.0
+
+import Foundation
+@testable import LinuxNodeKit
+
+/// 極簡上鎖封套——fake 需在跨隔離（`async` 呼叫）間累積呼叫紀錄，用 NSLock 護一份可變
+/// 值即可，避免測試依賴具體並行原語（同 NymphKitTests/Support/Fakes.swift 的既有模式）。
+final class Locked<Value>: @unchecked Sendable {
+
+	init(_ value: Value) {
+		self.value = value
+	}
+
+	@discardableResult
+	func withLock<Result>(_ body: (inout Value) -> Result) -> Result {
+		lock.lock()
+		defer { lock.unlock() }
+		return body(&value)
+	}
+
+	var current: Value {
+		withLock { $0 }
+	}
+
+	private let lock: NSLock = .init()
+
+	private var value: Value
+}
+
+/// 假 ``KernelArchiveFetching``：記錄收到的 archive / destination，可配成功寫入
+/// 佔位檔或擲固定錯誤——把 ``LinuxKernelProvisioner`` 的 fetch-on-demand 編排與真連網
+/// / 真 tar 解壓隔開來測。
+final class FakeKernelArchiveFetcher: KernelArchiveFetching, @unchecked Sendable {
+
+	init(failure: (any Error)? = nil, writtenContents: String = "fake-kernel-bytes") {
+		self.failure = failure
+		self.writtenContents = writtenContents
+	}
+
+	struct FetchCall {
+
+		let archive: LinuxKernelArchive
+
+		let destination: URL
+	}
+
+	let calls: Locked<[FetchCall]> = .init([])
+
+	func fetch(_ archive: LinuxKernelArchive, to destination: URL) async throws {
+		calls.withLock { $0.append(FetchCall(archive: archive, destination: destination)) }
+		if let failure {
+			throw failure
+		}
+		try FileManager.default.createDirectory(at: destination.deletingLastPathComponent(), withIntermediateDirectories: true)
+		try Data(writtenContents.utf8).write(to: destination)
+	}
+
+	private let failure: (any Error)?
+
+	private let writtenContents: String
+}
