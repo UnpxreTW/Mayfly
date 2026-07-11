@@ -1,1 +1,39 @@
-Ly8gc3dpZnQtdG9vbHMtdmVyc2lvbjogNi4wCgppbXBvcnQgUGFja2FnZURlc2NyaXB0aW9uCgpsZXQgcGFja2FnZSA9IFBhY2thZ2UoCgluYW1lOiAiTGludXhOb2RlS2l0IiwKCXBsYXRmb3JtczogWwoJCS5tYWNPUygiMTUuMCIpLAoJXSwKCXByb2R1Y3RzOiBbCgkJLmxpYnJhcnkobmFtZTogIkxpbnV4Tm9kZUtpdCIsIHRhcmdldHM6IFsiTGludXhOb2RlS2l0Il0pLAoJXSwKCWRlcGVuZGVuY2llczogWwoJCS5wYWNrYWdlKHBhdGg6ICIuLi9tYXlmbHktY2xpIiksCgkJLnBhY2thZ2UocGF0aDogIi4uL01hY2hpbmVLaXQiKSwKCQkucGFja2FnZSh1cmw6ICJodHRwczovL2dpdGh1Yi5jb20vYXBwbGUvY29udGFpbmVyaXphdGlvbi5naXQiLCBmcm9tOiAiMC4zNy4wIiksCgkJLnBhY2thZ2UodXJsOiAiaHR0cHM6Ly9naXRodWIuY29tL1VucHhyZVRXL1N3aWZ0U3R5bGVLaXQuZ2l0IiwgZnJvbTogIjIuMC4wIiksCgldLAoJdGFyZ2V0czogWwoJCS50YXJnZXQoCgkJCW5hbWU6ICJMaW51eE5vZGVLaXQiLAoJCQlkZXBlbmRlbmNpZXM6IFsKCQkJCS5wcm9kdWN0KG5hbWU6ICJOeW1waEtpdCIsIHBhY2thZ2U6ICJtYXlmbHktY2xpIiksCgkJCQkucHJvZHVjdChuYW1lOiAiTWFjaGluZUtpdCIsIHBhY2thZ2U6ICJNYWNoaW5lS2l0IiksCgkJCQkucHJvZHVjdChuYW1lOiAiQ29udGFpbmVyaXphdGlvbiIsIHBhY2thZ2U6ICJjb250YWluZXJpemF0aW9uIiksCgkJCQkucHJvZHVjdChuYW1lOiAiQ29udGFpbmVyaXphdGlvbk9TIiwgcGFja2FnZTogImNvbnRhaW5lcml6YXRpb24iKSwKCQkJXSwKCQkJcGF0aDogIlNvdXJjZXMvTGludXhOb2RlS2l0IiwKCQkJcGx1Z2luczogWwoJCQkJLnBsdWdpbihuYW1lOiAiU3dpZnRTdHlsZUxpbnQiLCBwYWNrYWdlOiAiU3dpZnRTdHlsZUtpdCIpLAoJCQldCgkJKSwKCQkudGVzdFRhcmdldCgKCQkJbmFtZTogIkxpbnV4Tm9kZUtpdFRlc3RzIiwKCQkJZGVwZW5kZW5jaWVzOiBbIkxpbnV4Tm9kZUtpdCJdLAoJCQlwYXRoOiAiVGVzdHMvTGludXhOb2RlS2l0VGVzdHMiCgkJKSwKCV0KKQo=
+// swift-tools-version: 6.0
+
+import PackageDescription
+
+let package = Package(
+	name: "LinuxNodeKit",
+	platforms: [
+		.macOS("15.0"),
+	],
+	products: [
+		.library(name: "LinuxNodeKit", targets: ["LinuxNodeKit"]),
+	],
+	dependencies: [
+		.package(path: "../mayfly-cli"),
+		.package(path: "../MachineKit"),
+		.package(url: "https://github.com/apple/containerization.git", from: "0.37.0"),
+		.package(url: "https://github.com/UnpxreTW/SwiftStyleKit.git", from: "2.0.0"),
+	],
+	targets: [
+		.target(
+			name: "LinuxNodeKit",
+			dependencies: [
+				.product(name: "NymphKit", package: "mayfly-cli"),
+				.product(name: "MachineKit", package: "MachineKit"),
+				.product(name: "Containerization", package: "containerization"),
+				.product(name: "ContainerizationOS", package: "containerization"),
+			],
+			path: "Sources/LinuxNodeKit",
+			plugins: [
+				.plugin(name: "SwiftStyleLint", package: "SwiftStyleKit"),
+			]
+		),
+		.testTarget(
+			name: "LinuxNodeKitTests",
+			dependencies: ["LinuxNodeKit"],
+			path: "Tests/LinuxNodeKitTests"
+		),
+	]
+)
