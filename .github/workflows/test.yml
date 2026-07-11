@@ -1,1 +1,28 @@
-IyBTUERYLUZpbGVDb3B5cmlnaHRUZXh0OiAyMDI2IFVucHhyZSAoR2l0SHViOiBVbnB4cmVUVykKIyBTUERYLUxpY2Vuc2UtSWRlbnRpZmllcjogQXBhY2hlLTIuMAoKbmFtZTogVGVzdAoKb246CiAgcHVsbF9yZXF1ZXN0OgogIHB1c2g6CiAgICBicmFuY2hlczogW21haW5dCgpwZXJtaXNzaW9uczoKICBjb250ZW50czogcmVhZAoKam9iczoKICB0ZXN0OgogICAgcnVucy1vbjogbWFjb3MtbGF0ZXN0CiAgICBzdGVwczoKICAgICAgLSB1c2VzOiBhY3Rpb25zL2NoZWNrb3V0QHY3CiAgICAgIC0gbmFtZTogUGluIFhjb2RlIDI2LjMKICAgICAgICB1c2VzOiBtYXhpbS1sb2Jhbm92L3NldHVwLXhjb2RlQHYxCiAgICAgICAgd2l0aDoKICAgICAgICAgIHhjb2RlLXZlcnNpb246ICcyNi4zJwogICAgICAtIG5hbWU6IHN3aWZ0IHRlc3TvvIhNYWNoaW5lS2l077yJCiAgICAgICAgcnVuOiBzd2lmdCB0ZXN0IC0tcGFja2FnZS1wYXRoIFBhY2thZ2VzL01hY2hpbmVLaXQKICAgICAgLSBuYW1lOiBzd2lmdCB0ZXN077yIbWF5Zmx5LWNsae+8iQogICAgICAgIHJ1bjogc3dpZnQgdGVzdCAtLXBhY2thZ2UtcGF0aCBQYWNrYWdlcy9tYXlmbHktY2xpCiAgICAgIC0gbmFtZTogc3dpZnQgdGVzdO+8iExpbnV4Tm9kZUtpdO+8iQogICAgICAgIHJ1bjogc3dpZnQgdGVzdCAtLXBhY2thZ2UtcGF0aCBQYWNrYWdlcy9MaW51eE5vZGVLaXQK
+# SPDX-FileCopyrightText: 2026 Unpxre (GitHub: UnpxreTW)
+# SPDX-License-Identifier: Apache-2.0
+
+name: Test
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Pin Xcode 26.3
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: '26.3'
+      - name: swift test（MachineKit）
+        run: swift test --package-path Packages/MachineKit
+      - name: swift test（mayfly-cli）
+        run: swift test --package-path Packages/mayfly-cli
+      - name: swift test（LinuxNodeKit）
+        run: swift test --package-path Packages/LinuxNodeKit
