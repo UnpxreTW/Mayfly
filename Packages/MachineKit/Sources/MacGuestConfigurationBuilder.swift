@@ -109,9 +109,7 @@ public enum MacGuestConfigurationBuilder {
 		guard let hardwareModel = VZMacHardwareModel(dataRepresentation: hardwareModelData) else {
 			throw MacGuestConfigurationError.identityDataInvalid(spec.hardwareModel)
 		}
-		guard hardwareModel.isSupported else {
-			throw MacGuestConfigurationError.hardwareModelUnsupported
-		}
+		guard hardwareModel.isSupported else { throw MacGuestConfigurationError.hardwareModelUnsupported }
 		platform.hardwareModel = hardwareModel
 		let identifierData = try identityData(at: spec.machineIdentifier)
 		guard let identifier = VZMacMachineIdentifier(dataRepresentation: identifierData) else {

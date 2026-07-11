@@ -49,9 +49,7 @@ final class GuestEventRelay: NSObject, VZVirtualMachineDelegate {
 		if let event {
 			eventContinuation.yield(event)
 		}
-		guard stopReason == nil else {
-			return
-		}
+		guard stopReason == nil else { return }
 		stopReason = reason
 		for waiter in stopWaiters.values {
 			waiter.resume(returning: reason)

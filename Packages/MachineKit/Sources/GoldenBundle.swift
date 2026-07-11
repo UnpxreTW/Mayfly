@@ -35,9 +35,7 @@ public struct GoldenBundle: Sendable {
 		} catch {
 			throw GoldenBundleError.metadataUndecodable(metadataURL)
 		}
-		guard metadata.ephemeral != true else {
-			throw GoldenBundleError.markedEphemeral(bundle)
-		}
+		guard metadata.ephemeral != true else { throw GoldenBundleError.markedEphemeral(bundle) }
 		return GoldenBundle(bundle: bundle)
 	}
 

@@ -49,9 +49,7 @@ public actor GuestVolumeMounter {
 				attachedBaseDisk = base
 				return base
 			} catch let error as GuestVolumeMounterError where Self.isBusy(error) {
-				guard elapsedMS < capMS else {
-					throw GuestVolumeMounterError.stillBusy
-				}
+				guard elapsedMS < capMS else { throw GuestVolumeMounterError.stillBusy }
 				try await Task.sleep(for: .milliseconds(delayMS))
 				elapsedMS += delayMS
 				delayMS = min(delayMS * 2, 2000)
@@ -63,9 +61,7 @@ public actor GuestVolumeMounter {
 	/// guest Data 卷的 device id（如 `disk11s5`）存起。需先 ``attach()``。
 	@discardableResult
 	public func locateDataVolume() async throws -> String {
-		guard let base = attachedBaseDisk else {
-			throw GuestVolumeMounterError.notReady(step: "attach")
-		}
+		guard let base = attachedBaseDisk else { throw GuestVolumeMounterError.notReady(step: "attach") }
 		let output = try await runner.run(executable: "/usr/sbin/diskutil", arguments: ["apfs", "list", "-plist"])
 		let topology = try GuestDiskTopology(plistData: output)
 		let identifier = try topology.dataVolumeDeviceID(onAttachedDisk: base)
@@ -82,9 +78,7 @@ public actor GuestVolumeMounter {
 	/// host 端**短暫** `mdutil -i off <mountpoint>`（不持久進卷）或靠短窗口 + 快速 detach。〕
 	@discardableResult
 	public func mount() async throws -> URL {
-		guard let identifier = dataVolumeID else {
-			throw GuestVolumeMounterError.notReady(step: "locateDataVolume")
-		}
+		guard let identifier = dataVolumeID else { throw GuestVolumeMounterError.notReady(step: "locateDataVolume") }
 		do {
 			_ = try await runner.run(
 				executable: "/usr/sbin/diskutil",
@@ -103,9 +97,7 @@ public actor GuestVolumeMounter {
 	/// （否則 owners-disabled、注入檔帶 host uid）。需先 ``locateDataVolume()``。
 	public func enableOwnership() async throws {
 		try Self.requireRoot()
-		guard let identifier = dataVolumeID else {
-			throw GuestVolumeMounterError.notReady(step: "locateDataVolume")
-		}
+		guard let identifier = dataVolumeID else { throw GuestVolumeMounterError.notReady(step: "locateDataVolume") }
 		_ = try await runner.run(executable: "/usr/sbin/diskutil", arguments: ["enableOwnership", identifier])
 	}
 
@@ -120,9 +112,7 @@ public actor GuestVolumeMounter {
 	/// chown 寫入的檔本身、不推斷目錄 owner）。
 	public func write(_ files: [InjectedFile]) async throws {
 		try Self.requireRoot()
-		guard let mountPoint else {
-			throw GuestVolumeMounterError.notReady(step: "mount")
-		}
+		guard let mountPoint else { throw GuestVolumeMounterError.notReady(step: "mount") }
 		for file in files {
 			let target = mountPoint.appending(path: file.relativePath)
 			_ = try await runner.run(
@@ -145,9 +135,7 @@ public actor GuestVolumeMounter {
 	/// `hdiutil detach` 卸掉整顆 attached image（連同掛上的 Data 卷）。未 attach 則 no-op。
 	/// 收尾用——呼叫端通常以 `try?` 包在 defer。
 	public func detach() async throws {
-		guard let base = attachedBaseDisk else {
-			return
-		}
+		guard let base = attachedBaseDisk else { return }
 		_ = try await runner.run(executable: "/usr/bin/hdiutil", arguments: ["detach", "/dev/\(base)"])
 		attachedBaseDisk = nil
 		dataVolumeID = nil
@@ -182,9 +170,7 @@ public actor GuestVolumeMounter {
 		let wholeDisk = entities.lazy.compactMap { $0["dev-entry"] as? String }.first { entry in
 			entry.wholeMatch(of: /\/dev\/disk[0-9]+/) != nil
 		}
-		guard let devEntry = wholeDisk else {
-			throw GuestVolumeMounterError.unparseableAttachOutput
-		}
+		guard let devEntry = wholeDisk else { throw GuestVolumeMounterError.unparseableAttachOutput }
 		return String(devEntry.dropFirst("/dev/".count))
 	}
 
@@ -205,27 +191,21 @@ public actor GuestVolumeMounter {
 
 	/// busy-like 失敗才值得 attach 重試（其餘錯立刻上拋、不空轉）。
 	private static func isBusy(_ error: GuestVolumeMounterError) -> Bool {
-		guard case let .commandFailed(_, _, stderr) = error else {
-			return false
-		}
+		guard case let .commandFailed(_, _, stderr) = error else { return false }
 		let lowered = stderr.lowercased()
 		return lowered.contains("busy") || lowered.contains("resource temporarily unavailable") || lowered.contains("in use")
 	}
 
 	/// 掛載失敗是否因卷加密 / 鎖定（→ `encryptedLocked` 走 fallback、非通用錯）。
 	private static func isLocked(_ error: GuestVolumeMounterError) -> Bool {
-		guard case let .commandFailed(_, _, stderr) = error else {
-			return false
-		}
+		guard case let .commandFailed(_, _, stderr) = error else { return false }
 		let lowered = stderr.lowercased()
 		return lowered.contains("locked") || lowered.contains("encrypt") || lowered.contains("passphrase")
 	}
 
 	/// 需 root 步驟的 preflight。
 	private static func requireRoot() throws {
-		guard geteuid() == 0 else {
-			throw GuestVolumeMounterError.requiresRoot
-		}
+		guard geteuid() == 0 else { throw GuestVolumeMounterError.requiresRoot }
 	}
 
 	/// 待 attach 的 RAW guest disk image。

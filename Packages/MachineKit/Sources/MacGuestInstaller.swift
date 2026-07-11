@@ -69,7 +69,7 @@ public final class MacGuestInstaller: @unchecked Sendable {
 				}
 			} onCancel: {
 				// 與 operation 閉包同在 serial vmQueue 上序列化：起跑後才 cancel
-				// progress，未起跑只立旗標、讓 operation 閉包以 .cancelled 收束。
+				// progress、未起跑只立旗標、讓 operation 閉包以 .cancelled 收束。
 				vmQueue.async {
 					if self.installStarted {
 						self.installer?.progress.cancel()
@@ -117,9 +117,7 @@ public final class MacGuestInstaller: @unchecked Sendable {
 	) throws {
 		let manager: FileManager = .default
 		if manager.fileExists(atPath: bundle.path) {
-			guard overwrite else {
-				throw MacGuestInstallerError.bundleAlreadyExists(bundle)
-			}
+			guard overwrite else { throw MacGuestInstallerError.bundleAlreadyExists(bundle) }
 		}
 		// 顯式型別必填：static method 回傳型別 ≠ 外層型別，省略會被 formatter 的
 		// propertyTypes 規則誤改成 `: Host` 致編譯不過。

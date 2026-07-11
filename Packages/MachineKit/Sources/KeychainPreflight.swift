@@ -93,12 +93,8 @@ private struct LegacyDefaultKeychainQuery: DefaultKeychainQuerying {
 		// OSStatus 顯式標註不只為可讀性：SecKeychain* 函式大寫開頭、省略型別
 		// 會被 formatter 的 propertyTypes 規則誤判為型別改寫成 .init(...)。
 		let copyStatus: OSStatus = SecKeychainCopyDefault(&keychain)
-		guard copyStatus != errSecNoDefaultKeychain else {
-			return .missing
-		}
-		guard copyStatus == errSecSuccess else {
-			return .undetermined(status: copyStatus)
-		}
+		guard copyStatus != errSecNoDefaultKeychain else { return .missing }
+		guard copyStatus == errSecSuccess else { return .undetermined(status: copyStatus) }
 		guard let keychain else {
 			// Copy 成功卻給 nil 違反 CF 慣例、理論上不可達；用 internal
 			// component 當 sentinel，避免 undetermined 攜帶成功碼 0。
@@ -108,15 +104,9 @@ private struct LegacyDefaultKeychainQuery: DefaultKeychainQuerying {
 		let statusResult: OSStatus = SecKeychainGetStatus(keychain, &keychainStatus)
 		// 登記還在、檔案本體被刪：ref 建得出來、GetStatus 才報檔不存在——
 		// 與「從未設定」同屬可修復的 missing、不是偵測器故障。
-		guard statusResult != errSecNoSuchKeychain else {
-			return .missing
-		}
-		guard statusResult == errSecSuccess else {
-			return .undetermined(status: statusResult)
-		}
-		guard keychainStatus & SecKeychainStatus(kSecUnlockStateStatus) != 0 else {
-			return .locked(path: path(of: keychain))
-		}
+		guard statusResult != errSecNoSuchKeychain else { return .missing }
+		guard statusResult == errSecSuccess else { return .undetermined(status: statusResult) }
+		guard keychainStatus & SecKeychainStatus(kSecUnlockStateStatus) != 0 else { return .locked(path: path(of: keychain)) }
 		return .unlocked
 	}
 
@@ -125,9 +115,7 @@ private struct LegacyDefaultKeychainQuery: DefaultKeychainQuerying {
 	private func path(of keychain: SecKeychain) -> String? {
 		var buffer: [CChar] = .init(repeating: 0, count: Int(PATH_MAX))
 		var length: UInt32 = .init(buffer.count)
-		guard SecKeychainGetPath(keychain, &length, &buffer) == errSecSuccess else {
-			return nil
-		}
+		guard SecKeychainGetPath(keychain, &length, &buffer) == errSecSuccess else { return nil }
 		// length 出參 = 不含 NUL 的實際長度；用它截斷再以 failable 解碼（避開
 		// String(cString: [CChar]) 這個 stdlib 已 deprecated 的 overload；非法
 		// UTF-8 回 nil、由呼叫端當「取不到路徑」處理，best-effort 不影響判定）。
