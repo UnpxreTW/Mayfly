@@ -99,7 +99,7 @@ public struct SystemKernelArchiveFetcher: KernelArchiveFetching {
 	/// `copyItem` 保留 symlink 不跟隨，若直接複製連結，待解壓工作目錄被 defer 清掉後，快取
 	/// 裡只剩懸空 symlink（容器讀不到 kernel、`isCached` 跟隨懸空連結恆 false → 每次重抓、
 	/// 永遠壞）。故複製前先 `resolvingSymlinksInPath()` 解到 extractDir 內的真 regular
-	/// file——相對 symlink 指向同目錄檔、解析後仍落在 extractDir 內。抽成 internal 供 B1
+	/// file——相對 symlink 指向同目錄檔、解析後仍落在 extractDir 內。抽成 internal 供
 	/// 迴歸測試不連網直接跑安裝路徑。
 	func install(extractedKernel: URL, to destination: URL) throws {
 		let manager: FileManager = .default
