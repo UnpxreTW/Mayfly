@@ -51,12 +51,7 @@ public struct SystemKernelArchiveFetcher: KernelArchiveFetching {
 			throw ArchiveError.missingInnerFile(archive.innerPath)
 		}
 
-		try manager.createDirectory(at: destination.deletingLastPathComponent(), withIntermediateDirectories: true)
-		let staging: URL = destination.deletingLastPathComponent().appending(component: ".\(destination.lastPathComponent).partial")
-		try? manager.removeItem(at: staging)
-		defer { try? manager.removeItem(at: staging) }
-		try manager.copyItem(at: extractedKernel, to: staging)
-		try manager.moveItem(at: staging, to: destination)
+		try install(extractedKernel: extractedKernel, to: destination)
 	}
 
 	// MARK: Private
@@ -96,5 +91,24 @@ public struct SystemKernelArchiveFetcher: KernelArchiveFetching {
 				}
 			}
 		}
+	}
+
+	/// 把解壓出的 kernel 安裝到 `destination`：先解 symlink，再走 staging → atomic rename
+	/// （半成品不以最終名存在，`isCached`「存在即完整」契約）。kata 封存把
+	/// `vmlinux.container` 出成指向同目錄版本化真檔（`vmlinux-<ver>`）的相對 symlink；
+	/// `copyItem` 保留 symlink 不跟隨，若直接複製連結，待解壓工作目錄被 defer 清掉後，快取
+	/// 裡只剩懸空 symlink（容器讀不到 kernel、`isCached` 跟隨懸空連結恆 false → 每次重抓、
+	/// 永遠壞）。故複製前先 `resolvingSymlinksInPath()` 解到 extractDir 內的真 regular
+	/// file——相對 symlink 指向同目錄檔、解析後仍落在 extractDir 內。抽成 internal 供 B1
+	/// 迴歸測試不連網直接跑安裝路徑。
+	func install(extractedKernel: URL, to destination: URL) throws {
+		let manager: FileManager = .default
+		let resolvedKernel: URL = extractedKernel.resolvingSymlinksInPath()
+		try manager.createDirectory(at: destination.deletingLastPathComponent(), withIntermediateDirectories: true)
+		let staging: URL = destination.deletingLastPathComponent().appending(component: ".\(destination.lastPathComponent).partial")
+		try? manager.removeItem(at: staging)
+		defer { try? manager.removeItem(at: staging) }
+		try manager.copyItem(at: resolvedKernel, to: staging)
+		try manager.moveItem(at: staging, to: destination)
 	}
 }
