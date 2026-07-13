@@ -24,3 +24,5 @@ jobs:
         run: swift build --package-path Packages/MachineKit
       - name: swift build（mayfly-cli）
         run: swift build --package-path Packages/mayfly-cli
+      - name: swift build（LinuxNodeKit）
+        run: swift build --package-path Packages/LinuxNodeKit

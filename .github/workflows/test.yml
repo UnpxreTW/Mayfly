@@ -24,3 +24,5 @@ jobs:
         run: swift test --package-path Packages/MachineKit
       - name: swift test（mayfly-cli）
         run: swift test --package-path Packages/mayfly-cli
+      - name: swift test（LinuxNodeKit）
+        run: swift test --package-path Packages/LinuxNodeKit

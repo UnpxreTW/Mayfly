@@ -16,6 +16,9 @@ path = [
 	"Packages/mayfly-cli/NOTICE",
 	"Packages/mayfly-cli/Package.swift",
 	"Packages/mayfly-cli/Package.resolved",
+	"Packages/LinuxNodeKit/NOTICE",
+	"Packages/LinuxNodeKit/Package.swift",
+	"Packages/LinuxNodeKit/Package.resolved",
 ]
 precedence = "aggregate"
 SPDX-FileCopyrightText = "2026 Unpxre (GitHub: UnpxreTW)"
