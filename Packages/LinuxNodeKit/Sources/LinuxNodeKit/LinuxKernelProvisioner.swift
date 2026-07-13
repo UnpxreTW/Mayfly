@@ -32,9 +32,7 @@ public struct LinuxKernelProvisioner: Sendable {
 	///   ``NymphError/internalFailure(_:)``（帶底層描述——「清楚錯誤訊息」的落地）。
 	public func prepare(_ archive: LinuxKernelArchive = .default) async throws -> URL {
 		let destination: URL = cache.kernelURL(version: archive.version)
-		guard !cache.isCached(version: archive.version) else {
-			return destination
-		}
+		guard !cache.isCached(version: archive.version) else { return destination }
 		do {
 			try await fetcher.fetch(archive, to: destination)
 		} catch {

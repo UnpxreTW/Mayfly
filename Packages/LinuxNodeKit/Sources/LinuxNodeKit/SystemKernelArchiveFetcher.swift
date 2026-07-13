@@ -19,10 +19,14 @@ public struct SystemKernelArchiveFetcher: KernelArchiveFetching {
 	/// （封存結構跟 pin 的 ``LinuxKernelArchive/innerPath`` 對不上）／`tar` 本身失敗。
 	public enum ArchiveError: Error {
 
+		/// 下載封存的 sha256 與 pin 的 ``LinuxKernelArchive/archiveSHA256`` 不符——供應鏈
+		/// 完整性把關，帶預期／實際值。
 		case sha256Mismatch(expected: String, actual: String)
 
+		/// 解壓後找不到 pin 的 ``LinuxKernelArchive/innerPath``——封存內部結構與預期對不上。
 		case missingInnerFile(String)
 
+		/// `/usr/bin/tar` 解壓本身失敗（帶 exit status 與 stderr）。
 		case extractFailed(status: Int32, stderr: String)
 	}
 

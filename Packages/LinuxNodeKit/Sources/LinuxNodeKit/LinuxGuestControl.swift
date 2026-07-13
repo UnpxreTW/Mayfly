@@ -49,9 +49,7 @@ final class LinuxGuestControl: GuestControl, @unchecked Sendable {
 
 	func start() async throws {
 		let canStart: Bool = withLock {
-			guard lifecycleState == .idle else {
-				return false
-			}
+			guard lifecycleState == .idle else { return false }
 			lifecycleState = .booting
 			return true
 		}
@@ -68,9 +66,7 @@ final class LinuxGuestControl: GuestControl, @unchecked Sendable {
 	}
 
 	func waitUntilReady() async throws -> String? {
-		guard withLock({ lifecycleState }) == .booting else {
-			return nil
-		}
+		guard withLock({ lifecycleState }) == .booting else { return nil }
 		let clock: ContinuousClock = .init()
 		let deadline: ContinuousClock.Instant = clock.now.advanced(by: readinessTimeout)
 		while clock.now < deadline {
@@ -96,15 +92,11 @@ final class LinuxGuestControl: GuestControl, @unchecked Sendable {
 
 	func forceStop() async throws {
 		let shouldStop: Bool = withLock {
-			guard lifecycleState != .idle, lifecycleState != .stopped else {
-				return false
-			}
+			guard lifecycleState != .idle, lifecycleState != .stopped else { return false }
 			lifecycleState = .stopped
 			return true
 		}
-		guard shouldStop else {
-			return
-		}
+		guard shouldStop else { return }
 		do {
 			try await container.stop()
 		} catch {
@@ -126,9 +118,7 @@ final class LinuxGuestControl: GuestControl, @unchecked Sendable {
 		workingDirectory: String?,
 		environment: [String: String]
 	) async throws -> GuestExecResult {
-		guard withLock({ lifecycleState }) == .ready else {
-			throw NymphError.notReady
-		}
+		guard withLock({ lifecycleState }) == .ready else { throw NymphError.notReady }
 		do {
 			return try await runCommand(
 				command,

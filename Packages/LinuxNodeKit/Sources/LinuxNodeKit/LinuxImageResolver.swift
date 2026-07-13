@@ -41,9 +41,7 @@ public struct LinuxImageResolver: Sendable {
 		if alias.contains("/") || alias.contains(":") {
 			return LinuxGuestSpec(imageReference: alias, kernel: kernel)
 		}
-		guard let reference = aliases[alias] else {
-			throw NymphError.goldenNotFound(alias)
-		}
+		guard let reference = aliases[alias] else { throw NymphError.goldenNotFound(alias) }
 		return LinuxGuestSpec(imageReference: reference, kernel: kernel)
 	}
 }
