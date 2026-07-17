@@ -67,8 +67,10 @@ public struct SystemKernelArchiveFetcher: KernelArchiveFetching {
 		try FileManager.default.moveItem(at: tempURL, to: localURL)
 	}
 
-	/// 呼叫系統 `/usr/bin/tar` 解壓（`--strip-components=1`，比照上游 kata 封存的頂層
-	/// `opt/kata/...` 結構慣例）。
+	/// 呼叫系統 `/usr/bin/tar` 解壓（`--strip-components=1`）。已對 kata-static 3.17.0
+	/// arm64 封存（sha256 同 pin）實測驗證：條目一律帶 `./` 前綴（如 `./opt/kata/...`），
+	/// bsdtar 把 `./` 當第一層剝掉、解壓後頂層即為 `opt/`——`innerPath` 以 `opt/...` 起頭
+	/// 與實際結構相符。上游若改佈局，sha256 pin 會先擋下（fail closed），屆時再依新結構調整。
 	private func extract(_ archivePath: URL, to destinationDirectory: URL) async throws {
 		try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, any Error>) in
 			DispatchQueue.global().async {

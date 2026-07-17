@@ -37,7 +37,9 @@ public struct LinuxKernelArchive: Sendable, Equatable {
 	}
 
 	/// M1 落地預設：kata-containers 3.17.0 arm64——PoC 實測跑通的組合（containerization
-	/// 0.37.0、alpine:3 rootfs），sha256 為當時下載實測值。
+	/// 0.37.0、alpine:3 rootfs），sha256 為當時下載實測值。封存結構已對實際封存驗證：
+	/// ``innerPath`` 於 `--strip-components=1` 解壓後確實存在，為指向同目錄
+	/// `vmlinux-6.12.28-153` 的相對 symlink（symlink 解法見 `SystemKernelArchiveFetcher`）。
 	public static let `default`: LinuxKernelArchive = .init(
 		version: "3.17.0",
 		archiveURL: URL(string: "https://github.com/kata-containers/kata-containers/releases/download/3.17.0/kata-static-3.17.0-arm64.tar.xz")!,

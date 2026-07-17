@@ -95,6 +95,8 @@ public struct LinuxGuestEngine: GuestEngine {
 			containerID: containerID,
 			readinessTimeout: readinessTimeout
 		)
+		// 對齊 containerization 0.37.0 `ContainerManager` 的實際佈局（已對上游原始碼驗證）：
+		// per-container 狀態（rootfs.ext4／bootlog.log）落在 `<root>/containers/<id>`。
 		let clonePath: URL = stateRoot.appending(component: "containers").appending(component: containerID)
 		return ProvisionedGuest(control: control, goldenAlias: golden, clonePath: clonePath)
 	}
