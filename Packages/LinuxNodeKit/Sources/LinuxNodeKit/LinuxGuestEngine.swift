@@ -29,8 +29,10 @@ public struct LinuxGuestEngine: GuestEngine {
 	// MARK: Public
 
 	/// vminitd 版本需與 containerization 套件版本對齊——GHCR 上該 image 無 `latest`
-	/// tag，只有逐版本 tag。
-	public static let defaultInitfsReference: String = "ghcr.io/apple/containerization/vminit:0.37.0"
+	/// tag，只有逐版本 tag。版本正本＝``LinuxToolchain/containerizationVersion``
+	/// （對齊機制與升版程序見該處）。
+	public static let defaultInitfsReference: String =
+		"ghcr.io/apple/containerization/vminit:\(LinuxToolchain.containerizationVersion)"
 
 	/// - Parameters:
 	///   - resolver: golden 別名 → OCI image 參照 ＋ kernel 的解析。
