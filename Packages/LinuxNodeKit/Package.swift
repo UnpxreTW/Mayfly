@@ -13,7 +13,10 @@ let package = Package(
 	dependencies: [
 		.package(path: "../mayfly-cli"),
 		.package(path: "../MachineKit"),
-		.package(url: "https://github.com/apple/containerization.git", from: "0.37.0"),
+		// vminitd（initfs image）tag 必須與套件版本一致——range 解析飄版會造成 host 端
+		// API 與 guest 內 vminitd 版本 skew。exact pin（非 from:）：升級走人工復驗；
+		// 版本正本＝LinuxToolchain.containerizationVersion，測試驗 Package.resolved 對齊。
+		.package(url: "https://github.com/apple/containerization.git", exact: "0.37.0"),
 		.package(url: "https://github.com/UnpxreTW/SwiftStyleKit.git", from: "2.0.0"),
 	],
 	targets: [
