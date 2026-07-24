@@ -26,7 +26,10 @@ let package = Package(
 		),
 		.testTarget(
 			name: "MachineKitTests",
-			dependencies: ["MachineKit"]
+			dependencies: ["MachineKit"],
+			plugins: [
+				.plugin(name: "SwiftStyleLint", package: "SwiftStyleKit"),
+			]
 		),
 	]
 )
