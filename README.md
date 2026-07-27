@@ -6,7 +6,7 @@
 
 ## 需求
 
-macOS 26+（Apple Silicon）、Xcode 26+、Tuist 4。
+macOS 26+（Apple Silicon）、Xcode 26+。
 
 ## 開發
 
