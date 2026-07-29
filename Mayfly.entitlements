@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  App Sandbox 刻意尚未開啟：VM bundle 與 golden image 落在使用者自選路徑、daemon socket
+  在 ~/.mayfly，開啟後兩者都要改走 security-scoped bookmark 才存取得到。程式仍照可沙盒化
+  的方式寫（路徑一律由上層注入、不寫死家目錄），日後要開只需補 entitlement 與書籤層。
+-->
+<plist version="1.0">
+<dict>
+	<key>com.apple.security.virtualization</key>
+	<true/>
+</dict>
+</plist>
