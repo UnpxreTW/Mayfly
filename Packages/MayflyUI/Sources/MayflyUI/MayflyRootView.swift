@@ -8,45 +8,86 @@
 
 import SwiftUI
 
-/// app 外殼的根畫面。
+/// app 外殼的根畫面：左側 session 清單、右側細節欄。
 ///
-/// 現階段只做建置系統的落地證明——顯示 daemon socket 落點與存在性，證實 app bundle
-/// 確實連得上引擎側的 package 圖。VM library 清單與 `.inspector` 細節面板為後續切片。
+/// 本型別只做組裝——載入、選取與錯誤全歸 ``SessionLibraryModel``，畫面本身不碰 socket、
+/// 也不碰檔案系統。
 public struct MayflyRootView: View {
 
-	private let endpoint: DaemonEndpoint
+	// MARK: Public
 
-	/// - Parameter endpoint: 端點快照，預設於初始化當下解析一次（無自動輪詢）。
-	public init(endpoint: DaemonEndpoint = .resolve()) {
-		self.endpoint = endpoint
+	/// 走真實 daemon 的預設組裝。
+	@MainActor
+	public init() {
+		self.init(model: SessionLibraryModel())
 	}
 
 	public var body: some View {
-		VStack(alignment: .leading, spacing: 12) {
-			Label(statusTitle, systemImage: statusSymbol)
-				.font(.headline)
-				.foregroundStyle(statusTint)
-			Text(endpoint.socketPath)
-				.font(.system(.caption, design: .monospaced))
-				.textSelection(.enabled)
-				.foregroundStyle(.secondary)
+		NavigationStack {
+			SessionLibraryView(model: model)
+				.navigationTitle("Sessions")
+				.toolbar {
+					// 兩顆按鈕都留在視窗主 toolbar：細節欄在窄視窗會收成覆蓋式面板，把切換鈕
+					// 放進面板自己的 toolbar 會讓它跟著消失、之後開不回來。
+					ToolbarItem {
+						Button {
+							Task { await model.refresh() }
+						} label: {
+							// 重載期間清單留在畫面上、不退回 spinner，進行中訊號因此掛在這顆
+							// 按鈕上。**刻意不 disable**：往返沒有逾時，一旦 daemon 接了連線
+							// 卻不回應，鎖住按鈕就等於鎖死唯一的復原入口。用疊加而非換掉 label，
+							// 是為了讓 toolbar item 的寬度不隨狀態跳動、旁邊的鈕不位移。
+							Label("重新載入", systemImage: "arrow.clockwise")
+								.opacity(model.isReloading ? 0 : 1)
+								.overlay {
+									if model.isReloading {
+										ProgressView()
+											.controlSize(.small)
+											.accessibilityHidden(true)
+									}
+								}
+						}
+						// 進行中狀態不能只有視覺：spinner 沒有可唸的值，狀態改由 value 帶；
+						// 提示那句同時告訴使用者不必狂按（每按一次就多疊一條沒有逾時的往返）。
+						.accessibilityLabel("重新載入")
+						.accessibilityValue(model.isReloading ? "進行中" : "")
+						.help(model.isReloading ? "仍在等待 daemon 回應" : "重新載入")
+					}
+					ToolbarItem {
+						Button {
+							isInspectorPresented.toggle()
+						} label: {
+							Label("細節欄", systemImage: "sidebar.right")
+						}
+					}
+				}
 		}
-		.padding(24)
-		.frame(minWidth: 420, minHeight: 160, alignment: .topLeading)
+		// 細節欄掛在 `NavigationStack` 之外：掛在裡面會被算成導覽內容，toolbar 佔滿全寬、
+		// 可捲內容被蓋住。寬度給區間而非定值，使用者拖過的寬度才留得住。
+		.inspector(isPresented: $isInspectorPresented) {
+			SessionInspectorView(phase: model.detailPhase)
+				.inspectorColumnWidth(min: 260, ideal: 320, max: 420)
+		}
+		.frame(minWidth: 640, minHeight: 380)
+		.task {
+			await model.refresh()
+		}
+		.onChange(of: model.selectedSessionID) {
+			Task { await model.loadDetail() }
+		}
 	}
 
-	/// 三個狀態映射刻意留在 internal：純映射反轉（把兩態寫顛倒）只有測試釘得住。
-	var statusTitle: String {
-		endpoint.isSocketPresent ? "daemon socket 存在" : "daemon socket 不存在"
+	// MARK: Internal
+
+	/// 注入式組裝（測試與預覽用）。
+	@MainActor
+	init(model: SessionLibraryModel) {
+		_model = State(initialValue: model)
 	}
 
-	/// 實心＝socket 在、空心＝不在，跟隨「填滿代表啟用中」的系統慣例。
-	var statusSymbol: String {
-		endpoint.isSocketPresent ? "bolt.horizontal.circle.fill" : "bolt.horizontal.circle"
-	}
+	// MARK: Private
 
-	/// 兩態另以顏色區分，避免只差填色時在一瞥距離下讀反。
-	var statusTint: Color {
-		endpoint.isSocketPresent ? .green : .secondary
-	}
+	@State private var model: SessionLibraryModel
+
+	@State private var isInspectorPresented: Bool = true
 }
