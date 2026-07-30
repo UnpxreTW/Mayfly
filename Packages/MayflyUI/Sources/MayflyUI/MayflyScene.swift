@@ -16,7 +16,7 @@ public struct MayflyScene: Scene {
 
 	public var body: some Scene {
 		WindowGroup {
-			MayflyRootView()
+			MayflyRootScreen()
 		}
 	}
 }

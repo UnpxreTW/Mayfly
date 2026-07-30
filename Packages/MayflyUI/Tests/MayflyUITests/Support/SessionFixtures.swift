@@ -52,9 +52,10 @@ enum SessionFixtures {
 	@MainActor
 	static func model(
 		querier: any SessionQuerying,
-		endpoint: DaemonEndpoint = SessionFixtures.endpoint(socketPresent: false)
+		endpoint: DaemonEndpoint = SessionFixtures.endpoint(socketPresent: false),
+		pollInterval: Duration = .seconds(2)
 	) -> SessionLibraryModel {
-		SessionLibraryModel(querier: querier, resolveEndpoint: { endpoint })
+		SessionLibraryModel(querier: querier, resolveEndpoint: { endpoint }, pollInterval: pollInterval)
 	}
 
 	static func failure(in phase: SessionLibraryModel.LibraryPhase) -> DaemonFailure? {

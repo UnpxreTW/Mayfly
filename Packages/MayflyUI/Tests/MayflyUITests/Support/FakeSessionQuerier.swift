@@ -8,6 +8,7 @@
 
 import Foundation
 import NymphKit
+import Testing
 
 @testable import MayflyUI
 
@@ -17,9 +18,11 @@ import NymphKit
 /// `waitForCall(_:)` 等它真的抵達、`openGate(_:)` 放它走——陳舊回應的測試因此靠事件排序，
 /// 不靠睡眠猜時間。
 ///
+/// **兩側的等待都有上限**（等抵達、等放行），逾時即記 issue：標籤打錯時要得到紅字與診斷，
+/// 而不是掛住整個測試行程。
+///
 /// 標籤一律帶該目標的呼叫序號（`list#N`＝第 N 次 list、`status#N:<id>`＝該 id 的第 N 次）：
-/// 同一個目標被查兩次時才不會共用一個等待槽（覆蓋掉的 continuation 永遠不會被 resume，
-/// 測試會變成卡死而不是紅字）。
+/// 同一個目標被查兩次時才不會共用一個閘門（`openGate` 放行的會是錯的那一次）。
 actor FakeSessionQuerier: SessionQuerying {
 
 	// MARK: Internal
@@ -78,16 +81,32 @@ actor FakeSessionQuerier: SessionQuerying {
 	/// 放行停在閘門前的呼叫（先開後到也算數）。
 	func openGate(_ label: String) {
 		openedLabels.insert(label)
-		gateWaiters.removeValue(forKey: label)?.resume()
 	}
 
-	/// 等標籤對應的呼叫真的抵達。
-	func waitForCall(_ label: String) async {
+	/// 等標籤對應的呼叫真的抵達；最多等 `timeout`，逾時就記一條 issue 並返回。
+	///
+	/// **等待一定要有上限**：被等的呼叫若因回歸而永遠不來，無上限的等待會掛住整個測試行程，
+	/// CI 拿到的是 job timeout 而不是紅字。`.timeLimit` trait 救不了這種等待——實測它會在時限
+	/// 到時記下 issue，但停在非取消感知的等待上的測試仍不會結束。
+	func waitForCall(_ label: String, timeout: Duration = .seconds(5)) async {
 		guard !arrivedLabels.contains(label) else {
 			return
 		}
-		await withCheckedContinuation { continuation in
-			arrivalWaiters[label] = continuation
+		let clock: ContinuousClock = .init()
+		let deadline: ContinuousClock.Instant = clock.now.advanced(by: timeout)
+		// 短間隔重查而非 continuation：actor 內把 continuation 與逾時做成競速，稍有不慎就
+		// double-resume 而當場崩潰；這裡粒度與上限都看得見，代價只是每毫秒醒一次。
+		while clock.now < deadline {
+			if arrivedLabels.contains(label) {
+				return
+			}
+			try? await Task.sleep(for: .milliseconds(1))
+			if Task.isCancelled {
+				break
+			}
+		}
+		if !arrivedLabels.contains(label) {
+			Issue.record("等不到呼叫 \(label)（已等 \(timeout)）；已抵達的有 \(arrivedLabels.sorted())")
 		}
 	}
 
@@ -103,10 +122,6 @@ actor FakeSessionQuerier: SessionQuerying {
 
 	private var arrivedLabels: Set<String> = []
 
-	private var gateWaiters: [String: CheckedContinuation<Void, Never>] = [:]
-
-	private var arrivalWaiters: [String: CheckedContinuation<Void, Never>] = [:]
-
 	private func nextListResult() -> Result<ListResult, any Error> {
 		guard listResults.count > 1 else {
 			return listResults[0]
@@ -116,15 +131,29 @@ actor FakeSessionQuerier: SessionQuerying {
 
 	private func noteArrival(_ label: String) {
 		arrivedLabels.insert(label)
-		arrivalWaiters.removeValue(forKey: label)?.resume()
 	}
 
-	private func waitIfGated(_ label: String) async {
+	/// 停在閘門前直到被放行；最多等 `timeout`，逾時記一條 issue 後**自行放行**。
+	///
+	/// 與 ``waitForCall(_:timeout:)`` 同一個理由：`openGate` 的標籤打錯一個字，無上限的等待
+	/// 就會掛住整個測試行程。這裡逾時後放它走，測試才會走到斷言、拿到紅字與診斷訊息。
+	private func waitIfGated(_ label: String, timeout: Duration = .seconds(5)) async {
 		guard gatedLabels.contains(label), !openedLabels.contains(label) else {
 			return
 		}
-		await withCheckedContinuation { continuation in
-			gateWaiters[label] = continuation
+		let clock: ContinuousClock = .init()
+		let deadline: ContinuousClock.Instant = clock.now.advanced(by: timeout)
+		while clock.now < deadline {
+			if openedLabels.contains(label) {
+				return
+			}
+			try? await Task.sleep(for: .milliseconds(1))
+			if Task.isCancelled {
+				break
+			}
+		}
+		if !openedLabels.contains(label) {
+			Issue.record("閘門 \(label) 沒有被放行（已等 \(timeout)）；已放行的有 \(openedLabels.sorted())")
 		}
 	}
 }

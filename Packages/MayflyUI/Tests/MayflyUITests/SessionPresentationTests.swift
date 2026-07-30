@@ -75,4 +75,17 @@ private final class SessionPresentationTests {
 		#expect(SessionFormatting.address("192.168.64.10") == "192.168.64.10")
 		#expect(SessionFormatting.address(nil) == "—")
 	}
+
+	/// 自動更新出狀況時，兩型措辭都必須明講資料可能過期——這是清單留在畫面上的前提，
+	/// 少了它就等於拿舊資料冒充現況。
+	@Test
+	private func `both background issue notes admit the data may be stale`() {
+		let stalled: String = SessionLibraryModel.BackgroundIssue.stalled.note
+		let failed: String = SessionLibraryModel.BackgroundIssue
+			.failed(.unreachable(endpoint: SessionFixtures.endpoint(socketPresent: false), detail: nil))
+			.note
+		#expect(stalled.contains("可能不是當下狀態"))
+		#expect(failed.contains("可能不是當下狀態"))
+		#expect(stalled != failed)
+	}
 }
