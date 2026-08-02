@@ -10,16 +10,26 @@ import SwiftUI
 
 /// app 外殼的根畫面：左側 session 清單、右側細節欄。
 ///
-/// 本型別只做組裝——載入、選取與錯誤全歸 ``SessionLibraryModel``，畫面本身不碰 socket、
-/// 也不碰檔案系統。
-public struct MayflyRootView: View {
+/// 本型別只做組裝——載入、選取與錯誤全歸 ``SessionLibraryModel``。這裡是模組內**唯一**碰
+/// 行程環境與檔案系統的地方（組裝時解析一次端點，見 ``init(resolveEndpoint:)``）；畫面本身
+/// 不碰 socket，其餘型別一律吃注入進來的 ``DaemonEndpoint``。
+public struct MayflyRootScreen: View {
 
 	// MARK: Public
 
 	/// 走真實 daemon 的預設組裝。
+	///
+	/// - Parameter resolveEndpoint: 端點解析。往返用的 socket 路徑由它給一次，失敗說明再向它要
+	///   一次當下的落點事實（socket 檔可能中途出現或消失）。兩者共用同一份解析，畫面說的落點
+	///   才會是真正連過的那個。
 	@MainActor
-	public init() {
-		self.init(model: SessionLibraryModel())
+	public init(resolveEndpoint: @escaping @Sendable () -> DaemonEndpoint = { .resolve() }) {
+		self.init(
+			model: SessionLibraryModel(
+				querier: DaemonSessionQuerier(endpoint: resolveEndpoint()),
+				resolveEndpoint: resolveEndpoint
+			)
+		)
 	}
 
 	public var body: some View {
@@ -69,8 +79,9 @@ public struct MayflyRootView: View {
 				.inspectorColumnWidth(min: 260, ideal: 320, max: 420)
 		}
 		.frame(minWidth: 640, minHeight: 380)
+		// 開場即取一次，之後每 2 秒自動重取；`.task` 在畫面離場時取消，輪詢隨之停下。
 		.task {
-			await model.refresh()
+			await model.pollForever()
 		}
 		.onChange(of: model.selectedSessionID) {
 			Task { await model.loadDetail() }

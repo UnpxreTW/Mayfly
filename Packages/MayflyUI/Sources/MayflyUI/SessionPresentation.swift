@@ -67,6 +67,24 @@ extension SessionState {
 	}
 }
 
+// MARK: - Background issue wording
+
+/// 自動更新出狀況時的說明。留在 internal 由測試釘住：兩型措辭一旦接反，畫面就會對使用者
+/// 說謊，而編譯器與 lint 都攔不到。
+extension SessionLibraryModel.BackgroundIssue {
+
+	/// 一行說明——兩型都必須講明「畫面上的資料可能不是當下狀態」，否則使用者會以為看到的是現況。
+	var note: String {
+		switch self {
+		case .stalled:
+			return "自動更新暫停：上一次請求還沒有回應，畫面上的資料可能不是當下狀態。"
+
+		case let .failed(failure):
+			return "自動更新失敗（\(failure.headline)）：畫面上的資料可能不是當下狀態。"
+		}
+	}
+}
+
 // MARK: - SessionFormatting
 
 /// 數值欄位的顯示格式（清單列與細節欄共用同一份，兩處才不會各自漂移）。

@@ -12,11 +12,28 @@ import SwiftUI
 // MARK: - SessionLibraryView
 
 /// session 清單欄：四種呈現（載入中／空表／清單／取不到），選取直接寫回 model。
+///
+/// 自動更新的說明條掛在 `body` 上、**不掛在任何一個相位分支裡**：空表與錯誤頁同樣需要那行字
+/// ——最容易被當成事實的畫面正是「沒有 session」，它必須說得出自己已經停止更新。
 struct SessionLibraryView: View {
 
 	@Bindable var model: SessionLibraryModel
 
 	var body: some View {
+		content
+			// 說明條掛在最外層、不只掛在有清單那一態：空表（「一開 app 什麼都沒有」的常態）
+			// 若少了這行，畫面只會寫「沒有 session」而不提那份判斷已經停止更新。
+			.safeAreaInset(edge: .bottom) {
+				if let issue: SessionLibraryModel.BackgroundIssue = model.backgroundIssue {
+					BackgroundIssueNote(issue: issue)
+				}
+			}
+	}
+
+	// MARK: Private
+
+	@ViewBuilder
+	private var content: some View {
 		switch model.libraryPhase {
 		case .loading:
 			ProgressView()
@@ -48,6 +65,27 @@ struct SessionLibraryView: View {
 				}
 			}
 		}
+	}
+}
+
+// MARK: - BackgroundIssueNote
+
+/// 自動更新的說明條。
+private struct BackgroundIssueNote: View {
+
+	let issue: SessionLibraryModel.BackgroundIssue
+
+	var body: some View {
+		HStack(spacing: 6) {
+			Image(systemName: "exclamationmark.triangle")
+			Text(issue.note)
+		}
+		.font(.caption)
+		.foregroundStyle(.secondary)
+		.padding(.horizontal, 12)
+		.padding(.vertical, 6)
+		.frame(maxWidth: .infinity, alignment: .leading)
+		.background(.bar)
 	}
 }
 

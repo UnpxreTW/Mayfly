@@ -30,7 +30,10 @@ let package = Package(
 		.testTarget(
 			name: "MayflyUITests",
 			dependencies: ["MayflyUI"],
-			path: "Tests/MayflyUITests"
+			path: "Tests/MayflyUITests",
+			plugins: [
+				.plugin(name: "SwiftStyleLint", package: "SwiftStyleKit"),
+			]
 		),
 	]
 )

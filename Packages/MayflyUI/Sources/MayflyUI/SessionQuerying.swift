@@ -45,8 +45,14 @@ public struct DaemonSessionQuerier: SessionQuerying {
 
 	// MARK: Public
 
-	/// - Parameter client: socket 客戶端；預設連 ``NymphPaths`` 的落點慣例。
-	public init(client: NymphClient = NymphClient()) {
+	/// - Parameter endpoint: 目標端點；socket 路徑一律由它給。
+	///
+	/// - Important: 刻意**不**用 ``NymphClient/init(socketPath:)`` 的預設落點解析。那會是第二個
+	///   解析點：畫面說明講的是 ``DaemonEndpoint`` 解出的落點，往返打的卻是客戶端自己解的，
+	///   兩者一旦分岔（app 進沙盒後 home 變成 container home 就會分岔），畫面就會指著一個
+	///   根本沒被連過的路徑說「這裡沒有 socket」。路徑事實只留一份。
+	public init(endpoint: DaemonEndpoint) {
+		let client: NymphClient = .init(socketPath: URL(fileURLWithPath: endpoint.socketPath))
 		self.init { request in
 			try await client.send(request)
 		}
