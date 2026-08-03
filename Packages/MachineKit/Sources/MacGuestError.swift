@@ -9,8 +9,8 @@
 /// harness 層錯誤。VZ 層失敗除 keychain 診斷命中外原樣上拋 `VZError`。
 public enum MacGuestError: Error {
 
-	/// preflight：login keychain 鎖定。macOS 15+ host 上 `start()` 會以
-	/// 無線索的通用 Code=1 失敗，所以在碰 VZ 之前先擋下、給可修復的錯誤。
+	/// preflight：login keychain 鎖定。`start()` 會以無線索的通用 Code=1
+	/// 失敗，所以在碰 VZ 之前先擋下、給可修復的錯誤。
 	case keychainLocked(path: String?)
 
 	/// preflight：無 default keychain。

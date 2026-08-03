@@ -5,7 +5,7 @@ import PackageDescription
 let package = Package(
 	name: "MachineKit",
 	platforms: [
-		.macOS(.v13),
+		.macOS("26.0"),
 	],
 	products: [
 		.library(name: "MachineKit", targets: ["MachineKit"]),

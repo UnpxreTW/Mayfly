@@ -34,8 +34,8 @@ let project = Project(
 			destinations: .macOS,
 			product: .app,
 			bundleId: "me.unpxre.Mayfly",
-			// 外殼下限＝macOS 15（非底層工具貼近新系統；引擎與 CLI 各自維持較低下限）。
-			deploymentTargets: .macOS("15.0"),
+			// 全專案單一下限＝macOS 26，與四個 SwiftPM package 一致。
+			deploymentTargets: .macOS("26.0"),
 			infoPlist: .extendingDefault(with: [
 				"CFBundleName": "Mayfly",
 				"CFBundleShortVersionString": "0.0.1",
