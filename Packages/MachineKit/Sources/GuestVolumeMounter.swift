@@ -41,7 +41,7 @@ public actor GuestVolumeMounter {
 		let capMS = retryCapMilliseconds
 		while true {
 			do {
-				let output = try await runner.run(
+				let output = try await runCommand(
 					executable: "/usr/bin/hdiutil",
 					arguments: ["attach", "-nomount", "-owners", "on", "-plist", diskImage.path]
 				)
@@ -62,7 +62,7 @@ public actor GuestVolumeMounter {
 	@discardableResult
 	public func locateDataVolume() async throws -> String {
 		guard let base = attachedBaseDisk else { throw GuestVolumeMounterError.notReady(step: "attach") }
-		let output = try await runner.run(executable: "/usr/sbin/diskutil", arguments: ["apfs", "list", "-plist"])
+		let output = try await runCommand(executable: "/usr/sbin/diskutil", arguments: ["apfs", "list", "-plist"])
 		let topology = try GuestDiskTopology(plistData: output)
 		let identifier = try topology.dataVolumeDeviceID(onAttachedDisk: base)
 		dataVolumeID = identifier
@@ -80,14 +80,14 @@ public actor GuestVolumeMounter {
 	public func mount() async throws -> URL {
 		guard let identifier = dataVolumeID else { throw GuestVolumeMounterError.notReady(step: "locateDataVolume") }
 		do {
-			_ = try await runner.run(
+			_ = try await runCommand(
 				executable: "/usr/sbin/diskutil",
 				arguments: ["mount", "-mountOptions", "nobrowse", identifier]
 			)
 		} catch let error as GuestVolumeMounterError where Self.isLocked(error) {
 			throw GuestVolumeMounterError.encryptedLocked
 		}
-		let info = try await runner.run(executable: "/usr/sbin/diskutil", arguments: ["info", "-plist", identifier])
+		let info = try await runCommand(executable: "/usr/sbin/diskutil", arguments: ["info", "-plist", identifier])
 		let url = try URL(fileURLWithPath: Self.parseMountPoint(info))
 		mountPoint = url
 		return url
@@ -98,7 +98,7 @@ public actor GuestVolumeMounter {
 	public func enableOwnership() async throws {
 		try Self.requireRoot()
 		guard let identifier = dataVolumeID else { throw GuestVolumeMounterError.notReady(step: "locateDataVolume") }
-		_ = try await runner.run(executable: "/usr/sbin/diskutil", arguments: ["enableOwnership", identifier])
+		_ = try await runCommand(executable: "/usr/sbin/diskutil", arguments: ["enableOwnership", identifier])
 	}
 
 	/// **需 root**：先 `mkdir -p` 父目錄、寫 `relativePath` 的內容，再 numeric
@@ -115,7 +115,7 @@ public actor GuestVolumeMounter {
 		guard let mountPoint else { throw GuestVolumeMounterError.notReady(step: "mount") }
 		for file in files {
 			let target = mountPoint.appending(path: file.relativePath)
-			_ = try await runner.run(
+			_ = try await runCommand(
 				executable: "/bin/mkdir",
 				arguments: ["-p", target.deletingLastPathComponent().path]
 			)
@@ -124,11 +124,11 @@ public actor GuestVolumeMounter {
 			} catch {
 				throw GuestVolumeMounterError.writeFailed(relativePath: file.relativePath, underlying: error)
 			}
-			_ = try await runner.run(
+			_ = try await runCommand(
 				executable: "/usr/sbin/chown",
 				arguments: ["\(file.owner.uid):\(file.owner.gid)", target.path]
 			)
-			_ = try await runner.run(executable: "/bin/chmod", arguments: [String(file.mode, radix: 8), target.path])
+			_ = try await runCommand(executable: "/bin/chmod", arguments: [String(file.mode, radix: 8), target.path])
 		}
 	}
 
@@ -136,7 +136,7 @@ public actor GuestVolumeMounter {
 	/// 收尾用——呼叫端通常以 `try?` 包在 defer。
 	public func detach() async throws {
 		guard let base = attachedBaseDisk else { return }
-		_ = try await runner.run(executable: "/usr/bin/hdiutil", arguments: ["detach", "/dev/\(base)"])
+		_ = try await runCommand(executable: "/usr/bin/hdiutil", arguments: ["detach", "/dev/\(base)"])
 		attachedBaseDisk = nil
 		dataVolumeID = nil
 		mountPoint = nil
@@ -206,6 +206,30 @@ public actor GuestVolumeMounter {
 	/// 需 root 步驟的 preflight。
 	private static func requireRoot() throws {
 		guard geteuid() == 0 else { throw GuestVolumeMounterError.requiresRoot }
+	}
+
+	/// 跑外部命令，並把 ``CommandRunnerError`` 收斂成本層的 ``GuestVolumeMounterError``。
+	///
+	/// runner 是共用的執行器抽象、其錯誤契約不帶掛載層語義；轉譯集中在這一處，
+	/// `isBusy` / `isLocked` 的 stderr 判讀與呼叫端的 catch 合約都不受影響。
+	///
+	/// **只收斂 ``CommandRunnerError``**：runner 擲別的型別仍原樣穿透本型別的公開面
+	/// （``SystemCommandRunner`` 的 spawn 失敗上拋 Foundation 錯誤、取消擲
+	/// `CancellationError`、他人實作可擲任意型別）——與改動前一致；是否把行程起不來這類
+	/// 失敗也收編進 ``CommandRunnerError`` 留後續處理。
+	private func runCommand(executable: String, arguments: [String]) async throws -> Data {
+		do {
+			return try await runner.run(executable: executable, arguments: arguments)
+		} catch let error as CommandRunnerError {
+			switch error {
+			case let .commandFailed(failedExecutable, status, stderr):
+				throw GuestVolumeMounterError.commandFailed(
+					executable: failedExecutable,
+					status: status,
+					stderr: stderr
+				)
+			}
+		}
 	}
 
 	/// 待 attach 的 RAW guest disk image。

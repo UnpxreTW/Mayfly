@@ -30,21 +30,22 @@ private final class SystemCommandRunnerTests {
 		#expect(String(bytes: output, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines) == "mayfly-ok")
 	}
 
-	/// 非零 exit 擲 ``GuestVolumeMounterError/commandFailed(executable:status:stderr:)``（帶 status）。
+	/// 非零 exit 擲 ``CommandRunnerError/commandFailed(executable:status:stderr:)``（帶 status）。
+	/// 釘住「執行器只擲自己的錯誤型別」——不漏任何呼叫端的層。
 	@Test
 	private func `run throws command failed on nonzero exit`() async {
 		let runner: SystemCommandRunner = .init()
 		do {
 			_ = try await runner.run(executable: "/bin/sh", arguments: ["-c", "exit 3"])
 			Issue.record("預期擲 commandFailed")
-		} catch let error as GuestVolumeMounterError {
+		} catch let error as CommandRunnerError {
 			guard case let .commandFailed(_, status, _) = error else {
 				Issue.record("預期 .commandFailed、得 \(error)")
 				return
 			}
 			#expect(status == 3)
 		} catch {
-			Issue.record("預期 GuestVolumeMounterError、得 \(error)")
+			Issue.record("預期 CommandRunnerError、得 \(error)")
 		}
 	}
 }

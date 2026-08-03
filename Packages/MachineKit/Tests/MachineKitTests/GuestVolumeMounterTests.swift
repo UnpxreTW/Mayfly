@@ -43,7 +43,7 @@ private func makeTempDiskImage() throws -> URL {
 }
 
 private func busyFailure() -> Result<Data, any Error> {
-	.failure(GuestVolumeMounterError.commandFailed(
+	.failure(CommandRunnerError.commandFailed(
 		executable: "/usr/bin/hdiutil",
 		status: 1,
 		stderr: "hdiutil: attach failed - Resource busy"
@@ -57,6 +57,9 @@ private func captureMounterError(_ body: () async throws -> Void) async -> Guest
 	} catch let error as GuestVolumeMounterError {
 		return error
 	} catch {
+		// 型別不對就地記下——否則呼叫端只看到 nil，看不出漏出來的是什麼（錯誤契約
+		// 轉譯回歸時，那正是唯一想診斷的事）。
+		Issue.record("預期 GuestVolumeMounterError、得 \(error)")
 		return nil
 	}
 }
@@ -216,7 +219,7 @@ private final class GuestVolumeMounterTests {
 				return .success(apfsPlist)
 			}
 			if arguments.first == "mount" {
-				return .failure(GuestVolumeMounterError.commandFailed(
+				return .failure(CommandRunnerError.commandFailed(
 					executable: executable,
 					status: 66,
 					stderr: "Volume on disk11s5 is locked"
@@ -232,6 +235,31 @@ private final class GuestVolumeMounterTests {
 			Issue.record("預期 .encryptedLocked、得 \(String(describing: error))")
 			return
 		}
+	}
+
+	/// 釘住錯誤契約轉譯：runner 擲通用 ``CommandRunnerError``、本型別對外擲自己的
+	/// ``GuestVolumeMounterError/commandFailed(executable:status:stderr:)``，三個欄位逐項保真。
+	/// 轉譯漏掉時 `captureMounterError` 會收不到（回 nil）而失敗。
+	@Test
+	private func `command failure surfaces as mounter error`() async throws {
+		let image = try makeTempDiskImage()
+		defer { try? FileManager.default.removeItem(at: image) }
+		let fake = FakeCommandRunner { executable, _ in
+			.failure(CommandRunnerError.commandFailed(
+				executable: executable,
+				status: 12,
+				stderr: "hdiutil: attach failed - no mountable file systems"
+			))
+		}
+		let mounter: GuestVolumeMounter = .init(diskImage: image, runner: fake)
+		let error = await captureMounterError { _ = try await mounter.attach() }
+		guard case let .commandFailed(executable, status, stderr) = error else {
+			Issue.record("預期 .commandFailed、得 \(String(describing: error))")
+			return
+		}
+		#expect(executable == "/usr/bin/hdiutil")
+		#expect(status == 12)
+		#expect(stderr == "hdiutil: attach failed - no mountable file systems")
 	}
 
 	@Test
