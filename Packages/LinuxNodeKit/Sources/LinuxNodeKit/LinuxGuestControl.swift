@@ -35,16 +35,24 @@ final class LinuxGuestControl: GuestControl, @unchecked Sendable {
 	/// 存活期的秒數；正式 idle-timeout / 生命週期政策留後續切片。
 	static let keepAliveArguments: [String] = ["/bin/sleep", "2147483647"]
 
+	/// - Parameters:
+	///   - manager: 建出本容器的 manager，供 ``destroyClone()`` 回收。
+	///   - container: 容器物件。
+	///   - containerID: 容器 id。
+	///   - readinessTimeout: readiness 等待上限。
+	///   - network: 本容器所在的共用網路；`nil`＝未接網路，``currentIP()`` 恆回 `nil`。
 	init(
 		manager: ContainerManager,
 		container: LinuxContainer,
 		containerID: String,
-		readinessTimeout: Duration
+		readinessTimeout: Duration,
+		network: LinuxContainerNetwork? = nil
 	) {
 		self.manager = manager
 		self.container = container
 		self.containerID = containerID
 		self.readinessTimeout = readinessTimeout
+		self.network = network
 	}
 
 	func start() async throws {
@@ -72,8 +80,7 @@ final class LinuxGuestControl: GuestControl, @unchecked Sendable {
 		while clock.now < deadline {
 			if await probeReady() {
 				withLock { lifecycleState = .ready }
-				// 未啟用容器網路（見型別文件），無 IP 可回。
-				return nil
+				return await currentIP()
 			}
 			try? await Task.sleep(for: .milliseconds(LinuxGuestControl.readinessPollIntervalMilliseconds))
 		}
@@ -84,10 +91,13 @@ final class LinuxGuestControl: GuestControl, @unchecked Sendable {
 		withLock { lifecycleState }
 	}
 
+	/// 回報容器在共用網路上配到的 IPv4 位址。
+	///
+	/// 位址由 ``LinuxContainerNetwork`` 在 `ContainerManager.create` 配發介面的當下記下——
+	/// 不向 guest 內部查詢，因此 boot 尚未完成時就已可回報。容器未接網路（引擎建構時
+	/// 未傳網路）時恆為 `nil`。
 	func currentIP() async -> String? {
-		// M1 未啟用容器網路（host↔容器連通性未解、非本層可控）——無 IP 可回。
-		// SessionStore 依 IP 非 nil 判斷 ready 的相容處理留後續整合切片解決。
-		nil
+		network?.ipv4Address(for: containerID)
 	}
 
 	func forceStop() async throws {
@@ -163,6 +173,8 @@ final class LinuxGuestControl: GuestControl, @unchecked Sendable {
 	private let containerID: String
 
 	private let readinessTimeout: Duration
+
+	private let network: LinuxContainerNetwork?
 
 	private func withLock<Result>(_ body: () throws -> Result) rethrows -> Result {
 		lock.lock()

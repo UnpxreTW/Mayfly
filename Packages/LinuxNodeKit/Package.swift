@@ -35,7 +35,13 @@ let package = Package(
 		),
 		.testTarget(
 			name: "LinuxNodeKitTests",
-			dependencies: ["LinuxNodeKit"],
+			dependencies: [
+				"LinuxNodeKit",
+				// 測試自己 import 這兩個（假介面用 `CIDRv4`／`Interface`），不靠受測 target
+				// 的傳遞 import——後者若改掉依賴，測試會以「找不到模組」的形式壞掉。
+				.product(name: "Containerization", package: "containerization"),
+				.product(name: "ContainerizationExtras", package: "containerization"),
+			],
 			path: "Tests/LinuxNodeKitTests"
 		),
 	]

@@ -40,18 +40,23 @@ public struct LinuxGuestEngine: GuestEngine {
 	///   - stateRoot: 容器 image store／rootfs 根目錄，預設 ``LinuxNodePaths/containerRoot(environment:)``。
 	///   - initfsReference: vminitd guest agent 的 OCI 參照。
 	///   - rootfsSizeInBytes: 容器 rootfs 上限，M1 沿用 PoC 驗證過的 1 GiB。
+	///   - network: 容器網路。`nil`（預設）＝不接網路，容器沒有對外連線、也不會有 IP；
+	///     要接網路時傳一顆**整個引擎壽命共用**的 ``LinuxContainerNetwork``
+	///     （見 ``LinuxContainerNetwork/vmnet(mtu:)``，該型別文件說明為何必須共用同一顆）。
 	public init(
 		resolver: LinuxImageResolver = .init(),
 		kernelProvisioner: LinuxKernelProvisioner = .init(),
 		stateRoot: URL = LinuxNodePaths.containerRoot(),
 		initfsReference: String = LinuxGuestEngine.defaultInitfsReference,
-		rootfsSizeInBytes: UInt64 = 1.gib()
+		rootfsSizeInBytes: UInt64 = 1.gib(),
+		network: LinuxContainerNetwork? = nil
 	) {
 		self.resolver = resolver
 		self.kernelProvisioner = kernelProvisioner
 		self.stateRoot = stateRoot
 		self.initfsReference = initfsReference
 		self.rootfsSizeInBytes = rootfsSizeInBytes
+		self.network = network
 	}
 
 	public func provision(
@@ -70,24 +75,37 @@ public struct LinuxGuestEngine: GuestEngine {
 
 		var manager: ContainerManager
 		do {
-			manager = try await ContainerManager(kernel: kernel, initfsReference: initfsReference, root: stateRoot)
+			manager = try await ContainerManager(
+				kernel: kernel,
+				initfsReference: initfsReference,
+				root: stateRoot,
+				network: network
+			)
 		} catch {
 			throw NymphError.internalFailure("linux container manager init failed: \(error)")
 		}
 
+		// `networking:` 一律由網路是否在場推導、不寫死常數。上游 `ContainerManager.create`
+		// 那段是 `if networking { if let interface = try self.network?.createInterface(id) { … } }`
+		// ——`networking: true` 配上 `network == nil` 時整段被 optional-chain 靜默跳過，不設介面、
+		// 不設 DNS、不拋錯、不警告，結果是「編得過、跑得起來、容器就是沒網路」。由 network 推導
+		// 讓兩者結構上不可能不一致。
 		let container: LinuxContainer
 		do {
 			container = try await manager.create(
 				containerID,
 				reference: spec.imageReference,
 				rootfsSizeInBytes: rootfsSizeInBytes,
-				networking: false
+				networking: network != nil
 			) { configuration in
 				configuration.cpus = cpus
 				configuration.memoryInBytes = memoryGiB.gib()
 				configuration.process.arguments = LinuxGuestControl.keepAliveArguments
 			}
 		} catch {
+			// create 是在內部先配介面、之後才可能擲錯的：失敗路徑不交還的話，位址會一直
+			// 掛在共用配發表上直到行程結束。從未配發時交還是 no-op，故無條件補這一次。
+			try? network?.releaseInterface(containerID)
 			throw NymphError.cloneFailed("linux container create failed: \(error)")
 		}
 
@@ -95,7 +113,8 @@ public struct LinuxGuestEngine: GuestEngine {
 			manager: manager,
 			container: container,
 			containerID: containerID,
-			readinessTimeout: readinessTimeout
+			readinessTimeout: readinessTimeout,
+			network: network
 		)
 		// 對齊 containerization 0.37.0 `ContainerManager` 的實際佈局（已對上游原始碼驗證）：
 		// per-container 狀態（rootfs.ext4／bootlog.log）落在 `<root>/containers/<id>`。
@@ -114,6 +133,8 @@ public struct LinuxGuestEngine: GuestEngine {
 	private let initfsReference: String
 
 	private let rootfsSizeInBytes: UInt64
+
+	private let network: LinuxContainerNetwork?
 
 	/// 容器 id：`mfly-linux-` 前綴 + UUID，避免與其他 Linux 節點或並行 provision 撞號。
 	private static func makeContainerID() -> String {
