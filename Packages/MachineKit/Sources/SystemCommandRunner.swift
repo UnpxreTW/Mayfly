@@ -52,7 +52,7 @@ public struct SystemCommandRunner: CommandRunner {
 				if process.terminationStatus == 0 {
 					continuation.resume(returning: stdout.get())
 				} else {
-					continuation.resume(throwing: GuestVolumeMounterError.commandFailed(
+					continuation.resume(throwing: CommandRunnerError.commandFailed(
 						executable: executable,
 						status: process.terminationStatus,
 						stderr: String(bytes: stderr.get(), encoding: .utf8) ?? ""

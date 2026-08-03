@@ -113,7 +113,7 @@ private final class GuestProvisionerTests {
 				return .success(apfsPlist)
 			}
 			if arguments.first == "mount" {
-				return .failure(GuestVolumeMounterError.commandFailed(
+				return .failure(CommandRunnerError.commandFailed(
 					executable: executable,
 					status: 66,
 					stderr: "Volume on disk11s5 is locked"
@@ -149,7 +149,7 @@ private final class GuestProvisionerTests {
 				return .success(apfsPlist)
 			}
 			if arguments.first == "mount" {
-				return .failure(GuestVolumeMounterError.commandFailed(
+				return .failure(CommandRunnerError.commandFailed(
 					executable: executable,
 					status: 1,
 					stderr: "could not mount disk11s5: Input/output error"
