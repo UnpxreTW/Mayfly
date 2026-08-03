@@ -38,6 +38,6 @@ xcodebuild -workspace Mayfly.xcworkspace -scheme Mayfly -configuration Debug -sk
 
 只有 app target 進 Tuist；`mayfly` 執行檔維持純 SwiftPM。畫面程式碼放 `Packages/MayflyUI`（吃得到 lint 與單元測試），Xcode target 側只留 `Sources/MayflyApp.swift` 一個進入點。
 
-app 的最低系統版本是 macOS 15，高於引擎與 CLI——外殼用得上新 API，底層元件保留較低下限。
+app 的最低系統版本與四個 package 同為 macOS 26——全專案單一下限，沒有分層。
 
 **本節的兩條指令不在 CI 覆蓋範圍**（CI 只跑上一節的 `swift build` / `swift test`）：改動 `Project.swift`、`Mayfly.entitlements` 或 `Sources/MayflyApp.swift` 後，送出前請在本機跑過 generate ＋ build。

@@ -5,9 +5,7 @@ import PackageDescription
 let package = Package(
 	name: "MayflyUI",
 	platforms: [
-		// GUI 下限刻意高於引擎（MachineKit / mayfly-cli 為 macOS 13）：外殼是非底層工具、
-		// 貼近新系統換取無相容分支的實作；引擎與 CLI 的觸及面不受此影響。
-		.macOS("15.0"),
+		.macOS("26.0"),
 	],
 	products: [
 		.library(name: "MayflyUI", targets: ["MayflyUI"]),

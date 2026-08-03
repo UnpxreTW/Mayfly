@@ -5,7 +5,7 @@ import PackageDescription
 let package = Package(
 	name: "LinuxNodeKit",
 	platforms: [
-		.macOS("15.0"),
+		.macOS("26.0"),
 	],
 	products: [
 		.library(name: "LinuxNodeKit", targets: ["LinuxNodeKit"]),

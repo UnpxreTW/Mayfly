@@ -13,8 +13,8 @@ import Security
 
 /// VM `start()` 前的 login keychain 狀態檢查。
 ///
-/// macOS 15+ host 上 login keychain 未解鎖會讓 `start()` 以通用的
-/// `VZErrorDomain` Code=1（internalError）失敗——真正的失敗發生在
+/// login keychain 未解鎖會讓 `start()` 以通用的 `VZErrorDomain`
+/// Code=1（internalError）失敗——真正的失敗發生在
 /// com.apple.Virtualization.VirtualMachine helper 行程（SEP keypair 生成被
 /// Security Server 拒絕），client 端錯誤的 userInfo 沒有任何線索。這裡用
 /// `SecKeychainGetStatus` 做純狀態查詢：不彈窗、不解鎖、無副作用，讓呼叫端
