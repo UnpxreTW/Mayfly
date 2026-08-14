@@ -1,0 +1,15 @@
+{
+  "originHash" : "d672a135dded0e33695c44eea9f5a7e5c8fdfd7613a61a3e218dd492ff7fffa7",
+  "pins" : [
+    {
+      "identity" : "swiftstylekit",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/UnpxreTW/SwiftStyleKit.git",
+      "state" : {
+        "revision" : "bdbad295d10c00c742df250a176e3b119351d634",
+        "version" : "2.1.0"
+      }
+    }
+  ],
+  "version" : 3
+}

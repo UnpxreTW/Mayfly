@@ -11,7 +11,7 @@ let package = Package(
 		.library(name: "LinuxNodeKit", targets: ["LinuxNodeKit"]),
 	],
 	dependencies: [
-		.package(path: "../mayfly-cli"),
+		.package(path: "../NymphKit"),
 		.package(path: "../MachineKit"),
 		// vminitd（initfs image）tag 必須與套件版本一致——range 解析飄版會造成 host 端
 		// API 與 guest 內 vminitd 版本 skew。exact pin（非 from:）：升級走人工復驗；
@@ -23,7 +23,7 @@ let package = Package(
 		.target(
 			name: "LinuxNodeKit",
 			dependencies: [
-				.product(name: "NymphKit", package: "mayfly-cli"),
+				.product(name: "NymphKit", package: "NymphKit"),
 				.product(name: "MachineKit", package: "MachineKit"),
 				.product(name: "Containerization", package: "containerization"),
 				.product(name: "ContainerizationOS", package: "containerization"),

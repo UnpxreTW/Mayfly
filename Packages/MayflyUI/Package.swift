@@ -11,14 +11,14 @@ let package = Package(
 		.library(name: "MayflyUI", targets: ["MayflyUI"]),
 	],
 	dependencies: [
-		.package(path: "../mayfly-cli"),
+		.package(path: "../NymphKit"),
 		.package(url: "https://github.com/UnpxreTW/SwiftStyleKit.git", from: "2.0.0"),
 	],
 	targets: [
 		.target(
 			name: "MayflyUI",
 			dependencies: [
-				.product(name: "NymphKit", package: "mayfly-cli"),
+				.product(name: "NymphKit", package: "NymphKit"),
 			],
 			path: "Sources/MayflyUI",
 			plugins: [
