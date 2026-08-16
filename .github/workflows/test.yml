@@ -20,8 +20,19 @@ jobs:
         uses: maxim-lobanov/setup-xcode@v1
         with:
           xcode-version: '26.3'
+      - name: 逐包步驟漂移警報（package 數 vs step 數）
+        run: |
+          packages=$(ls -d Packages/*/Package.swift | wc -l | tr -d ' ')
+          steps=$(grep -cE '^ +run: swift test --package-path Packages/' .github/workflows/test.yml)
+          echo "packages=$packages steps=$steps"
+          if [ "$packages" != "$steps" ]; then
+            echo "::error::Packages/ 有 $packages 個套件，本 workflow 只列了 $steps 個逐包步驟——新增套件時請一併補步驟"
+            exit 1
+          fi
       - name: swift test（MachineKit）
         run: swift test --package-path Packages/MachineKit
+      - name: swift test（NymphKit）
+        run: swift test --package-path Packages/NymphKit
       - name: swift test（mayfly-cli）
         run: swift test --package-path Packages/mayfly-cli
       - name: swift test（LinuxNodeKit）
