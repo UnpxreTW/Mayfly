@@ -97,6 +97,81 @@ private final class NymphToolInvokerTests {
 		#expect(sent == [.spawn(SpawnParams(golden: "sa-ci-macos26", cpus: 4, memoryGiB: 4, wait: false, readinessTimeoutSeconds: 180))])
 	}
 
+	/// `kind` 原樣映進 ``SpawnParams``（schema 的 `kind` 對映協議的 `kind`）。
+	@Test
+	private func `spawn maps the kind argument`() async throws {
+		let harness: (client: NymphClient, dispatcher: RecordingDispatcher, server: NymphServer) =
+			makeHarness(response: .spawn(SpawnResult(id: "mfly-lnx1", state: .booting, ip: nil)))
+		defer { harness.server.shutdown() }
+		let result: CallTool.Result = await NymphToolInvoker.handle(
+			.init(name: "spawn", arguments: ["golden": "alpine", "kind": "linux", "wait": false]),
+			client: harness.client
+		)
+		#expect(result.isError == false)
+		let sent: [NymphRequest] = await harness.dispatcher.received
+		#expect(sent == [.spawn(SpawnParams(golden: "alpine", kind: .linux, cpus: 4, memoryGiB: 4, wait: false, readinessTimeoutSeconds: 180))])
+	}
+
+	/// 未知 `kind` → tool-error（`invalid_arguments`），連 daemon 都不連——錯值大聲失敗、
+	/// 不悄悄回退成 mac（那會開出呼叫端沒要的 guest）。
+	@Test
+	private func `spawn with an unknown kind is a tool error before reaching the daemon`() async {
+		let client: NymphClient = .init(socketPath: temporarySocketURL())
+		let params: CallTool.Parameters = .init(name: "spawn", arguments: ["golden": "base", "kind": "freebsd"])
+		let result: CallTool.Result = await NymphToolInvoker.handle(params, client: client)
+		#expect(result.isError == true)
+		#expect(result.structuredContent?.objectValue?["code"] == "invalid_arguments")
+	}
+
+	/// 不送 `kind` → 落 mac（既有呼叫端不受加欄影響）。
+	@Test
+	private func `spawn without kind defaults to mac`() async throws {
+		let harness: (client: NymphClient, dispatcher: RecordingDispatcher, server: NymphServer) =
+			makeHarness(response: .spawn(SpawnResult(id: "mfly-mac1", state: .booting, ip: nil)))
+		defer { harness.server.shutdown() }
+		let result: CallTool.Result = await NymphToolInvoker.handle(
+			.init(name: "spawn", arguments: ["golden": "sequoia-base", "wait": false]),
+			client: harness.client
+		)
+		#expect(result.isError == false)
+		let sent: [NymphRequest] = await harness.dispatcher.received
+		guard case let .spawn(params) = sent.first else {
+			Issue.record("預期 spawn 請求、得 \(sent)")
+			return
+		}
+		#expect(params.kind == .mac)
+	}
+
+	/// `kind` 存在但**不是字串**（`["linux"]`）→ `invalid_arguments` tool-error，且**不送進** daemon。
+	/// 明示了要 linux 卻因型別不合被吞成 mac，會開出呼叫端沒要的 guest——與缺欄兩條路徑必須分開。
+	@Test
+	private func `spawn with a non string kind is a tool error not a default`() async {
+		let client: NymphClient = .init(socketPath: temporarySocketURL())
+		let params: CallTool.Parameters = .init(name: "spawn", arguments: ["golden": "alpine", "kind": ["linux"]])
+		let result: CallTool.Result = await NymphToolInvoker.handle(params, client: client)
+		#expect(result.isError == true)
+		#expect(result.structuredContent?.objectValue?["code"] == "invalid_arguments")
+	}
+
+	/// `kind` 明示 `null` → 落 mac（與「不送 `kind`」同一條預設路徑，null 不算錯型別）。
+	@Test
+	private func `spawn with a null kind defaults to mac`() async throws {
+		let harness: (client: NymphClient, dispatcher: RecordingDispatcher, server: NymphServer) =
+			makeHarness(response: .spawn(SpawnResult(id: "mfly-mac2", state: .booting, ip: nil)))
+		defer { harness.server.shutdown() }
+		let result: CallTool.Result = await NymphToolInvoker.handle(
+			.init(name: "spawn", arguments: ["golden": "sequoia-base", "kind": .null, "wait": false]),
+			client: harness.client
+		)
+		#expect(result.isError == false)
+		let sent: [NymphRequest] = await harness.dispatcher.received
+		guard case let .spawn(params) = sent.first else {
+			Issue.record("預期 spawn 請求、得 \(sent)")
+			return
+		}
+		#expect(params.kind == .mac)
+	}
+
 	/// booting 逾時降級：`ip` 為 nil → JSON `null`（NY-1）。
 	@Test
 	private func `spawn booting result encodes null ip`() async throws {

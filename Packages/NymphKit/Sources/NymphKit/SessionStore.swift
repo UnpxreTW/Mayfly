@@ -22,13 +22,33 @@ public actor SessionStore {
 	// MARK: Public
 
 	/// - Parameters:
-	///   - engine: golden → 備妥 guest 的引擎（真機 / fake）。
+	///   - engines: ``GuestKind`` → 該種 guest 的引擎。**未列的 kind 一律擲
+	///     ``NymphError/engineUnavailable(_:)``**——不退回任何一顆引擎代打（別的 kind 的
+	///     別名餵給錯引擎會靜默開出錯的 guest）。
 	///   - maxSessions: 併發 session 上限（admission；設計 §10.4 的最小落地——先做 VM 數
 	///     上限，記憶體 / CPU 總量准入留後續）。
 	///   - gracePeriod: `destroy force=false` 的優雅停機上限。
 	///   - cloneRegistry: 孤兒回收登記（nil＝不登記、僅記憶體 table）。
 	///   - clock: 時間源（uptime 計算；測試注入固定值）。
 	///   - makeHandle: opaque handle 產生器（測試注入確定序列）。
+	public init(
+		engines: [GuestKind: any GuestEngine],
+		maxSessions: Int = 8,
+		gracePeriod: Duration = .seconds(30),
+		cloneRegistry: CloneRegistry? = nil,
+		clock: @escaping @Sendable () -> Date = { Date() },
+		makeHandle: @escaping @Sendable () -> String = { SessionStore.randomHandle() }
+	) {
+		self.engines = engines
+		self.maxSessions = maxSessions
+		self.gracePeriod = gracePeriod
+		self.cloneRegistry = cloneRegistry
+		self.clock = clock
+		self.makeHandle = makeHandle
+	}
+
+	/// 只掛 macOS 引擎的便利建構（等同 `engines: [.mac: engine]`）——`kind: linux` 的請求
+	/// 於此形下擲 ``NymphError/engineUnavailable(_:)``。
 	public init(
 		engine: any GuestEngine,
 		maxSessions: Int = 8,
@@ -37,12 +57,14 @@ public actor SessionStore {
 		clock: @escaping @Sendable () -> Date = { Date() },
 		makeHandle: @escaping @Sendable () -> String = { SessionStore.randomHandle() }
 	) {
-		self.engine = engine
-		self.maxSessions = maxSessions
-		self.gracePeriod = gracePeriod
-		self.cloneRegistry = cloneRegistry
-		self.clock = clock
-		self.makeHandle = makeHandle
+		self.init(
+			engines: [.mac: engine],
+			maxSessions: maxSessions,
+			gracePeriod: gracePeriod,
+			cloneRegistry: cloneRegistry,
+			clock: clock,
+			makeHandle: makeHandle
+		)
 	}
 
 	/// 隨機 opaque handle：`mfly-` + 8 hex（4 亂數 byte）。對映 Docker container id 心智、
@@ -54,13 +76,18 @@ public actor SessionStore {
 
 	/// clone + boot + 依 NY-1 收斂：`wait=true`（預設）阻塞到 READY、逾時無 IP **降級回
 	/// booting 不自殺**（VM 續跑、client 之後以 status 輪詢）；`wait=false` 即回 booting。
+	///
+	/// 引擎由 `kind` 選定（線協議欄、非別名字面推斷）；該 kind 未註冊引擎時擲
+	/// ``NymphError/engineUnavailable(_:)``，不代打、不猜。
 	public func spawn(
 		golden: String,
+		kind: GuestKind = .mac,
 		cpus: Int,
 		memoryGiB: Int,
 		wait: Bool,
 		readinessTimeout: Duration
 	) async throws -> SpawnResult {
+		guard let engine: any GuestEngine = engines[kind] else { throw NymphError.engineUnavailable(kind) }
 		guard table.count < maxSessions else {
 			throw NymphError.admissionDenied(limit: maxSessions)
 		}
@@ -211,8 +238,8 @@ public actor SessionStore {
 		var stopReason: String?
 	}
 
-	/// golden → 備妥 guest 的引擎。
-	private let engine: any GuestEngine
+	/// kind → 該種 guest 的引擎；查無即擲 ``NymphError/engineUnavailable(_:)``。
+	private let engines: [GuestKind: any GuestEngine]
 
 	/// 併發上限。
 	private let maxSessions: Int
@@ -265,6 +292,7 @@ extension SessionStore: RequestDispatching {
 			case let .spawn(params):
 				return .spawn(try await spawn(
 					golden: params.golden,
+					kind: params.kind,
 					cpus: params.cpus,
 					memoryGiB: params.memoryGiB,
 					wait: params.wait,

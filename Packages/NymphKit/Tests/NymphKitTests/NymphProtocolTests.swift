@@ -27,6 +27,7 @@ private final class NymphProtocolTests {
 	private func `requests round trip`() throws {
 		let requests: [NymphRequest] = [
 			.spawn(SpawnParams(golden: "base", cpus: 6, memoryGiB: 8, wait: false, readinessTimeoutSeconds: 90)),
+			.spawn(SpawnParams(golden: "alpine", kind: .linux)),
 			.execute(ExecuteParams(id: "mfly-1", command: ["ls", "-la"], timeoutSeconds: 30, standardInput: "in", workingDirectory: "/w", environment: ["K": "V"])),
 			.list(ListParams(all: true)),
 			.status(StatusParams(id: "mfly-2")),
@@ -76,6 +77,33 @@ private final class NymphProtocolTests {
 		#expect(ToolError(.transportFailure("d")).code == "transport_failure")
 		#expect(ToolError(.execTimedOut).code == "timed_out")
 		#expect(ToolError(.notAppleSilicon).code == "not_apple_silicon")
+		#expect(ToolError(.engineUnavailable(.linux)).code == "engine_unavailable")
 		#expect(ToolError(.internalFailure("d")).code == "internal_error")
+	}
+
+	/// **舊 client 相容**：不含 `kind` 鍵的 spawn 請求解得出來、且落在 ``GuestKind/mac``。
+	/// 手寫 JSON 是唯一能鎖住這件事的形式——encode → decode 的來回永遠會寫出 `kind`，
+	/// 缺欄路徑不會被走到。
+	@Test
+	private func `spawn request without kind decodes as mac`() throws {
+		let line: String = #"{"spawn":{"_0":{"golden":"base","cpus":4,"memoryGiB":4,"wait":true,"readinessTimeoutSeconds":180}}}"#
+		let request: NymphRequest = try JSONDecoder().decode(NymphRequest.self, from: Data(line.utf8))
+		#expect(request == .spawn(SpawnParams(golden: "base")))
+		guard case let .spawn(params) = request else {
+			Issue.record("expected a spawn request")
+			return
+		}
+		#expect(params.kind == .mac)
+	}
+
+	/// 明示的 `kind` 照解；未知字面值解碼即失敗（不猜、不回退預設）。
+	@Test
+	private func `spawn request kind is decoded and unknown values fail`() throws {
+		let linux: String = #"{"spawn":{"_0":{"golden":"alpine","kind":"linux","cpus":4,"memoryGiB":4,"wait":true,"readinessTimeoutSeconds":180}}}"#
+		#expect(try JSONDecoder().decode(NymphRequest.self, from: Data(linux.utf8)) == .spawn(SpawnParams(golden: "alpine", kind: .linux)))
+		let unknown: String = #"{"spawn":{"_0":{"golden":"base","kind":"freebsd","cpus":4,"memoryGiB":4,"wait":true,"readinessTimeoutSeconds":180}}}"#
+		#expect(throws: (any Error).self) {
+			try JSONDecoder().decode(NymphRequest.self, from: Data(unknown.utf8))
+		}
 	}
 }

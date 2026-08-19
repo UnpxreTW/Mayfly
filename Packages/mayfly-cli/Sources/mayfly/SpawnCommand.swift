@@ -22,6 +22,10 @@ struct SpawnCommand: AsyncParsableCommand {
 	@Argument(help: "Golden alias to spawn from.")
 	var golden: String
 
+	/// guest 種類（`mac` / `linux`）；未知值於 `run()` 明確擲錯、不預設回 mac。
+	@Option(name: .customLong("kind"), help: "Guest kind to spawn: mac or linux.")
+	var kind: String = GuestKind.mac.rawValue
+
 	/// 要求 vCPU 數。
 	@Option(help: "Virtual CPU count (clamped to host limits).")
 	var cpus: Int = 4
@@ -39,8 +43,12 @@ struct SpawnCommand: AsyncParsableCommand {
 	var readinessTimeoutSeconds: Int = 180
 
 	func run() async throws {
+		guard let guestKind: GuestKind = .init(rawValue: kind) else {
+			throw ValidationError("unknown --kind value \"\(kind)\"; expected one of: \(GuestKind.allCases.map(\.rawValue).joined(separator: ", ")).")
+		}
 		let request: NymphRequest = .spawn(SpawnParams(
 			golden: golden,
+			kind: guestKind,
 			cpus: cpus,
 			memoryGiB: memoryGiB,
 			wait: !noWait,
