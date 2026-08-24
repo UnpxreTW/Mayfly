@@ -7,6 +7,7 @@
 //  SPDX-License-Identifier: Apache-2.0
 
 import MCP
+import NymphKit
 
 /// 把 MCP `CallTool.Parameters.arguments`（`[String: Value]?`、寬鬆 JSON）讀成契約 #31 五工具
 /// 期待的型別欄位——集中一處，讓 ``NymphToolInvoker`` 的五個 build 函式只管欄位名稱、不重複
@@ -31,6 +32,16 @@ struct NymphToolArguments {
 	/// 選填字串；缺失回 nil。
 	func string(_ key: String) -> String? {
 		raw[key]?.stringValue
+	}
+
+	/// 選填字串；缺失（或 `null`）回 `defaultValue`。**存在但不是字串**（陣列、布林、數字等）擲
+	/// ``NymphShimError/invalidArgument(_:)``——不靜默吞成預設（同 ``int(_:default:)``／
+	/// ``bool(_:default:)`` 的紀律：明示值被無聲忽略是 bug）。不做寬鬆轉型：字串欄位收到別的
+	/// 型別是呼叫端寫錯、不是編碼差異。
+	func string(_ key: String, default defaultValue: String) throws -> String {
+		guard let value: Value = raw[key], !value.isNull else { return defaultValue }
+		guard let string: String = value.stringValue else { throw NymphShimError.invalidArgument(key) }
+		return string
 	}
 
 	/// 選填整數；缺失（或 `null`）回 `defaultValue`。以 swift-sdk 寬鬆轉型接受字串編碼的整數
@@ -125,10 +136,13 @@ enum NymphShimError: Error {
 	/// 直連方（CLI 等），不對 MCP 開放。
 	case invalidGoldenAlias
 
+	/// `spawn` 的 `kind` 不是已知的 guest 種類——錯值大聲失敗，不悄悄回退成預設值。
+	case invalidGuestKind
+
 	/// 對外穩定碼。
 	var code: String {
 		switch self {
-		case .missingArgument, .invalidArgument, .invalidGoldenAlias:
+		case .missingArgument, .invalidArgument, .invalidGoldenAlias, .invalidGuestKind:
 			return "invalid_arguments"
 		}
 	}
@@ -145,6 +159,9 @@ enum NymphShimError: Error {
 
 		case .invalidGoldenAlias:
 			return "golden must be a named alias, not a host path"
+
+		case .invalidGuestKind:
+			return "kind must be one of: " + GuestKind.allCases.map(\.rawValue).joined(separator: ", ")
 		}
 	}
 }

@@ -63,6 +63,9 @@ public struct SpawnParams: Codable, Sendable, Equatable {
 	/// golden 別名。
 	public let golden: String
 
+	/// 要開的 guest 種類（缺欄＝``GuestKind/mac``，保既有 client 回溯相容）。
+	public let kind: GuestKind
+
 	/// 要求 vCPU 數（引擎收斂到 host 上限）。
 	public let cpus: Int
 
@@ -75,12 +78,55 @@ public struct SpawnParams: Codable, Sendable, Equatable {
 	/// readiness 等待上限（秒）。
 	public let readinessTimeoutSeconds: Int
 
-	public init(golden: String, cpus: Int = 4, memoryGiB: Int = 4, wait: Bool = true, readinessTimeoutSeconds: Int = 180) {
+	public init(
+		golden: String,
+		kind: GuestKind = .mac,
+		cpus: Int = 4,
+		memoryGiB: Int = 4,
+		wait: Bool = true,
+		readinessTimeoutSeconds: Int = 180
+	) {
 		self.golden = golden
+		self.kind = kind
 		self.cpus = cpus
 		self.memoryGiB = memoryGiB
 		self.wait = wait
 		self.readinessTimeoutSeconds = readinessTimeoutSeconds
+	}
+
+	/// 手寫解碼**只為 `kind` 缺欄時補 ``GuestKind/mac``**——合成的 `Decodable` 會把缺欄
+	/// 當錯誤，加欄即斷開既有 client。其餘欄位維持必填語義；編碼走合成實作（`kind`
+	/// 一律寫出）。
+	public init(from decoder: any Decoder) throws {
+		let container: KeyedDecodingContainer<CodingKeys> = try decoder.container(keyedBy: CodingKeys.self)
+		self.golden = try container.decode(String.self, forKey: .golden)
+		self.kind = try container.decodeIfPresent(GuestKind.self, forKey: .kind) ?? .mac
+		self.cpus = try container.decode(Int.self, forKey: .cpus)
+		self.memoryGiB = try container.decode(Int.self, forKey: .memoryGiB)
+		self.wait = try container.decode(Bool.self, forKey: .wait)
+		self.readinessTimeoutSeconds = try container.decode(Int.self, forKey: .readinessTimeoutSeconds)
+	}
+
+	/// 明列鍵名供上方手寫解碼使用；鍵名與合成版一致（欄位名本身）。
+	enum CodingKeys: String, CodingKey {
+
+		/// golden 別名；必填，缺欄即解碼失敗。
+		case golden
+
+		/// guest 種類；**唯一容許缺欄者**，缺欄補 ``GuestKind/mac``。
+		case kind
+
+		/// 要求 vCPU 數；必填。
+		case cpus
+
+		/// 要求記憶體（GiB）；必填。
+		case memoryGiB
+
+		/// 是否阻塞到 READY；必填。
+		case wait
+
+		/// readiness 等待上限（秒）；必填。
+		case readinessTimeoutSeconds
 	}
 }
 
@@ -325,6 +371,9 @@ public struct ToolError: Codable, Sendable, Equatable, Error {
 
 		case .notAppleSilicon:
 			self.init(code: "not_apple_silicon", message: "nymph requires Apple Silicon")
+
+		case let .engineUnavailable(kind):
+			self.init(code: "engine_unavailable", message: "no engine is registered for guest kind: \(kind.rawValue)")
 
 		case let .internalFailure(detail):
 			self.init(code: "internal_error", message: detail)

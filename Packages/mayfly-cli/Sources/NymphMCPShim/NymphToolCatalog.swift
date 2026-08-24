@@ -20,7 +20,7 @@ enum NymphToolCatalog {
 	static let spawn = Tool(
 		name: "spawn",
 		description: """
-		Spawn a disposable macOS VM cloned from a golden image. Blocks until the VM reports \
+		Spawn a disposable VM cloned from a golden image. Blocks until the VM reports \
 		READY by default; on a readiness timeout it degrades to state "booting" instead of \
 		failing (poll with `status`). Returns an opaque session id, never a host path.
 		""",
@@ -30,6 +30,12 @@ enum NymphToolCatalog {
 				"golden": [
 					"type": "string",
 					"description": "Golden image alias to clone from (an alias, not a host path).",
+				],
+				"kind": [
+					"type": "string",
+					"description": "Guest kind to spawn. Defaults to \"mac\" when omitted.",
+					"enum": ["mac", "linux"],
+					"default": "mac",
 				],
 				"cpus": [
 					"type": "integer",

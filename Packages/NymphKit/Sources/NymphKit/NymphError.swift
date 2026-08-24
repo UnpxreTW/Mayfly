@@ -39,6 +39,9 @@ public enum NymphError: Error, Sendable, Equatable {
 	/// host 非 Apple Silicon（daemon 需 Virtualization.framework）。
 	case notAppleSilicon
 
+	/// 這個 daemon 沒有註冊對應 ``GuestKind`` 的引擎（請求合法、但此 host 開不了該種 guest）。
+	case engineUnavailable(GuestKind)
+
 	/// 其餘未歸類的內部錯誤（帶描述）。
 	case internalFailure(String)
 }
