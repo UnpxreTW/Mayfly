@@ -11,14 +11,17 @@ import Security
 
 // MARK: - KeychainPreflight
 
-/// VM `start()` 前的 login keychain 狀態檢查。
+/// VM `start()` 失敗後的 login keychain 狀態診斷。
 ///
-/// login keychain 未解鎖會讓 `start()` 以通用的 `VZErrorDomain`
+/// 曾觀察到 login keychain 未解鎖使 `start()` 以通用的 `VZErrorDomain`
 /// Code=1（internalError）失敗——真正的失敗發生在
 /// com.apple.Virtualization.VirtualMachine helper 行程（SEP keypair 生成被
 /// Security Server 拒絕），client 端錯誤的 userInfo 沒有任何線索。這裡用
 /// `SecKeychainGetStatus` 做純狀態查詢：不彈窗、不解鎖、無副作用，讓呼叫端
-/// 在碰 VZ 之前就拿到可修復的答案。
+/// 把那個沒有線索的錯誤翻成可修復的答案。
+///
+/// 只在失敗之後查、不事前擋門：macOS 26.x 實測鎖定的 default keychain 不影響
+/// `start()`，事前擋門會擋掉 headless／非互動 session 這個主要使用場景。
 ///
 /// 為什麼用 deprecated（10.10）API：file keychain 的鎖定狀態沒有非 deprecated
 /// 的查詢路徑——SecItem 體系無從表達「keychain 檔鎖著」，data protection
@@ -26,15 +29,14 @@ import Security
 /// errSecMissingEntitlement、查詢靜默回 not-found）。deprecation warning 以
 /// protocol witness 慣用法壓掉（見 ``LegacyDefaultKeychainQuery``）。
 ///
-/// 通過 ≠ `start()` 必成功——VZ 真正卡的是 SEP user keybag、keychain 鎖定
-/// 狀態是高度相關的 proxy。這是「已知、可修復失敗模式的偵測器」；殘餘
-/// case（root 執行、host 從未 GUI 登入過）由 `start()` 失敗後的二次診斷接住。
+/// 鎖定 ≠ `start()` 必失敗——VZ 真正卡的是 SEP user keybag、keychain 鎖定
+/// 狀態只是相關的 proxy，這也是它不適合當事前閘門的理由。
 public enum KeychainPreflight {
 
 	/// default keychain 的鎖定狀態。
 	public enum Status: Equatable, Sendable {
 
-		/// 已解鎖，`start()` 的 keychain 閘門應可通過。
+		/// 已解鎖，`start()` 的失敗與 keychain 無關。
 		case unlocked
 
 		/// 鎖定。修復：`security unlock-keychain <path>`。
