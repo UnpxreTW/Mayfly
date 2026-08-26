@@ -119,9 +119,18 @@ public actor SessionStore {
 		guard wait else {
 			return SpawnResult(id: id, state: .booting, ip: nil)
 		}
-		let ip: String? = (try? await provisioned.control.waitUntilReady()) ?? nil
+		var ip: String? = (try? await provisioned.control.waitUntilReady()) ?? nil
+		// 狀態向控制面查、不由 IP 反推：沒接網路的 guest（Linux 容器即是）readiness 收斂後
+		// 仍解不出 IP，用 IP 反推會把已 ready 的 session 回報成 booting，與緊接著的 status
+		// 互相矛盾。IP 只是附帶欄位。
+		let state: SessionState = await provisioned.control.currentState()
+		// 查狀態這一步本身可能讓等待期間才收斂的 guest 升成 ready；此時 IP 要一併補回，
+		// 否則回的是「ready 但沒有 IP」——對接著要連線的呼叫端形同無解。
+		if state == .ready, ip == nil {
+			ip = await provisioned.control.currentIP()
+		}
 		table[id]?.lastIP = ip
-		return SpawnResult(id: id, state: ip != nil ? .ready : .booting, ip: ip)
+		return SpawnResult(id: id, state: state, ip: ip)
 	}
 
 	/// 在既有 session 內 execute（SSH）。no-such-id 擲 ``NymphError/noSuchID(_:)``；傳輸層失敗
