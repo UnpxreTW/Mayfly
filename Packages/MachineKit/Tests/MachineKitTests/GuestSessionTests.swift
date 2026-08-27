@@ -44,6 +44,17 @@ private final class GuestSessionTests {
 		}
 	}
 
+	/// 未 start 的 session 補探不會升狀態：`.ready` 只從 `.booting` 來，idle 的 session
+	/// 即使 host lease 剛好有這個 MAC 也不算開機完成。
+	@Test
+	private func `promote if ready does not lift an idle session`() async throws {
+		let fixture: (clone: EphemeralBundle, root: URL) = try makeEphemeralFixture()
+		defer { try? FileManager.default.removeItem(at: fixture.root) }
+		let session: GuestSession = try .init(bundle: fixture.clone)
+		#expect(await session.promoteIfReady() == false)
+		#expect(await session.state == .idle)
+	}
+
 	/// 未 start 就 forceStop → notStarted。
 	@Test
 	private func `force stop before start throws not started`() async throws {

@@ -42,6 +42,23 @@ private final class SessionStoreTests {
 		#expect(recorded?.destroyed == false)
 	}
 
+	/// 沒接網路的 guest：readiness 收斂但解不出 IP → 仍回 ready（狀態向控制面查、不由 IP 反推）。
+	@Test
+	private func `spawn reports ready even without an ip`() async throws {
+		let engine: FakeGuestEngine = .init { FakeGuestControl(readyIP: nil) }
+		let store: SessionStore = .init(engine: engine, makeHandle: sequentialHandles())
+		let result: SpawnResult = try await store.spawn(
+			golden: "base",
+			cpus: 2,
+			memoryGiB: 2,
+			wait: true,
+			readinessTimeout: .seconds(1)
+		)
+		#expect(result.state == .ready)
+		#expect(result.ip == nil)
+		#expect(await store.count == 1)
+	}
+
 	/// wait=false → 即回 booting、無 IP（VM 續開機、client 自輪詢）。
 	@Test
 	private func `spawn no wait returns booting immediately`() async throws {

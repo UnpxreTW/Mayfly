@@ -211,10 +211,11 @@ public struct SpawnResult: Codable, Sendable, Equatable {
 	/// opaque handle（`mfly-xxxxxxxx`）。
 	public let id: String
 
-	/// 收斂後狀態（`ready` 或逾時降級的 `booting`）。
+	/// 收斂後狀態，由控制面回報（`ready`、或逾時降級的 `booting`）；guest 於等待期間停止時
+	/// 亦可能為 `stopped`。
 	public let state: SessionState
 
-	/// guest IP；booting / 尚未解出時為 nil。
+	/// guest IP；未解出時為 nil——含尚在 booting、以及沒接網路的 guest（此時仍可能是 `ready`）。
 	public let ip: String?
 
 	public init(id: String, state: SessionState, ip: String?) {
