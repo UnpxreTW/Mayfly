@@ -74,7 +74,10 @@ final class LinuxGuestControl: GuestControl, @unchecked Sendable {
 	}
 
 	func waitUntilReady() async throws -> String? {
-		guard withLock({ lifecycleState }) == .booting else { return nil }
+		let state: SessionState = withLock { lifecycleState }
+		// 已被 status／exec 的隨手探測升成 .ready 時直接回報，不再空等一輪。
+		guard state != .ready else { return await currentIP() }
+		guard state == .booting else { return nil }
 		let clock: ContinuousClock = .init()
 		let deadline: ContinuousClock.Instant = clock.now.advanced(by: readinessTimeout)
 		while clock.now < deadline {
@@ -88,7 +91,10 @@ final class LinuxGuestControl: GuestControl, @unchecked Sendable {
 	}
 
 	func currentState() async -> SessionState {
-		withLock { lifecycleState }
+		if withLock({ lifecycleState }) == .booting {
+			await promoteIfReady()
+		}
+		return withLock { lifecycleState }
 	}
 
 	/// 回報容器在共用網路上配到的 IPv4 位址。
@@ -128,6 +134,9 @@ final class LinuxGuestControl: GuestControl, @unchecked Sendable {
 		workingDirectory: String?,
 		environment: [String: String]
 	) async throws -> GuestExecResult {
+		if withLock({ lifecycleState }) == .booting {
+			await promoteIfReady()
+		}
 		guard withLock({ lifecycleState }) == .ready else { throw NymphError.notReady }
 		do {
 			return try await runCommand(
@@ -180,6 +189,21 @@ final class LinuxGuestControl: GuestControl, @unchecked Sendable {
 		lock.lock()
 		defer { lock.unlock() }
 		return try body()
+	}
+
+	/// 探測一次，通了就把狀態升成 `.ready`（冪等、只從 `.booting` 升）。
+	///
+	/// `.ready` 的轉態不能只掛在 ``waitUntilReady()``——`--no-wait` 的 spawn 根本不呼叫它，
+	/// 狀態會永停 `.booting`，使 ``exec(_:timeout:standardInput:workingDirectory:environment:)``
+	/// 的 readiness guard 恆假、該 session 只能 destroy。故 status／exec 兩個入口遇 `.booting`
+	/// 時各自補探一次，讓收斂不依賴呼叫端有沒有等。
+	private func promoteIfReady() async {
+		guard await probeReady() else { return }
+		withLock {
+			if lifecycleState == .booting {
+				lifecycleState = .ready
+			}
+		}
 	}
 
 	private func probeReady() async -> Bool {

@@ -9,6 +9,7 @@
 import ArgumentParser
 import Dispatch
 import Foundation
+import LinuxNodeKit
 import MachineKit
 import NymphKit
 
@@ -19,6 +20,9 @@ import Darwin
 /// `mayfly nymph`：起常駐 daemon——loadOrGenerate 穩定身份鑰、掃孤兒 clone、開 Unix
 /// socket、跑 `SessionStore`。真共享（設計決策②）：client 來去、session table 不隨單一
 /// client 斷線收束。收 SIGTERM / SIGINT → drain（每 session forceStop + destroy clone）後退出。
+///
+/// 每種 guest 各掛一顆引擎：macOS 走 ``RealGuestEngine``、Linux 走 `LinuxGuestEngine`。
+/// spawn 依請求帶的 kind 挑引擎，沒掛引擎的 kind 回 `engine_unavailable`、不由別顆代打。
 ///
 /// arm64 限定（引擎觸碰 Virtualization.framework）；非 Apple Silicon 比照 `run` 明確擋下。
 struct NymphCommand: AsyncParsableCommand {
@@ -44,8 +48,15 @@ struct NymphCommand: AsyncParsableCommand {
 		if !reclaimed.isEmpty {
 			FileHandle.standardError.write(Data("nymph: reclaimed \(reclaimed.count) orphan clone(s)\n".utf8))
 		}
-		let engine: RealGuestEngine = .init(hostKey: hostKey, resolver: .fromEnvironment())
-		let store: SessionStore = .init(engine: engine, maxSessions: maxSessions, cloneRegistry: registry)
+		let macEngine: RealGuestEngine = .init(hostKey: hostKey, resolver: .fromEnvironment())
+		// 預設不接網路（network: nil）：容器沒有對外連線、`currentIP()` 恆回 nil，readiness
+		// 改由容器內探測驅動（見 `LinuxGuestControl`）；接上容器網路另行處理。
+		let linuxEngine: LinuxGuestEngine = .init()
+		let store: SessionStore = .init(
+			engines: [.mac: macEngine, .linux: linuxEngine],
+			maxSessions: maxSessions,
+			cloneRegistry: registry
+		)
 		let socketURL: URL = NymphPaths.socketURL()
 		let server: NymphServer = .init(socketPath: socketURL, dispatcher: store)
 		try server.start()

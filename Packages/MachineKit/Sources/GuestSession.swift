@@ -90,9 +90,34 @@ public actor GuestSession {
 
 	/// 等 readiness 收斂：回解出的 guest IP；gate 逾時無 IP 回 nil（best-effort）、
 	/// guest 提早停止亦回 nil。未 start 擲 ``GuestSessionError/notStarted``。
+	///
+	/// 已被 ``promoteIfReady()`` 升成 `.ready` 時直接回報該 IP、不再空等一輪。
 	public func waitUntilReady() async throws -> String? {
 		guard let readinessTask else { throw GuestSessionError.notStarted }
+		if case let .ready(ip) = state {
+			return ip
+		}
 		return await readinessTask.value
+	}
+
+	/// 現查一次 host lease，解得出 IP 就把狀態自 `.booting` 升成 `.ready`（冪等、只從
+	/// `.booting` 升）。回傳是否已處於 `.ready`。
+	///
+	/// gate 逾時（``ReadinessGate`` 兩路皆未解出 IP）時狀態刻意停在 `.booting`，此後的
+	/// 收斂就靠本方法——呼叫端在查狀態或要 exec 時各補探一次，收斂不依賴當初有沒有等。
+	/// 開機慢於 readinessTimeout 的 guest 因此仍會晚升、不會永停 `.booting`。
+	///
+	/// 證據取 lease 而非額外的 guest 內探測：macOS guest 的控制通道是 SSH、必須先有 IP，
+	/// 解不出 IP 的 session 對呼叫端就是不可用，`.booting` 是如實回報；而 lease 是 host
+	/// 本機檔案的一次讀取、有界且不觸網，不會把「查狀態」變成一次可能懸掛的遠端呼叫。
+	@discardableResult
+	public func promoteIfReady() -> Bool {
+		if case .ready = state {
+			return true
+		}
+		guard state == .booting, let ip = GuestLease.currentIP(macAddress: metadata.macAddress) else { return false }
+		state = .ready(ip: ip)
+		return true
 	}
 
 	/// 等 guest 停止、回停止原因（單一真相；語義同 ``MacGuest/waitUntilStopped()``）。
@@ -234,8 +259,12 @@ public actor GuestSession {
 	}
 
 	/// booting → ready 的單向轉移；已 stopped 則不回退。
+	///
+	/// 無 IP 不升：``ReadinessGate`` 只在兩路競速都沒解出 IP（＝整體逾時）時才送
+	/// `provisioningReady(ip: nil)`，那不是收斂、是放棄等待，升成 `.ready` 會讓呼叫端拿到
+	/// 一個連不上的 session。逾時後停在 `.booting`、之後由 ``promoteIfReady()`` 晚升。
 	private func markReady(ip: String?) {
-		guard state == .booting else { return }
+		guard state == .booting, let ip else { return }
 		state = .ready(ip: ip)
 	}
 

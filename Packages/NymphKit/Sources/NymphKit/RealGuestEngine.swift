@@ -131,6 +131,7 @@ struct RealGuestControl: GuestControl {
 	}
 
 	func currentState() async -> SessionState {
+		await promoteIfBooting()
 		switch await session.state {
 		case .idle:
 			return .idle
@@ -175,6 +176,7 @@ struct RealGuestControl: GuestControl {
 		workingDirectory: String?,
 		environment: [String: String]
 	) async throws -> GuestExecResult {
+		await promoteIfBooting()
 		do {
 			return try await exec.run(
 				command,
@@ -191,6 +193,16 @@ struct RealGuestControl: GuestControl {
 
 	func destroyClone() throws {
 		try cloner.destroy(clone)
+	}
+
+	/// session 還在 `.booting` 時補探一次（`GuestSession.promoteIfReady()`，現查 host lease）。
+	///
+	/// readiness 逾時的 session 停在 `.booting`，之後要靠查狀態或 exec 這兩個入口把它帶起來
+	/// ——`--no-wait` 的 spawn 根本沒等過，開機慢於 readinessTimeout 的 guest 也是如此。與
+	/// Linux 側 `status`／`exec` 各自補探一次的收法對稱。
+	private func promoteIfBooting() async {
+		guard await session.state == .booting else { return }
+		await session.promoteIfReady()
 	}
 
 	/// `GuestExecError`（引擎傳輸面）→ ``NymphError``（daemon 工具面）。

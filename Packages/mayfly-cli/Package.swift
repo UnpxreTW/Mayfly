@@ -14,6 +14,7 @@ let package = Package(
 	dependencies: [
 		.package(path: "../MachineKit"),
 		.package(path: "../NymphKit"),
+		.package(path: "../LinuxNodeKit"),
 		.package(url: "https://github.com/apple/swift-argument-parser.git", from: "1.5.0"),
 		.package(url: "https://github.com/UnpxreTW/SwiftStyleKit.git", from: "2.0.0"),
 		// pre-1.0（0.12.1）——風險關在 NymphMCPShim 這個薄 shim，daemon 核心協議走自訂
@@ -38,6 +39,7 @@ let package = Package(
 				.product(name: "MachineKit", package: "MachineKit"),
 				.product(name: "ArgumentParser", package: "swift-argument-parser"),
 				.product(name: "NymphKit", package: "NymphKit"),
+				.product(name: "LinuxNodeKit", package: "LinuxNodeKit"),
 				"NymphMCPShim",
 			],
 			path: "Sources/mayfly",
