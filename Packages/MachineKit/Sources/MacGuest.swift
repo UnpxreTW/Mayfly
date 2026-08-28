@@ -49,23 +49,15 @@ public final class MacGuest: @unchecked Sendable {
 
 	/// 啟動 guest。
 	///
-	/// 先跑 ``KeychainPreflight``：鎖定 / 缺失即擲 ``MacGuestError``、完全
-	/// 不碰 VZ（`undetermined` 放行——偵測器自己壞不該擋路）。`start()`
-	/// 失敗且為通用 Code=1 時重跑 preflight 做二次診斷：
-	/// keychain 不可用 → 擲
-	/// ``MacGuestError/startBlockedByKeychain(underlying:keychain:)``、
+	/// keychain 狀態**不事前擋門**：實測 macOS 26.x 上鎖定的 default keychain
+	/// 不影響 `VZVirtualMachine.start`，事前擋門會把 headless／非互動 session
+	/// 這個主要使用場景無由擋在門外。``KeychainPreflight`` 因此只在失敗之後
+	/// 當診斷線索用：`start()` 失敗且為通用 Code=1 時查一次 keychain，不可用
+	/// → 擲 ``MacGuestError/startBlockedByKeychain(underlying:keychain:)``、
 	/// 否則原樣上拋。再深入的診斷看 unified log（library 不代跑、只給
 	/// 指引）：`log show --last 2m --predicate 'subsystem == "com.apple.security"'`
 	/// 配合 Virtualization helper 行程過濾。
 	public func start() async throws {
-		switch KeychainPreflight.status() {
-		case let .locked(path):
-			throw MacGuestError.keychainLocked(path: path)
-		case .missing:
-			throw MacGuestError.noDefaultKeychain
-		case .unlocked, .undetermined:
-			break
-		}
 		do {
 			try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, any Error>) in
 				vmQueue.async {
