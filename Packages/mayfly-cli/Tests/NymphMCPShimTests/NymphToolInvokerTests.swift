@@ -39,6 +39,7 @@ private final class NymphToolInvokerTests {
 
 		let params: CallTool.Parameters = .init(name: "spawn", arguments: [
 			"golden": "sequoia-base",
+			"os": "mac",
 			"cpus": 8,
 			"memory_gib": 6,
 			"wait": false,
@@ -53,7 +54,14 @@ private final class NymphToolInvokerTests {
 			"ip": "10.0.0.9",
 		])
 		let sent: [NymphRequest] = await harness.dispatcher.received
-		#expect(sent == [.spawn(SpawnParams(golden: "sequoia-base", cpus: 8, memoryGiB: 6, wait: false, readinessTimeoutSeconds: 60))])
+		#expect(sent == [.spawn(SpawnParams(
+			golden: "sequoia-base",
+			os: .mac,
+			cpus: 8,
+			memoryGiB: 6,
+			wait: false,
+			readinessTimeoutSeconds: 60
+		))])
 	}
 
 	/// spawn 缺必填 `golden` → tool-error（`invalid_arguments`），連 daemon 都不連（無 socket
@@ -89,87 +97,83 @@ private final class NymphToolInvokerTests {
 		let harness = makeHarness(response: .spawn(SpawnResult(id: "mfly-ok1", state: .booting, ip: nil)))
 		defer { harness.server.shutdown() }
 		let result: CallTool.Result = await NymphToolInvoker.handle(
-			.init(name: "spawn", arguments: ["golden": "sa-ci-macos26", "wait": false]),
+			.init(name: "spawn", arguments: ["golden": "sa-ci-macos26", "os": "mac", "wait": false]),
 			client: harness.client
 		)
 		#expect(result.isError == false)
 		let sent: [NymphRequest] = await harness.dispatcher.received
-		#expect(sent == [.spawn(SpawnParams(golden: "sa-ci-macos26", cpus: 4, memoryGiB: 4, wait: false, readinessTimeoutSeconds: 180))])
+		#expect(sent == [.spawn(SpawnParams(
+			golden: "sa-ci-macos26",
+			os: .mac,
+			cpus: 4,
+			memoryGiB: 4,
+			wait: false,
+			readinessTimeoutSeconds: 180
+		))])
 	}
 
-	/// `kind` 原樣映進 ``SpawnParams``（schema 的 `kind` 對映協議的 `kind`）。
+	/// `os` 原樣映進 ``SpawnParams``（schema 的 `os` 對映協議的 `os`）。
 	@Test
-	private func `spawn maps the kind argument`() async throws {
+	private func `spawn maps the os argument`() async throws {
 		let harness: (client: NymphClient, dispatcher: RecordingDispatcher, server: NymphServer) =
 			makeHarness(response: .spawn(SpawnResult(id: "mfly-lnx1", state: .booting, ip: nil)))
 		defer { harness.server.shutdown() }
 		let result: CallTool.Result = await NymphToolInvoker.handle(
-			.init(name: "spawn", arguments: ["golden": "alpine", "kind": "linux", "wait": false]),
+			.init(name: "spawn", arguments: ["golden": "alpine", "os": "linux", "wait": false]),
 			client: harness.client
 		)
 		#expect(result.isError == false)
 		let sent: [NymphRequest] = await harness.dispatcher.received
-		#expect(sent == [.spawn(SpawnParams(golden: "alpine", kind: .linux, cpus: 4, memoryGiB: 4, wait: false, readinessTimeoutSeconds: 180))])
+		#expect(sent == [.spawn(SpawnParams(
+			golden: "alpine",
+			os: .linux,
+			cpus: 4,
+			memoryGiB: 4,
+			wait: false,
+			readinessTimeoutSeconds: 180
+		))])
 	}
 
-	/// 未知 `kind` → tool-error（`invalid_arguments`），連 daemon 都不連——錯值大聲失敗、
+	/// 未知 `os` → tool-error（`invalid_arguments`），連 daemon 都不連——錯值大聲失敗、
 	/// 不悄悄回退成 mac（那會開出呼叫端沒要的 guest）。
 	@Test
-	private func `spawn with an unknown kind is a tool error before reaching the daemon`() async {
+	private func `spawn with an unknown os is a tool error before reaching the daemon`() async {
 		let client: NymphClient = .init(socketPath: temporarySocketURL())
-		let params: CallTool.Parameters = .init(name: "spawn", arguments: ["golden": "base", "kind": "freebsd"])
+		let params: CallTool.Parameters = .init(name: "spawn", arguments: ["golden": "base", "os": "freebsd"])
 		let result: CallTool.Result = await NymphToolInvoker.handle(params, client: client)
 		#expect(result.isError == true)
 		#expect(result.structuredContent?.objectValue?["code"] == "invalid_arguments")
 	}
 
-	/// 不送 `kind` → 落 mac（既有呼叫端不受加欄影響）。
+	/// 不送 `os` → tool-error（`invalid_arguments`），連 daemon 都不連——沒有預設引擎，
+	/// 未指明種類的請求不得靜默開出某一種 guest。
 	@Test
-	private func `spawn without kind defaults to mac`() async throws {
-		let harness: (client: NymphClient, dispatcher: RecordingDispatcher, server: NymphServer) =
-			makeHarness(response: .spawn(SpawnResult(id: "mfly-mac1", state: .booting, ip: nil)))
-		defer { harness.server.shutdown() }
-		let result: CallTool.Result = await NymphToolInvoker.handle(
-			.init(name: "spawn", arguments: ["golden": "sequoia-base", "wait": false]),
-			client: harness.client
-		)
-		#expect(result.isError == false)
-		let sent: [NymphRequest] = await harness.dispatcher.received
-		guard case let .spawn(params) = sent.first else {
-			Issue.record("預期 spawn 請求、得 \(sent)")
-			return
-		}
-		#expect(params.kind == .mac)
-	}
-
-	/// `kind` 存在但**不是字串**（`["linux"]`）→ `invalid_arguments` tool-error，且**不送進** daemon。
-	/// 明示了要 linux 卻因型別不合被吞成 mac，會開出呼叫端沒要的 guest——與缺欄兩條路徑必須分開。
-	@Test
-	private func `spawn with a non string kind is a tool error not a default`() async {
+	private func `spawn without os is a tool error before reaching the daemon`() async {
 		let client: NymphClient = .init(socketPath: temporarySocketURL())
-		let params: CallTool.Parameters = .init(name: "spawn", arguments: ["golden": "alpine", "kind": ["linux"]])
+		let params: CallTool.Parameters = .init(name: "spawn", arguments: ["golden": "sequoia-base", "wait": false])
 		let result: CallTool.Result = await NymphToolInvoker.handle(params, client: client)
 		#expect(result.isError == true)
 		#expect(result.structuredContent?.objectValue?["code"] == "invalid_arguments")
 	}
 
-	/// `kind` 明示 `null` → 落 mac（與「不送 `kind`」同一條預設路徑，null 不算錯型別）。
+	/// `os` 存在但**不是字串**（`["linux"]`）→ `invalid_arguments` tool-error，且**不送進** daemon。
 	@Test
-	private func `spawn with a null kind defaults to mac`() async throws {
-		let harness: (client: NymphClient, dispatcher: RecordingDispatcher, server: NymphServer) =
-			makeHarness(response: .spawn(SpawnResult(id: "mfly-mac2", state: .booting, ip: nil)))
-		defer { harness.server.shutdown() }
-		let result: CallTool.Result = await NymphToolInvoker.handle(
-			.init(name: "spawn", arguments: ["golden": "sequoia-base", "kind": .null, "wait": false]),
-			client: harness.client
-		)
-		#expect(result.isError == false)
-		let sent: [NymphRequest] = await harness.dispatcher.received
-		guard case let .spawn(params) = sent.first else {
-			Issue.record("預期 spawn 請求、得 \(sent)")
-			return
-		}
-		#expect(params.kind == .mac)
+	private func `spawn with a non string os is a tool error`() async {
+		let client: NymphClient = .init(socketPath: temporarySocketURL())
+		let params: CallTool.Parameters = .init(name: "spawn", arguments: ["golden": "alpine", "os": ["linux"]])
+		let result: CallTool.Result = await NymphToolInvoker.handle(params, client: client)
+		#expect(result.isError == true)
+		#expect(result.structuredContent?.objectValue?["code"] == "invalid_arguments")
+	}
+
+	/// `os` 明示 `null` → 與缺欄同樣是 tool-error（null 不是一個 guest 種類）。
+	@Test
+	private func `spawn with a null os is a tool error`() async {
+		let client: NymphClient = .init(socketPath: temporarySocketURL())
+		let params: CallTool.Parameters = .init(name: "spawn", arguments: ["golden": "sequoia-base", "os": .null])
+		let result: CallTool.Result = await NymphToolInvoker.handle(params, client: client)
+		#expect(result.isError == true)
+		#expect(result.structuredContent?.objectValue?["code"] == "invalid_arguments")
 	}
 
 	/// booting 逾時降級：`ip` 為 nil → JSON `null`（NY-1）。
@@ -177,7 +181,10 @@ private final class NymphToolInvokerTests {
 	private func `spawn booting result encodes null ip`() async throws {
 		let harness = makeHarness(response: .spawn(SpawnResult(id: "mfly-boot", state: .booting, ip: nil)))
 		defer { harness.server.shutdown() }
-		let result: CallTool.Result = await NymphToolInvoker.handle(.init(name: "spawn", arguments: ["golden": "focal"]), client: harness.client)
+		let result: CallTool.Result = await NymphToolInvoker.handle(
+			.init(name: "spawn", arguments: ["golden": "focal", "os": "linux"]),
+			client: harness.client
+		)
 		#expect(result.structuredContent == ["id": "mfly-boot", "state": "booting", "ip": nil])
 	}
 
@@ -322,7 +329,10 @@ private final class NymphToolInvokerTests {
 		let secretPath = "/Users/aron/GoldenBundles/sequoia-base.bundle"
 		let harness = makeHarness(response: .toolError(ToolError(code: "clone_failed", message: "clone failed: \(secretPath)")))
 		defer { harness.server.shutdown() }
-		let result: CallTool.Result = await NymphToolInvoker.handle(.init(name: "spawn", arguments: ["golden": "sequoia-base"]), client: harness.client)
+		let result: CallTool.Result = await NymphToolInvoker.handle(
+			.init(name: "spawn", arguments: ["golden": "sequoia-base", "os": "mac"]),
+			client: harness.client
+		)
 
 		#expect(result.isError == true)
 		#expect(result.structuredContent?.objectValue?["code"] == "clone_failed")
@@ -403,12 +413,20 @@ private final class NymphToolInvokerTests {
 		defer { harness.server.shutdown() }
 		let params: CallTool.Parameters = .init(name: "spawn", arguments: [
 			"golden": "sequoia-base",
+			"os": "mac",
 			"wait": "false",
 			"memory_gib": "8",
 		])
 		_ = await NymphToolInvoker.handle(params, client: harness.client)
 		let sent: [NymphRequest] = await harness.dispatcher.received
-		#expect(sent == [.spawn(SpawnParams(golden: "sequoia-base", cpus: 4, memoryGiB: 8, wait: false, readinessTimeoutSeconds: 180))])
+		#expect(sent == [.spawn(SpawnParams(
+			golden: "sequoia-base",
+			os: .mac,
+			cpus: 4,
+			memoryGiB: 8,
+			wait: false,
+			readinessTimeoutSeconds: 180
+		))])
 	}
 
 	/// 選填純量存在但**無法轉型**（`memory_gib: "abc"`）→ `invalid_arguments` tool-error，不靜默
