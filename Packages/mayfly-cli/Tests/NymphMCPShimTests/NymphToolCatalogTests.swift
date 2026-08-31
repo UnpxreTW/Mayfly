@@ -32,13 +32,13 @@ private final class NymphToolCatalogTests {
 		}
 	}
 
-	/// 必填欄位對映契約 #31：spawn 只要 golden；execute 要 id + cmd；status/destroy 只要 id。
+	/// 必填欄位對映契約 #31：spawn 要 golden + os；execute 要 id + cmd；status/destroy 只要 id。
 	@Test
 	private func `required fields match contract 31`() {
 		let required: [String: [String]] = Dictionary(
 			uniqueKeysWithValues: NymphToolCatalog.tools.map { ($0.name, $0.inputSchema.objectValue?["required"]?.arrayValue?.compactMap(\.stringValue) ?? []) }
 		)
-		#expect(required["spawn"] == ["golden"])
+		#expect(required["spawn"] == ["golden", "os"])
 		#expect(required["execute"] == ["id", "cmd"])
 		#expect(required["list"] == [])
 		#expect(required["status"] == ["id"])

@@ -136,7 +136,7 @@ enum NymphShimError: Error {
 	/// 直連方（CLI 等），不對 MCP 開放。
 	case invalidGoldenAlias
 
-	/// `spawn` 的 `kind` 不是已知的 guest 種類——錯值大聲失敗，不悄悄回退成預設值。
+	/// `spawn` 的 `os` 不是已知的 guest 種類——錯值大聲失敗，不悄悄回退成某一顆引擎。
 	case invalidGuestKind
 
 	/// 對外穩定碼。
@@ -161,7 +161,7 @@ enum NymphShimError: Error {
 			return "golden must be a named alias, not a host path"
 
 		case .invalidGuestKind:
-			return "kind must be one of: " + GuestKind.allCases.map(\.rawValue).joined(separator: ", ")
+			return "os must be one of: " + GuestKind.allCases.map(\.rawValue).joined(separator: ", ")
 		}
 	}
 }

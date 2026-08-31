@@ -47,7 +47,7 @@ public actor SessionStore {
 		self.makeHandle = makeHandle
 	}
 
-	/// 只掛 macOS 引擎的便利建構（等同 `engines: [.mac: engine]`）——`kind: linux` 的請求
+	/// 只掛 macOS 引擎的便利建構（等同 `engines: [.mac: engine]`）——`os: linux` 的請求
 	/// 於此形下擲 ``NymphError/engineUnavailable(_:)``。
 	public init(
 		engine: any GuestEngine,
@@ -77,8 +77,10 @@ public actor SessionStore {
 	/// clone + boot + 依 NY-1 收斂：`wait=true`（預設）阻塞到 READY、逾時無 IP **降級回
 	/// booting 不自殺**（VM 續跑、client 之後以 status 輪詢）；`wait=false` 即回 booting。
 	///
-	/// 引擎由 `kind` 選定（線協議欄、非別名字面推斷）；該 kind 未註冊引擎時擲
-	/// ``NymphError/engineUnavailable(_:)``，不代打、不猜。
+	/// 引擎由 `kind` 選定（線協議 `os` 欄、非別名字面推斷）；該 kind 未註冊引擎時擲
+	/// ``NymphError/engineUnavailable(_:)``，不代打、不猜。必填語義在線協議層
+	/// （``SpawnParams/os`` 缺欄即解碼失敗）；此處的 `.mac` 預設是行程內呼叫端的便利，
+	/// 與只掛 macOS 引擎的便利建構同款。
 	public func spawn(
 		golden: String,
 		kind: GuestKind = .mac,
@@ -301,7 +303,7 @@ extension SessionStore: RequestDispatching {
 			case let .spawn(params):
 				return .spawn(try await spawn(
 					golden: params.golden,
-					kind: params.kind,
+					kind: params.os,
 					cpus: params.cpus,
 					memoryGiB: params.memoryGiB,
 					wait: params.wait,

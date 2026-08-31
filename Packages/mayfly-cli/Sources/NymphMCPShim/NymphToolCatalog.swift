@@ -31,11 +31,10 @@ enum NymphToolCatalog {
 					"type": "string",
 					"description": "Golden image alias to clone from (an alias, not a host path).",
 				],
-				"kind": [
+				"os": [
 					"type": "string",
-					"description": "Guest kind to spawn. Defaults to \"mac\" when omitted.",
+					"description": "Guest OS to spawn. Required; there is no default engine.",
 					"enum": ["mac", "linux"],
-					"default": "mac",
 				],
 				"cpus": [
 					"type": "integer",
@@ -58,7 +57,7 @@ enum NymphToolCatalog {
 					"default": 180,
 				],
 			],
-			"required": ["golden"],
+			"required": ["golden", "os"],
 		]
 	)
 

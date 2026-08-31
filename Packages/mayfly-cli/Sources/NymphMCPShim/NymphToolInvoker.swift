@@ -61,11 +61,11 @@ enum NymphToolInvoker {
 			guard !golden.hasPrefix("/") else {
 				throw NymphShimError.invalidGoldenAlias
 			}
-			let kindRaw: String = try arguments.string("kind", default: GuestKind.mac.rawValue)
-			guard let kind: GuestKind = .init(rawValue: kindRaw) else { throw NymphShimError.invalidGuestKind }
+			let osRaw: String = try arguments.requiredString("os")
+			guard let os: GuestKind = .init(rawValue: osRaw) else { throw NymphShimError.invalidGuestKind }
 			return .spawn(SpawnParams(
 				golden: golden,
-				kind: kind,
+				os: os,
 				cpus: try arguments.int("cpus", default: 4),
 				memoryGiB: try arguments.int("memory_gib", default: 4),
 				wait: try arguments.bool("wait", default: true),

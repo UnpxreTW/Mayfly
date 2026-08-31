@@ -214,7 +214,7 @@ private final class SessionStoreTests {
 	private func `handle maps engine error to tool error`() async {
 		let engine: FakeGuestEngine = .init(provisionError: .goldenNotFound("nope"))
 		let store: SessionStore = .init(engine: engine, makeHandle: sequentialHandles())
-		let response = await store.handle(.spawn(SpawnParams(golden: "nope")))
+		let response: NymphResponse = await store.handle(.spawn(SpawnParams(golden: "nope", os: .mac)))
 		guard case let .toolError(error) = response else {
 			Issue.record("預期 toolError、得 \(response)")
 			return
@@ -246,7 +246,7 @@ private final class SessionStoreTests {
 	private func `spawn without an engine for the kind fails loudly`() async {
 		let engine: FakeGuestEngine = .init()
 		let store: SessionStore = .init(engine: engine, makeHandle: sequentialHandles())
-		let response: NymphResponse = await store.handle(.spawn(SpawnParams(golden: "alpine", kind: .linux)))
+		let response: NymphResponse = await store.handle(.spawn(SpawnParams(golden: "alpine", os: .linux)))
 		guard case let .toolError(error) = response else {
 			Issue.record("預期 toolError、得 \(response)")
 			return
@@ -256,13 +256,13 @@ private final class SessionStoreTests {
 		#expect(await store.count == 0)
 	}
 
-	/// 不帶 kind 的請求（舊 client）照舊落在 mac 引擎。
+	/// 明示 `os: mac` 的請求進 mac 引擎（linux 引擎完全沒被碰）——與 linux 那條對稱。
 	@Test
-	private func `spawn defaults to the mac engine`() async {
+	private func `spawn with os mac routes to the mac engine`() async {
 		let mac: FakeGuestEngine = .init { FakeGuestControl(readyIP: "10.0.0.9") }
 		let linux: FakeGuestEngine = .init()
 		let store: SessionStore = .init(engines: [.mac: mac, .linux: linux], makeHandle: sequentialHandles())
-		let response: NymphResponse = await store.handle(.spawn(SpawnParams(golden: "base", wait: true)))
+		let response: NymphResponse = await store.handle(.spawn(SpawnParams(golden: "base", os: .mac, wait: true)))
 		guard case let .spawn(result) = response else {
 			Issue.record("預期 spawn 回應、得 \(response)")
 			return
@@ -276,7 +276,7 @@ private final class SessionStoreTests {
 	private func `handle dispatches spawn success`() async {
 		let engine: FakeGuestEngine = .init { FakeGuestControl(readyIP: "10.0.0.9") }
 		let store: SessionStore = .init(engine: engine, makeHandle: sequentialHandles())
-		let response = await store.handle(.spawn(SpawnParams(golden: "base", wait: true)))
+		let response: NymphResponse = await store.handle(.spawn(SpawnParams(golden: "base", os: .mac, wait: true)))
 		guard case let .spawn(result) = response else {
 			Issue.record("預期 spawn 回應、得 \(response)")
 			return

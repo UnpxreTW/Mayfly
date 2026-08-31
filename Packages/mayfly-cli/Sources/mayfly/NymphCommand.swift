@@ -22,7 +22,7 @@ import Darwin
 /// client 斷線收束。收 SIGTERM / SIGINT → drain（每 session forceStop + destroy clone）後退出。
 ///
 /// 每種 guest 各掛一顆引擎：macOS 走 ``RealGuestEngine``、Linux 走 `LinuxGuestEngine`。
-/// spawn 依請求帶的 kind 挑引擎，沒掛引擎的 kind 回 `engine_unavailable`、不由別顆代打。
+/// spawn 依請求帶的 `os` 欄挑引擎，沒掛引擎的種類回 `engine_unavailable`、不由別顆代打。
 ///
 /// arm64 限定（引擎觸碰 Virtualization.framework）；非 Apple Silicon 比照 `run` 明確擋下。
 struct NymphCommand: AsyncParsableCommand {
