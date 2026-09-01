@@ -40,7 +40,7 @@ private final class EphemeralBundleTests {
 		let root: URL = try makeBundleFixture(ephemeral: true)
 		defer { try? FileManager.default.removeItem(at: root) }
 		let bundle: URL = root.appending(component: "job.bundle")
-		let diskImage: URL = GuestBundleLayout.diskImage(in: bundle)
+		let diskImage: URL = MacGuestBundleLayout.diskImage(in: bundle)
 		try FileManager.default.removeItem(at: diskImage)
 		#expect(throws: EphemeralBundleError.missingComponent(diskImage)) {
 			try EphemeralBundle.load(from: bundle)
@@ -53,7 +53,7 @@ private final class EphemeralBundleTests {
 		let root: URL = try makeBundleFixture(ephemeral: true)
 		defer { try? FileManager.default.removeItem(at: root) }
 		let bundle: URL = root.appending(component: "job.bundle")
-		let metadata: URL = GuestBundleLayout.metadata(in: bundle)
+		let metadata: URL = MacGuestBundleLayout.metadata(in: bundle)
 		try Data("not-json".utf8).write(to: metadata)
 		#expect(throws: EphemeralBundleError.metadataUndecodable(metadata)) {
 			try EphemeralBundle.load(from: bundle)
@@ -69,10 +69,10 @@ private final class EphemeralBundleTests {
 			.appending(component: "EphemeralBundleTests-\(UUID().uuidString)")
 		let bundle: URL = root.appending(component: "job.bundle")
 		try FileManager.default.createDirectory(at: bundle, withIntermediateDirectories: true)
-		try Data("disk".utf8).write(to: GuestBundleLayout.diskImage(in: bundle))
-		try Data("aux".utf8).write(to: GuestBundleLayout.auxiliaryStorage(in: bundle))
-		try Data("machine-identifier".utf8).write(to: GuestBundleLayout.machineIdentifier(in: bundle))
-		try Data("hardware-model".utf8).write(to: GuestBundleLayout.hardwareModel(in: bundle))
+		try Data("disk".utf8).write(to: MacGuestBundleLayout.diskImage(in: bundle))
+		try Data("aux".utf8).write(to: MacGuestBundleLayout.auxiliaryStorage(in: bundle))
+		try Data("machine-identifier".utf8).write(to: MacGuestBundleLayout.machineIdentifier(in: bundle))
+		try Data("hardware-model".utf8).write(to: MacGuestBundleLayout.hardwareModel(in: bundle))
 		let metadata: BundleMetadata = .init(
 			macAddress: "0a:1b:2c:3d:4e:5f",
 			osBuildVersion: "25F80",
@@ -80,7 +80,7 @@ private final class EphemeralBundleTests {
 			restoreImageSHA256: "deadbeef",
 			ephemeral: ephemeral
 		)
-		try JSONEncoder().encode(metadata).write(to: GuestBundleLayout.metadata(in: bundle))
+		try JSONEncoder().encode(metadata).write(to: MacGuestBundleLayout.metadata(in: bundle))
 		return root
 	}
 }
