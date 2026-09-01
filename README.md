@@ -25,6 +25,16 @@ swift test --package-path Packages/MayflyUI
 
 CI（GitHub Actions）跑上述指令，見 `.github/workflows/build.yml` 與 `test.yml`。
 
+### 執行檔簽章
+
+`mayfly` 要真的開起 guest 需要 `com.apple.security.virtualization`，而 SwiftPM 不簽 entitlement——**每一次重建都會把執行檔洗回沒有 entitlement 的 ad-hoc 簽章**，而且要等到開機器時才失敗。要在本機實跑時，用把建置與補簽綁在一起的腳本：
+
+```shell
+bash Scripts/build-signed-cli.sh
+```
+
+腳本建置 release 版後依 `Mayfly.entitlements` 重簽，並回讀確認 entitlement 真的在（讀不到就回非零）。單純跑 `swift build` 出來的執行檔沒有這一項，開 guest 會被擋下。
+
 ### app
 
 app 需要真正的 `.app` bundle 才簽得上 `com.apple.security.virtualization`，SwiftPM 產不出來，故 app target 由 Tuist 產生（版本釘在 `.config/mise.toml`）：
