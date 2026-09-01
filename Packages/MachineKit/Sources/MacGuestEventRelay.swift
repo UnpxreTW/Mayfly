@@ -43,7 +43,7 @@ final class MacGuestEventRelay: NSObject, VZVirtualMachineDelegate {
 	private(set) var stopReason: MacGuestStopReason?
 
 	/// 收斂停機：發事件（`event` 給 nil 表示 host 硬停、無對應 delegate
-	/// 事件）、記第一個 reason、嗚醒並清空所有 waiter。
+	/// 事件）、記第一個 reason、喚醒並清空所有 waiter。
 	func settle(reason: MacGuestStopReason, event: MacGuestEvent?) {
 		dispatchPrecondition(condition: .onQueue(queue))
 		if let event {
