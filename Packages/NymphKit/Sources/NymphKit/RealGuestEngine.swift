@@ -9,14 +9,14 @@
 import Foundation
 import MachineKit
 
-// 引擎真機路徑觸碰 GuestSession（VZ、arm64 限定）與 GuestExec 的 session overload——整段
+// 引擎真機路徑觸碰 MacGuestSession（VZ、arm64 限定）與 MacGuestExec 的 session overload——整段
 // arch gate。核心 SessionStore / 協議 / socket 皆 arch-neutral、以 fake 驅動可跨 arch 測；
 // 只有這層真接引擎。非 arm64 由 `mayfly nymph` 命令層擋下（比照 RunCommand）。
 #if arch(arm64)
 
-/// ``GuestEngine`` 的真機實作：golden 別名 → `clonefile` 落地 → 建 `GuestSession`（未 start）
-/// → 包成 ``RealGuestControl``。組合現有引擎正本（`GuestCloner` / `GuestSession` /
-/// `GuestExec` / `GuestLease`），本層只做別名解析、clone 落點、身份鑰接線——不改引擎。
+/// ``GuestEngine`` 的真機實作：golden 別名 → `clonefile` 落地 → 建 `MacGuestSession`（未 start）
+/// → 包成 ``RealGuestControl``。組合現有引擎正本（`MacGuestCloner` / `MacGuestSession` /
+/// `MacGuestExec` / `MacGuestLease`），本層只做別名解析、clone 落點、身份鑰接線——不改引擎。
 public struct RealGuestEngine: GuestEngine {
 
 	// MARK: Public
@@ -30,7 +30,7 @@ public struct RealGuestEngine: GuestEngine {
 		hostKey: NymphHostKey,
 		resolver: GoldenResolver,
 		username: String = "runner",
-		cloner: GuestCloner = GuestCloner()
+		cloner: MacGuestCloner = MacGuestCloner()
 	) {
 		self.hostKey = hostKey
 		self.resolver = resolver
@@ -56,9 +56,9 @@ public struct RealGuestEngine: GuestEngine {
 		}
 		let destination: URL = resolver.cloneDestination(forGolden: goldenURL, id: UUID().uuidString)
 		let clone: EphemeralBundle = try clone(goldenBundle, to: destination)
-		let session: GuestSession
+		let session: MacGuestSession
 		do {
-			session = try GuestSession(
+			session = try MacGuestSession(
 				bundle: clone,
 				cpuCount: cpus,
 				memoryBytes: UInt64(memoryGiB) * 1_073_741_824,
@@ -70,7 +70,7 @@ public struct RealGuestEngine: GuestEngine {
 		}
 		let control = RealGuestControl(
 			session: session,
-			exec: GuestExec(identity: hostKey, username: username),
+			exec: MacGuestExec(identity: hostKey, username: username),
 			clone: clone,
 			cloner: cloner
 		)
@@ -89,9 +89,9 @@ public struct RealGuestEngine: GuestEngine {
 	private let username: String
 
 	/// CoW 複製器。
-	private let cloner: GuestCloner
+	private let cloner: MacGuestCloner
 
-	/// 建 `.mayfly-clones` 落點 parent、clonefile；`GuestClonerError` 映成 cloneFailed。
+	/// 建 `.mayfly-clones` 落點 parent、clonefile；`MacGuestClonerError` 映成 cloneFailed。
 	private func clone(_ golden: GoldenBundle, to destination: URL) throws -> EphemeralBundle {
 		do {
 			try FileManager.default.createDirectory(
@@ -106,21 +106,21 @@ public struct RealGuestEngine: GuestEngine {
 }
 
 /// ``GuestControl`` 的真機實作：把 store 的抽象動作轉成引擎呼叫。VM 活在 `session`（actor）
-/// 內；exec 走 `GuestExec` 的 session overload（現查 lease IP）；`GuestExecError` 在此映成
+/// 內；exec 走 `MacGuestExec` 的 session overload（現查 lease IP）；`MacGuestExecError` 在此映成
 /// ``NymphError``（傳輸層錯誤面）。
 struct RealGuestControl: GuestControl {
 
 	/// VM session（actor）。
-	let session: GuestSession
+	let session: MacGuestSession
 
 	/// guest 內執行器（SSH）。
-	let exec: GuestExec
+	let exec: MacGuestExec
 
 	/// 可拋 clone bundle。
 	let clone: EphemeralBundle
 
 	/// CoW 複製器（destroy clone 用）。
-	let cloner: GuestCloner
+	let cloner: MacGuestCloner
 
 	func start() async throws {
 		try await session.start()
@@ -151,11 +151,11 @@ struct RealGuestControl: GuestControl {
 		guard case let .ready(readinessIP) = await session.state else {
 			return nil
 		}
-		let metadataURL: URL = GuestBundleLayout.metadata(in: clone.bundle)
+		let metadataURL: URL = MacGuestBundleLayout.metadata(in: clone.bundle)
 		if
 			let data = try? Data(contentsOf: metadataURL),
 			let metadata = try? JSONDecoder().decode(BundleMetadata.self, from: data),
-			let live = GuestLease.currentIP(macAddress: metadata.macAddress) {
+			let live = MacGuestLease.currentIP(macAddress: metadata.macAddress) {
 			return live
 		}
 		return readinessIP
@@ -186,7 +186,7 @@ struct RealGuestControl: GuestControl {
 				workingDirectory: workingDirectory,
 				environment: environment
 			)
-		} catch let error as GuestExecError {
+		} catch let error as MacGuestExecError {
 			throw RealGuestControl.map(error)
 		}
 	}
@@ -195,7 +195,7 @@ struct RealGuestControl: GuestControl {
 		try cloner.destroy(clone)
 	}
 
-	/// session 還在 `.booting` 時補探一次（`GuestSession.promoteIfReady()`，現查 host lease）。
+	/// session 還在 `.booting` 時補探一次（`MacGuestSession.promoteIfReady()`，現查 host lease）。
 	///
 	/// readiness 逾時的 session 停在 `.booting`，之後要靠查狀態或 exec 這兩個入口把它帶起來
 	/// ——`--no-wait` 的 spawn 根本沒等過，開機慢於 readinessTimeout 的 guest 也是如此。與
@@ -205,8 +205,8 @@ struct RealGuestControl: GuestControl {
 		await session.promoteIfReady()
 	}
 
-	/// `GuestExecError`（引擎傳輸面）→ ``NymphError``（daemon 工具面）。
-	private static func map(_ error: GuestExecError) -> NymphError {
+	/// `MacGuestExecError`（引擎傳輸面）→ ``NymphError``（daemon 工具面）。
+	private static func map(_ error: MacGuestExecError) -> NymphError {
 		switch error {
 		case .notReady:
 			return .notReady

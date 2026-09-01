@@ -22,7 +22,7 @@ public enum NymphRequest: Codable, Sendable, Equatable {
 	/// clone + boot + 等 READY（依 NY-1 阻塞 / 逾時降級）。
 	case spawn(SpawnParams)
 
-	/// 在既有 session 內執行命令（SSH、經 ``GuestExec``）。
+	/// 在既有 session 內執行命令（SSH、經 ``MacGuestExec``）。
 	case execute(ExecuteParams)
 
 	/// 列出 session。

@@ -10,8 +10,8 @@ import Foundation
 import MachineKit
 
 /// 一台受 daemon 管的 guest 的控制面——`SessionStore` 只透過此協議驅動 VM 生命週期與
-/// exec，**不直接觸碰引擎**。真機由 arm64 的 ``RealGuestControl`` 包 `GuestSession` +
-/// `GuestExec`；單元測試以 fake 取代（無需真開 VM / 真 SSH），把 store 的編排邏輯與 VM
+/// exec，**不直接觸碰引擎**。真機由 arm64 的 ``RealGuestControl`` 包 `MacGuestSession` +
+/// `MacGuestExec`；單元測試以 fake 取代（無需真開 VM / 真 SSH），把 store 的編排邏輯與 VM
 /// 隔開來測——這是本層抽象的唯一理由。
 public protocol GuestControl: Sendable {
 
@@ -49,7 +49,7 @@ public protocol GuestControl: Sendable {
 
 /// golden 別名 → 一台備妥（clone 完成、尚未 start）的 guest。`SessionStore.spawn` 在
 /// admission 通過後呼叫；真機由 arm64 的 ``RealGuestEngine`` 實作（解析 golden、clonefile、
-/// 建 `GuestSession`），測試以 fake 取代。
+/// 建 `MacGuestSession`），測試以 fake 取代。
 public protocol GuestEngine: Sendable {
 
 	/// 解析 `golden` 別名、clone 落地、備妥控制面。

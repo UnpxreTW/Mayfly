@@ -24,9 +24,9 @@ struct IPCommand: ParsableCommand {
 	var bundle: String
 
 	func run() throws {
-		let metadataURL: URL = GuestBundleLayout.metadata(in: URL(fileURLWithPath: bundle))
+		let metadataURL: URL = MacGuestBundleLayout.metadata(in: URL(fileURLWithPath: bundle))
 		let metadata = try JSONDecoder().decode(BundleMetadata.self, from: Data(contentsOf: metadataURL))
-		guard let ip = GuestLease.currentIP(macAddress: metadata.macAddress) else {
+		guard let ip = MacGuestLease.currentIP(macAddress: metadata.macAddress) else {
 			throw ExitCode(1)
 		}
 		print(ip)

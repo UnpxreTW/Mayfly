@@ -39,7 +39,7 @@ struct DestroyCommand: AsyncParsableCommand {
 	func run() async throws {
 		guard NymphClient.isDaemonPresent() else {
 			let clone: EphemeralBundle = try .load(from: URL(fileURLWithPath: target))
-			try GuestCloner().destroy(clone)
+			try MacGuestCloner().destroy(clone)
 			return
 		}
 		switch try await NymphClientSupport.send(.destroy(DestroyParams(id: target, force: !noForce))) {
