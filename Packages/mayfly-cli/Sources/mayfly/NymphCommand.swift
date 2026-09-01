@@ -36,6 +36,15 @@ struct NymphCommand: AsyncParsableCommand {
 	@Option(name: .customLong("max-sessions"), help: "Maximum concurrent sessions (admission ceiling).")
 	var maxSessions: Int = 8
 
+	/// macOS guest 的 SSH 帳號——golden image 把 nymph 公鑰注進哪個帳號，這裡就填哪個。
+	/// 預設 `runner`。readiness 走 host lease 解 IP、不經 SSH，所以帳號填錯的 session 照樣
+	/// 升到 ready，失敗遞延到 execute 的公鑰認證被拒。
+	@Option(
+		name: .customLong("guest-username"),
+		help: "SSH account inside macOS guests (must match the golden image)."
+	)
+	internal var guestUsername: String = "runner"
+
 	func run() async throws {
 #if arch(arm64)
 		// 對端斷線時 socket write 收 EPIPE、不讓 SIGPIPE 打死常駐 daemon。
@@ -48,7 +57,11 @@ struct NymphCommand: AsyncParsableCommand {
 		if !reclaimed.isEmpty {
 			FileHandle.standardError.write(Data("nymph: reclaimed \(reclaimed.count) orphan clone(s)\n".utf8))
 		}
-		let macEngine: RealGuestEngine = .init(hostKey: hostKey, resolver: .fromEnvironment())
+		let macEngine: RealGuestEngine = .init(
+			hostKey: hostKey,
+			resolver: .fromEnvironment(),
+			username: guestUsername
+		)
 		// 預設不接網路（network: nil）：容器沒有對外連線、`currentIP()` 恆回 nil，readiness
 		// 改由容器內探測驅動（見 `LinuxGuestControl`）；接上容器網路另行處理。
 		let linuxEngine: LinuxGuestEngine = .init()
