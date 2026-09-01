@@ -17,7 +17,7 @@ public enum EphemeralBundleError: Error, Equatable {
 	/// `metadata.json` 存在但解不開（毀損或非本格式）。
 	case metadataUndecodable(URL)
 
-	/// metadata 沒有 `ephemeral` 標記——不是 ``GuestCloner`` 的可拋複本（可能是
+	/// metadata 沒有 `ephemeral` 標記——不是 ``MacGuestCloner`` 的可拋複本（可能是
 	/// golden 或外來 bundle），不得包成可銷毀的 EphemeralBundle。
 	case notEphemeral(URL)
 }

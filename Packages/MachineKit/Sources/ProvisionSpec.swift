@@ -7,7 +7,7 @@
 //  SPDX-License-Identifier: Apache-2.0
 
 /// 一次 provisioning 的輸入規格：要離線建哪個本機帳號、塞哪把 SSH 公鑰、first-boot
-/// daemon 的 label。``GuestProvisioner`` 把它翻成一組 ``InjectedFile`` 寫進 guest。
+/// daemon 的 label。``MacGuestProvisioner`` 把它翻成一組 ``InjectedFile`` 寫進 guest。
 ///
 /// `password` 只用來算 dslocal 帳號的 SALTED-SHA512-PBKDF2 雜湊——sshd drop-in 是
 /// key-only（`PasswordAuthentication no`），密碼不走 SSH，給隨機值只為帳號不留空密碼、

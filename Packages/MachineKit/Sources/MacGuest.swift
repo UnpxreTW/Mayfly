@@ -45,7 +45,7 @@ public final class MacGuest: @unchecked Sendable {
 	/// yield 自 vmQueue、消費發生在呼叫端自己的 Task 上。注意 host 硬停
 	/// （``forceStop()``）沒有對應的 delegate callback、不會出現在本流——
 	/// 停機的單一真相是 ``waitUntilStopped()``。
-	public let events: AsyncStream<GuestEvent>
+	public let events: AsyncStream<MacGuestEvent>
 
 	/// 啟動 guest。
 	///
@@ -105,10 +105,10 @@ public final class MacGuest: @unchecked Sendable {
 	/// ``ensureStopped(within:)``、或以 Task 取消逃生。唯一的 throw 是
 	/// Task 取消（`CancellationError`）——non-throwing 版本在取消時沒有
 	/// 誠實的值可回。
-	public func waitUntilStopped() async throws -> GuestStopReason {
+	public func waitUntilStopped() async throws -> MacGuestStopReason {
 		let waiterID: UUID = .init()
 		return try await withTaskCancellationHandler {
-			try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<GuestStopReason, any Error>) in
+			try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<MacGuestStopReason, any Error>) in
 				vmQueue.async {
 					// onCancel 可能搶在註冊前跑（tombstone 已放）——兩個
 					// 閉包都在 vmQueue 上序列化、無 race；先消化 tombstone
@@ -144,8 +144,8 @@ public final class MacGuest: @unchecked Sendable {
 	/// 停才上拋。呼叫端負責先從 guest 內驅動關機；本方法只負責等與兜底。
 	/// Task 取消擲 `CancellationError`、**不會**觸發硬停——取消不是逾時、
 	/// 不該把等待升級成毀滅性動作。
-	public func ensureStopped(within gracePeriod: Duration) async throws -> GuestStopReason {
-		let raced = await withTaskGroup(of: GuestStopReason?.self) { group in
+	public func ensureStopped(within gracePeriod: Duration) async throws -> MacGuestStopReason {
+		let raced = await withTaskGroup(of: MacGuestStopReason?.self) { group in
 			group.addTask { try? await self.waitUntilStopped() }
 			group.addTask {
 				try? await Task.sleep(for: gracePeriod)
@@ -191,7 +191,7 @@ public final class MacGuest: @unchecked Sendable {
 	/// 層原樣擲 `VZError`。
 	public init(spec: MacGuestSpec, console: Console? = nil) throws {
 		let queue: DispatchQueue = .init(label: "MachineKit.MacGuest")
-		let (stream, continuation) = AsyncStream.makeStream(of: GuestEvent.self)
+		let (stream, continuation) = AsyncStream.makeStream(of: MacGuestEvent.self)
 		self.vmQueue = queue
 		self.events = stream
 		// sync 閉包保證建構與 delegate 設定發生在 vmQueue 上（VZ 的 queue
@@ -200,7 +200,7 @@ public final class MacGuest: @unchecked Sendable {
 		(self.virtualMachine, self.relay) = try queue.sync {
 			let configuration = try MacGuestConfigurationBuilder.makeConfiguration(from: spec, console: console)
 			let machine: VZVirtualMachine = .init(configuration: configuration, queue: queue)
-			let proxy: GuestEventRelay = .init(queue: queue, eventContinuation: continuation)
+			let proxy: MacGuestEventRelay = .init(queue: queue, eventContinuation: continuation)
 			machine.delegate = proxy
 			return (machine, proxy)
 		}
@@ -215,10 +215,10 @@ public final class MacGuest: @unchecked Sendable {
 	private let virtualMachine: VZVirtualMachine
 
 	/// delegate proxy。`virtualMachine.delegate` 是 weak、由 harness 強持有。
-	private let relay: GuestEventRelay
+	private let relay: MacGuestEventRelay
 
 	/// 讀 relay 的已停狀態（vmQueue 上）；未停回 nil。
-	private func settledStopReason() async -> GuestStopReason? {
+	private func settledStopReason() async -> MacGuestStopReason? {
 		await withCheckedContinuation { continuation in
 			vmQueue.async {
 				continuation.resume(returning: self.relay.stopReason)

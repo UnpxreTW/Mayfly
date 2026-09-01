@@ -12,7 +12,7 @@ import Foundation
 /// ——run 路徑可在編譯期要求一份「保證 provisioning 跑過」的 image，延續 create-vs-load
 /// 的型別紀律（再加一層 provisioned-vs-unprovisioned）。
 ///
-/// `init` 不公開：同模組只有 ``GuestProvisioner``（provision 完成時）與 ``load(from:)``
+/// `init` 不公開：同模組只有 ``MacGuestProvisioner``（provision 完成時）與 ``load(from:)``
 /// （跨行程重開檢查點）兩條鑄造途徑，下游模組（CLI / app / MCP）只能消費。
 public struct GoldenBundle: Sendable {
 
@@ -25,10 +25,10 @@ public struct GoldenBundle: Sendable {
 	/// 的 ``GoldenBundle`` 才帶完整語義；load 提供的是「至少是完整 bundle、不是
 	/// 任意路徑」的下限保證。
 	public static func load(from bundle: URL) throws -> GoldenBundle {
-		if let missing = GuestBundleLayout.firstMissingComponent(in: bundle) {
+		if let missing = MacGuestBundleLayout.firstMissingComponent(in: bundle) {
 			throw GoldenBundleError.missingComponent(missing)
 		}
-		let metadataURL: URL = GuestBundleLayout.metadata(in: bundle)
+		let metadataURL: URL = MacGuestBundleLayout.metadata(in: bundle)
 		let metadata: BundleMetadata
 		do {
 			metadata = try JSONDecoder().decode(BundleMetadata.self, from: Data(contentsOf: metadataURL))

@@ -89,7 +89,7 @@ public final class MacGuestInstaller: @unchecked Sendable {
 		try persistIdentity()
 		// KVO 多半已 yield 過終值；補一發確保 consumer 在 finish 前見得到 1.0。
 		progressContinuation.yield(1.0)
-		return GuestBundleLayout.spec(
+		return MacGuestBundleLayout.spec(
 			for: bundle,
 			metadata: bundleMetadata,
 			cpuCount: clampedCPUCount,
@@ -130,7 +130,7 @@ public final class MacGuestInstaller: @unchecked Sendable {
 		}
 		let resolvedMAC = macAddress ?? VZMACAddress.randomLocallyAdministered().string
 		try manager.createDirectory(at: bundle, withIntermediateDirectories: true)
-		let diskURL: URL = GuestBundleLayout.diskImage(in: bundle)
+		let diskURL: URL = MacGuestBundleLayout.diskImage(in: bundle)
 		try BootDiskImage.create(at: diskURL, nominalBytes: diskNominalBytes, overwrite: overwrite)
 		let (stream, continuation) = AsyncStream.makeStream(of: Double.self)
 		let queue: DispatchQueue = .init(label: "MachineKit.MacGuestInstaller")
@@ -140,7 +140,7 @@ public final class MacGuestInstaller: @unchecked Sendable {
 			try Self.buildVM(
 				BuildRequest(
 					prepared: prepared,
-					auxURL: GuestBundleLayout.auxiliaryStorage(in: bundle),
+					auxURL: MacGuestBundleLayout.auxiliaryStorage(in: bundle),
 					diskURL: diskURL,
 					cpuCount: cpu,
 					memoryBytes: memory,
@@ -344,9 +344,9 @@ public final class MacGuestInstaller: @unchecked Sendable {
 	/// install 成功後把身份原子的 .bin 與 metadata.json 落盤（aux / disk 已在 init
 	/// 產出）。任一寫失敗擲 ``MacGuestInstallerError/identityWriteFailed(_:underlying:)``。
 	private func persistIdentity() throws {
-		try write(hardwareModelData, to: GuestBundleLayout.hardwareModel(in: bundle))
-		try write(machineIdentifierData, to: GuestBundleLayout.machineIdentifier(in: bundle))
-		let metadataURL: URL = GuestBundleLayout.metadata(in: bundle)
+		try write(hardwareModelData, to: MacGuestBundleLayout.hardwareModel(in: bundle))
+		try write(machineIdentifierData, to: MacGuestBundleLayout.machineIdentifier(in: bundle))
+		let metadataURL: URL = MacGuestBundleLayout.metadata(in: bundle)
 		do {
 			let encoder: JSONEncoder = .init()
 			encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
