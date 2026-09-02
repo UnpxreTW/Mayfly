@@ -45,6 +45,14 @@ struct NymphCommand: AsyncParsableCommand {
 	)
 	internal var guestUsername: String = "runner"
 
+	/// 把每次 spawn／execute／status／destroy 的分段耗時寫成一行到 stderr。預設關；開了也只是
+	/// 多一條診斷輸出、不改任何回應內容。
+	@Flag(
+		name: .customLong("log-sessions"),
+		help: "Log one line per spawn/execute/status/destroy with phase timings to stderr."
+	)
+	internal var logSessions: Bool = false
+
 	func run() async throws {
 #if arch(arm64)
 		// 對端斷線時 socket write 收 EPIPE、不讓 SIGPIPE 打死常駐 daemon。
@@ -65,10 +73,12 @@ struct NymphCommand: AsyncParsableCommand {
 		// 預設不接網路（network: nil）：容器沒有對外連線、`currentIP()` 恆回 nil，readiness
 		// 改由容器內探測驅動（見 `LinuxGuestControl`）；接上容器網路另行處理。
 		let linuxEngine: LinuxGuestEngine = .init()
+		let logSink: SessionLogSink? = logSessions ? NymphCommand.writeSessionEvent(toStandardError:) : nil
 		let store: SessionStore = .init(
 			engines: [.mac: macEngine, .linux: linuxEngine],
 			maxSessions: maxSessions,
-			cloneRegistry: registry
+			cloneRegistry: registry,
+			logSink: logSink
 		)
 		let socketURL: URL = NymphPaths.socketURL()
 		let server: NymphServer = .init(socketPath: socketURL, dispatcher: store)
@@ -87,6 +97,16 @@ struct NymphCommand: AsyncParsableCommand {
 	}
 
 #if arch(arm64)
+
+	/// stderr sink：一事件一行、直接寫 handle（stdout 接 pipe 時 print 會 block-buffer）。與
+	/// 孤兒回收那行訊息同一條輸出面、同 `nymph: ` 前綴。
+	///
+	/// - Note: 走會擲錯的 `write(contentsOf:)` 並吞掉錯誤——stderr 接到已關閉的 pipe 時，
+	///   非擲錯版會丟出無人接的例外、把常駐 daemon 整支帶走；而這條每次操作都會跑。
+	private static func writeSessionEvent(toStandardError event: SessionLogEvent) {
+		try? FileHandle.standardError.write(contentsOf: Data((event.description + "\n").utf8))
+	}
+
 	/// 掛 SIGTERM / SIGINT：先 SIG_IGN 停用預設終止、再以 `DispatchSource` 收訊號 → drain
 	/// 全 session、關 socket、退出。回傳 sources 供呼叫端保活。
 	private static func installDrainHandlers(store: SessionStore, server: NymphServer) -> [any DispatchSourceSignal] {

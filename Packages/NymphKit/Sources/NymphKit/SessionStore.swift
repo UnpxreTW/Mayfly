@@ -29,6 +29,8 @@ public actor SessionStore {
 	///     上限，記憶體 / CPU 總量准入留後續）。
 	///   - gracePeriod: `destroy force=false` 的優雅停機上限。
 	///   - cloneRegistry: 孤兒回收登記（nil＝不登記、僅記憶體 table）。
+	///   - logSink: session 操作紀錄的落點（nil＝關閉、零量測）。**開啟時每次操作多讀一次
+	///     `clock`**（事件時間戳），依賴 clock 呼叫次數的測試須自行注入固定時鐘。
 	///   - clock: 時間源（uptime 計算；測試注入固定值）。
 	///   - makeHandle: opaque handle 產生器（測試注入確定序列）。
 	public init(
@@ -36,6 +38,7 @@ public actor SessionStore {
 		maxSessions: Int = 8,
 		gracePeriod: Duration = .seconds(30),
 		cloneRegistry: CloneRegistry? = nil,
+		logSink: SessionLogSink? = nil,
 		clock: @escaping @Sendable () -> Date = { Date() },
 		makeHandle: @escaping @Sendable () -> String = { SessionStore.randomHandle() }
 	) {
@@ -43,6 +46,7 @@ public actor SessionStore {
 		self.maxSessions = maxSessions
 		self.gracePeriod = gracePeriod
 		self.cloneRegistry = cloneRegistry
+		self.logSink = logSink
 		self.clock = clock
 		self.makeHandle = makeHandle
 	}
@@ -54,6 +58,7 @@ public actor SessionStore {
 		maxSessions: Int = 8,
 		gracePeriod: Duration = .seconds(30),
 		cloneRegistry: CloneRegistry? = nil,
+		logSink: SessionLogSink? = nil,
 		clock: @escaping @Sendable () -> Date = { Date() },
 		makeHandle: @escaping @Sendable () -> String = { SessionStore.randomHandle() }
 	) {
@@ -62,6 +67,7 @@ public actor SessionStore {
 			maxSessions: maxSessions,
 			gracePeriod: gracePeriod,
 			cloneRegistry: cloneRegistry,
+			logSink: logSink,
 			clock: clock,
 			makeHandle: makeHandle
 		)
@@ -89,50 +95,58 @@ public actor SessionStore {
 		wait: Bool,
 		readinessTimeout: Duration
 	) async throws -> SpawnResult {
-		guard let engine: any GuestEngine = engines[kind] else { throw NymphError.engineUnavailable(kind) }
-		guard table.count < maxSessions else {
-			throw NymphError.admissionDenied(limit: maxSessions)
+		try await logging(.spawn, golden: golden, kind: kind) { trace in
+			guard let engine: any GuestEngine = engines[kind] else { throw NymphError.engineUnavailable(kind) }
+			guard table.count < maxSessions else {
+				throw NymphError.admissionDenied(limit: maxSessions)
+			}
+			let provisioned: ProvisionedGuest = try await engine.provision(
+				golden: golden,
+				cpus: cpus,
+				memoryGiB: memoryGiB,
+				readinessTimeout: readinessTimeout
+			)
+			trace?.mark(.provision)
+			let id: String = mintHandle()
+			trace?.sessionID = id
+			cloneRegistry?.add(provisioned.clonePath)
+			table[id] = Entry(
+				id: id,
+				control: provisioned.control,
+				goldenAlias: provisioned.goldenAlias,
+				clonePath: provisioned.clonePath,
+				cpus: cpus,
+				memoryGiB: memoryGiB,
+				createdAt: clock()
+			)
+			do {
+				try await provisioned.control.start()
+				trace?.mark(.start)
+			} catch {
+				try? provisioned.control.destroyClone()
+				cloneRegistry?.remove(provisioned.clonePath)
+				table[id] = nil
+				throw NymphError.internalFailure("spawn start failed: \(error)")
+			}
+			guard wait else {
+				trace?.state = .booting
+				return SpawnResult(id: id, state: .booting, ip: nil)
+			}
+			var ip: String? = (try? await provisioned.control.waitUntilReady()) ?? nil
+			// 狀態向控制面查、不由 IP 反推：沒接網路的 guest（Linux 容器即是）readiness 收斂後
+			// 仍解不出 IP，用 IP 反推會把已 ready 的 session 回報成 booting，與緊接著的 status
+			// 互相矛盾。IP 只是附帶欄位。
+			let state: SessionState = await provisioned.control.currentState()
+			// 查狀態這一步本身可能讓等待期間才收斂的 guest 升成 ready；此時 IP 要一併補回，
+			// 否則回的是「ready 但沒有 IP」——對接著要連線的呼叫端形同無解。
+			if state == .ready, ip == nil {
+				ip = await provisioned.control.currentIP()
+			}
+			trace?.mark(.ready)
+			trace?.state = state
+			table[id]?.lastIP = ip
+			return SpawnResult(id: id, state: state, ip: ip)
 		}
-		let provisioned: ProvisionedGuest = try await engine.provision(
-			golden: golden,
-			cpus: cpus,
-			memoryGiB: memoryGiB,
-			readinessTimeout: readinessTimeout
-		)
-		let id: String = mintHandle()
-		cloneRegistry?.add(provisioned.clonePath)
-		table[id] = Entry(
-			id: id,
-			control: provisioned.control,
-			goldenAlias: provisioned.goldenAlias,
-			clonePath: provisioned.clonePath,
-			cpus: cpus,
-			memoryGiB: memoryGiB,
-			createdAt: clock()
-		)
-		do {
-			try await provisioned.control.start()
-		} catch {
-			try? provisioned.control.destroyClone()
-			cloneRegistry?.remove(provisioned.clonePath)
-			table[id] = nil
-			throw NymphError.internalFailure("spawn start failed: \(error)")
-		}
-		guard wait else {
-			return SpawnResult(id: id, state: .booting, ip: nil)
-		}
-		var ip: String? = (try? await provisioned.control.waitUntilReady()) ?? nil
-		// 狀態向控制面查、不由 IP 反推：沒接網路的 guest（Linux 容器即是）readiness 收斂後
-		// 仍解不出 IP，用 IP 反推會把已 ready 的 session 回報成 booting，與緊接著的 status
-		// 互相矛盾。IP 只是附帶欄位。
-		let state: SessionState = await provisioned.control.currentState()
-		// 查狀態這一步本身可能讓等待期間才收斂的 guest 升成 ready；此時 IP 要一併補回，
-		// 否則回的是「ready 但沒有 IP」——對接著要連線的呼叫端形同無解。
-		if state == .ready, ip == nil {
-			ip = await provisioned.control.currentIP()
-		}
-		table[id]?.lastIP = ip
-		return SpawnResult(id: id, state: state, ip: ip)
 	}
 
 	/// 在既有 session 內 execute（SSH）。no-such-id 擲 ``NymphError/noSuchID(_:)``；傳輸層失敗
@@ -145,20 +159,24 @@ public actor SessionStore {
 		workingDirectory: String?,
 		environment: [String: String]
 	) async throws -> ExecuteResult {
-		guard let entry = table[id] else {
-			throw NymphError.noSuchID(id)
+		try await logging(.execute, sessionID: id, command: command.first) { trace in
+			guard let entry: Entry = table[id] else {
+				throw NymphError.noSuchID(id)
+			}
+			let result: GuestExecResult = try await entry.control.exec(
+				command,
+				timeout: timeout,
+				standardInput: standardInput,
+				workingDirectory: workingDirectory,
+				environment: environment
+			)
+			trace?.mark(.exec)
+			trace?.exitCode = result.exitCode
+			return ExecuteResult(standardOutput: result.standardOutput, standardError: result.standardError, exit: result.exitCode)
 		}
-		let result: GuestExecResult = try await entry.control.exec(
-			command,
-			timeout: timeout,
-			standardInput: standardInput,
-			workingDirectory: workingDirectory,
-			environment: environment
-		)
-		return ExecuteResult(standardOutput: result.standardOutput, standardError: result.standardError, exit: result.exitCode)
 	}
 
-	/// 列出 session（依 createdAt 穩定排序）。`all=false` 濾掉已 stopped 未回收者。
+	/// 列出 session（依 createdAt 穩定排序）。`all=false` 濳掉已 stopped 未回收者。
 	public func list(all: Bool) async -> ListResult {
 		var summaries: [SessionSummary] = []
 		for entry in table.values.sorted(by: { ($0.createdAt, $0.id) < ($1.createdAt, $1.id) }) {
@@ -174,29 +192,35 @@ public actor SessionStore {
 
 	/// 查單一 session 狀態。no-such-id 擲錯。
 	public func status(id: String) async throws -> StatusResult {
-		guard let entry = table[id] else {
-			throw NymphError.noSuchID(id)
+		try await logging(.status, sessionID: id) { trace in
+			guard let entry: Entry = table[id] else {
+				throw NymphError.noSuchID(id)
+			}
+			let state: SessionState = await entry.control.currentState()
+			let ip: String? = await entry.control.currentIP() ?? entry.lastIP
+			trace?.state = state
+			return StatusResult(summary: summary(for: entry, state: state, ip: ip), stopReason: entry.stopReason)
 		}
-		let state: SessionState = await entry.control.currentState()
-		let ip: String? = await entry.control.currentIP() ?? entry.lastIP
-		return StatusResult(summary: summary(for: entry, state: state, ip: ip), stopReason: entry.stopReason)
 	}
 
 	/// 停 VM + 刪 clone + 移出 table。`force=true` → forceStop；`false` → 優雅停機。已
 	/// stopped 未回收者 destroy 亦正常（只刪 clone）。no-such-id 擲錯。
 	public func destroy(id: String, force: Bool) async throws -> DestroyResult {
-		guard let entry = table[id] else {
-			throw NymphError.noSuchID(id)
+		try await logging(.destroy, sessionID: id, force: force) { trace in
+			guard let entry: Entry = table[id] else {
+				throw NymphError.noSuchID(id)
+			}
+			if force {
+				try? await entry.control.forceStop()
+			} else {
+				try? await entry.control.gracefulStop(within: gracePeriod)
+			}
+			trace?.mark(.stop)
+			try? entry.control.destroyClone()
+			cloneRegistry?.remove(entry.clonePath)
+			table[id] = nil
+			return DestroyResult(id: id, destroyed: true)
 		}
-		if force {
-			try? await entry.control.forceStop()
-		} else {
-			try? await entry.control.gracefulStop(within: gracePeriod)
-		}
-		try? entry.control.destroyClone()
-		cloneRegistry?.remove(entry.clonePath)
-		table[id] = nil
-		return DestroyResult(id: id, destroyed: true)
 	}
 
 	/// daemon 關閉收束（SIGTERM / SIGINT）：對每個 session forceStop + 刪 clone（設計
@@ -261,6 +285,9 @@ public actor SessionStore {
 	/// 孤兒回收登記。
 	private let cloneRegistry: CloneRegistry?
 
+	/// session 操作紀錄的落點；nil＝關閉。
+	private let logSink: SessionLogSink?
+
 	/// 時間源。
 	private let clock: @Sendable () -> Date
 
@@ -290,6 +317,52 @@ public actor SessionStore {
 			memoryGiB: entry.memoryGiB,
 			uptimeSeconds: max(0, Int(clock().timeIntervalSince(entry.createdAt)))
 		)
+	}
+
+	/// 包住一次操作：sink 關（nil）→ 原樣跑 `body`，不建 trace、不讀任何時鐘；開 → 建 trace、
+	/// 跑完（含擲錯）發一筆事件，再原樣回傳或重擲。`body` 收到的 trace 在關閉時是 nil，四個
+	/// 方法內的 `trace?.` 因此整條短路。
+	private func logging<Value>(
+		_ operation: SessionLogEvent.Operation,
+		sessionID: String? = nil,
+		golden: String? = nil,
+		kind: GuestKind? = nil,
+		command: String? = nil,
+		force: Bool? = nil,
+		_ body: (SessionLogTrace?) async throws -> Value
+	) async throws -> Value {
+		guard let logSink else { return try await body(nil) }
+		let trace: SessionLogTrace = .init(
+			operation: operation,
+			sessionID: sessionID,
+			golden: golden,
+			kind: kind,
+			command: command,
+			force: force
+		)
+		do {
+			let value: Value = try await body(trace)
+			logSink(trace.finish(timestamp: clock(), outcome: .ok))
+			return value
+		} catch {
+			logSink(trace.finish(timestamp: clock(), outcome: .error(SessionStore.toolError(for: error))))
+			throw error
+		}
+	}
+
+	/// 錯誤 → 對外穩定碼：``NymphError`` 走 ``ToolError`` 既有的映射、``ToolError`` 原樣回、
+	/// 其餘收斂成 `internal_error`。紀錄與 ``handle(_:)`` 共用這一套，兩處的碼不會漂開。
+	private static func toolError(for error: any Error) -> ToolError {
+		switch error {
+		case let error as NymphError:
+			ToolError(error)
+
+		case let error as ToolError:
+			error
+
+		default:
+			ToolError(.internalFailure(String(describing: error)))
+		}
 	}
 }
 
@@ -329,12 +402,8 @@ extension SessionStore: RequestDispatching {
 			case let .destroy(params):
 				return .destroy(try await destroy(id: params.id, force: params.force))
 			}
-		} catch let error as NymphError {
-			return .toolError(ToolError(error))
-		} catch let error as ToolError {
-			return .toolError(error)
 		} catch {
-			return .toolError(ToolError(.internalFailure(String(describing: error))))
+			return .toolError(SessionStore.toolError(for: error))
 		}
 	}
 }
