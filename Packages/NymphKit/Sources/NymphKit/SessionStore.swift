@@ -176,7 +176,7 @@ public actor SessionStore {
 		}
 	}
 
-	/// 列出 session（依 createdAt 穩定排序）。`all=false` 濳掉已 stopped 未回收者。
+	/// 列出 session（依 createdAt 穩定排序）。`all=false` 濾掉已 stopped 未回收者。
 	public func list(all: Bool) async -> ListResult {
 		var summaries: [SessionSummary] = []
 		for entry in table.values.sorted(by: { ($0.createdAt, $0.id) < ($1.createdAt, $1.id) }) {

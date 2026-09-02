@@ -11,7 +11,7 @@ import MachineKit
 import NymphKit
 
 /// 極簡上鎖封套——fake 需在跨隔離（actor 呼叫、背景 Task）間累積呼叫紀錄，用 NSLock 護
-/// 一份可變值即可，避免測試依賴具體併行原語。
+/// 一份可變值即可，避免測試依賴具體並行原語。
 final class Locked<Value>: @unchecked Sendable {
 
 	init(_ value: Value) {
