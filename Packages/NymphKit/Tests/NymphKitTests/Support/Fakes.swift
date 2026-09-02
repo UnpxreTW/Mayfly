@@ -59,7 +59,17 @@ func steppingClock(start: Date, step: TimeInterval) -> @Sendable () -> Date {
 	}
 }
 
-/// 假 VM 控制面：可配 readiness / exec 結果，記錄 start / stop / destroy / exec 呼叫——把
+/// 記憶體 sink：把事件依序收進 `Locked` 陣列——驗事件序與欄位、不驗秒數（秒數是真實時鐘、
+/// 不可預期）。
+internal func recordingLogSink() -> (sink: SessionLogSink, events: Locked<[SessionLogEvent]>) {
+	let events: Locked<[SessionLogEvent]> = .init([])
+	let sink: SessionLogSink = { event in
+		events.withLock { $0.append(event) }
+	}
+	return (sink, events)
+}
+
+/// 假 VM 控制面：可配 readiness / start / exec 結果，記錄 start / stop / destroy / exec 呼叫——把
 /// `SessionStore` 的編排與真 VM / 真 SSH 隔開來測。
 final class FakeGuestControl: GuestControl, @unchecked Sendable {
 
@@ -82,17 +92,22 @@ final class FakeGuestControl: GuestControl, @unchecked Sendable {
 		readyIP: String? = "10.0.0.9",
 		timeoutOnReady: Bool = false,
 		stateOverride: SessionState? = nil,
-		execOutcome: Swift.Result<GuestExecResult, NymphError> = .success(GuestExecResult(standardOutput: "ok\n", standardError: "", exitCode: 0))
+		execOutcome: Swift.Result<GuestExecResult, NymphError> = .success(GuestExecResult(standardOutput: "ok\n", standardError: "", exitCode: 0)),
+		startError: NymphError? = nil
 	) {
 		self.readyIP = readyIP
 		self.timeoutOnReady = timeoutOnReady
 		self.stateOverride = stateOverride
 		self.execOutcome = execOutcome
+		self.startError = startError
 	}
 
 	let recorded: Locked<Recorded> = .init(Recorded())
 
 	func start() async throws {
+		if let startError {
+			throw startError
+		}
 		recorded.withLock {
 			$0.started = true
 			$0.state = .booting
@@ -152,6 +167,8 @@ final class FakeGuestControl: GuestControl, @unchecked Sendable {
 	private let stateOverride: SessionState?
 
 	private let execOutcome: Swift.Result<GuestExecResult, NymphError>
+
+	private let startError: NymphError?
 }
 
 /// 假引擎：每次 provision 造一個 ``FakeGuestControl`` 並記錄它與 clonePath，供斷言。可配
