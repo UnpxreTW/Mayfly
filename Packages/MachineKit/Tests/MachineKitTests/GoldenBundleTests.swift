@@ -28,7 +28,7 @@ private final class GoldenBundleTests {
 		let root: URL = try makeBundleFixture()
 		defer { try? FileManager.default.removeItem(at: root) }
 		let bundle: URL = root.appending(component: "golden.bundle")
-		let hardwareModel: URL = GuestBundleLayout.hardwareModel(in: bundle)
+		let hardwareModel: URL = MacGuestBundleLayout.hardwareModel(in: bundle)
 		try FileManager.default.removeItem(at: hardwareModel)
 		#expect(throws: GoldenBundleError.missingComponent(hardwareModel)) {
 			try GoldenBundle.load(from: bundle)
@@ -48,7 +48,7 @@ private final class GoldenBundleTests {
 			restoreImageSHA256: "deadbeef",
 			ephemeral: true
 		)
-		try JSONEncoder().encode(metadata).write(to: GuestBundleLayout.metadata(in: bundle))
+		try JSONEncoder().encode(metadata).write(to: MacGuestBundleLayout.metadata(in: bundle))
 		#expect(throws: GoldenBundleError.markedEphemeral(bundle)) {
 			try GoldenBundle.load(from: bundle)
 		}
@@ -60,7 +60,7 @@ private final class GoldenBundleTests {
 		let root: URL = try makeBundleFixture()
 		defer { try? FileManager.default.removeItem(at: root) }
 		let bundle: URL = root.appending(component: "golden.bundle")
-		let metadata: URL = GuestBundleLayout.metadata(in: bundle)
+		let metadata: URL = MacGuestBundleLayout.metadata(in: bundle)
 		try Data("not-json".utf8).write(to: metadata)
 		#expect(throws: GoldenBundleError.metadataUndecodable(metadata)) {
 			try GoldenBundle.load(from: bundle)
@@ -76,17 +76,17 @@ private final class GoldenBundleTests {
 			.appending(component: "GoldenBundleTests-\(UUID().uuidString)")
 		let bundle: URL = root.appending(component: "golden.bundle")
 		try FileManager.default.createDirectory(at: bundle, withIntermediateDirectories: true)
-		try Data("disk".utf8).write(to: GuestBundleLayout.diskImage(in: bundle))
-		try Data("aux".utf8).write(to: GuestBundleLayout.auxiliaryStorage(in: bundle))
-		try Data("machine-identifier".utf8).write(to: GuestBundleLayout.machineIdentifier(in: bundle))
-		try Data("hardware-model".utf8).write(to: GuestBundleLayout.hardwareModel(in: bundle))
+		try Data("disk".utf8).write(to: MacGuestBundleLayout.diskImage(in: bundle))
+		try Data("aux".utf8).write(to: MacGuestBundleLayout.auxiliaryStorage(in: bundle))
+		try Data("machine-identifier".utf8).write(to: MacGuestBundleLayout.machineIdentifier(in: bundle))
+		try Data("hardware-model".utf8).write(to: MacGuestBundleLayout.hardwareModel(in: bundle))
 		let metadata: BundleMetadata = .init(
 			macAddress: "0a:1b:2c:3d:4e:5f",
 			osBuildVersion: "25F80",
 			osVersion: "26.5.1",
 			restoreImageSHA256: "deadbeef"
 		)
-		try JSONEncoder().encode(metadata).write(to: GuestBundleLayout.metadata(in: bundle))
+		try JSONEncoder().encode(metadata).write(to: MacGuestBundleLayout.metadata(in: bundle))
 		return root
 	}
 }

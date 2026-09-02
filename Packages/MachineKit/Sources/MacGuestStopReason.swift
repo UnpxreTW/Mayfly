@@ -7,7 +7,7 @@
 //  SPDX-License-Identifier: Apache-2.0
 
 /// guest 停止的原因。
-public enum GuestStopReason: Sendable {
+public enum MacGuestStopReason: Sendable {
 
 	/// guest 自行關機（guestDidStop）。
 	case guestInitiated

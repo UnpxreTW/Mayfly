@@ -15,7 +15,7 @@ import Foundation
 /// 的合約）。`standardInput` 於 spawn 後寫入並關閉、nil 則立即關端送 EOF——否則 ssh
 /// 會空等我方 stdin、命令永不返回。`timeout` 非 nil 時掛 wall-clock 監看：逾時
 /// `terminate()`（SIGTERM）、收乾殘餘輸出後擲 ``ProcessRunnerError/timedOut(_:)``；SSH
-/// 自身的 `ConnectTimeout` 由 ``GuestExec`` 另外下（連線層），本層是整體壁鐘上限。
+/// 自身的 `ConnectTimeout` 由 ``MacGuestExec`` 另外下（連線層），本層是整體壁鐘上限。
 public struct SystemProcessRunner: ProcessRunner {
 
 	public func run(

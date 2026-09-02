@@ -6,13 +6,13 @@
 //
 //  SPDX-License-Identifier: Apache-2.0
 
-/// ``GuestExec`` 的失敗情形——**皆為傳輸 / 前置錯誤**（tool-error 面），與遠端命令
+/// ``MacGuestExec`` 的失敗情形——**皆為傳輸 / 前置錯誤**（tool-error 面），與遠端命令
 /// 的非零退出（資料、回在 ``GuestExecResult/exitCode``）互斥。契約見 #31：no-such /
 /// 未 ready / SSH 傳輸失敗 / 逾時＝擲錯；命令非零 exit＝正常回傳。
 ///
 /// （no-such-id 屬 daemon 的 session table 層〔實作順序②〕、本引擎切片不涉；引擎層
 /// 對應的是 ``notReady``。）
-public enum GuestExecError: Error, Equatable, Sendable {
+public enum MacGuestExecError: Error, Equatable, Sendable {
 
 	/// 目標 session 尚未 ready（未 start / 開機中 / 已停）——無法連入執行。
 	case notReady

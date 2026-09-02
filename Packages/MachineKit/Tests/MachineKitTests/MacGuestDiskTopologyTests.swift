@@ -18,29 +18,29 @@ private func apfsContainer(physStore: String, volumes: [(id: String, roles: [Str
 	]
 }
 
-/// 把 container dict 陣列包成根層、序列化成 plist bytes、餵 `GuestDiskTopology`。
-private func makeTopology(_ containers: [[String: Any]]) throws -> GuestDiskTopology {
+/// 把 container dict 陣列包成根層、序列化成 plist bytes、餵 `MacGuestDiskTopology`。
+private func makeTopology(_ containers: [[String: Any]]) throws -> MacGuestDiskTopology {
 	let root: [String: Any] = ["Containers": containers]
 	let data = try PropertyListSerialization.data(fromPropertyList: root, format: .xml, options: 0)
-	return try GuestDiskTopology(plistData: data)
+	return try MacGuestDiskTopology(plistData: data)
 }
 
-/// 跑 body、攔下 ``GuestVolumeMounterError`` 供 case 比對（error 含 associated value、
+/// 跑 body、攔下 ``MacGuestVolumeMounterError`` 供 case 比對（error 含 associated value、
 /// 不便走 `#expect(throws:)` 的相等比對）。
-private func captureError(_ body: () throws -> Void) -> GuestVolumeMounterError? {
+private func captureError(_ body: () throws -> Void) -> MacGuestVolumeMounterError? {
 	do {
 		try body()
 		return nil
-	} catch let error as GuestVolumeMounterError {
+	} catch let error as MacGuestVolumeMounterError {
 		return error
 	} catch {
 		return nil
 	}
 }
 
-// MARK: - GuestDiskTopologyTests
+// MARK: - MacGuestDiskTopologyTests
 
-private final class GuestDiskTopologyTests {
+private final class MacGuestDiskTopologyTests {
 
 	/// 安全命脈：同一份 topology 裡 host 自己的 Data 卷（`disk3s1`）也在場，查 attached
 	/// `disk8` 必須回 guest 的 `disk11s5`、**絕不**回 host 卷。
@@ -140,7 +140,7 @@ private final class GuestDiskTopologyTests {
 	/// 非 plist / 結構不符的 bytes → `malformedTopology`。
 	@Test
 	private func `throws malformed topology on garbage bytes`() {
-		let error = captureError { _ = try GuestDiskTopology(plistData: Data("not a plist".utf8)) }
+		let error = captureError { _ = try MacGuestDiskTopology(plistData: Data("not a plist".utf8)) }
 		guard case .malformedTopology = error else {
 			Issue.record("預期 .malformedTopology、得 \(String(describing: error))")
 			return

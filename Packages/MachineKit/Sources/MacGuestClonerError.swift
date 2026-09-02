@@ -8,10 +8,10 @@
 
 import Foundation
 
-/// ``GuestCloner`` 的失敗情形。`clonefile(2)` 的 errno 映射成可判別的 case：
+/// ``MacGuestCloner`` 的失敗情形。`clonefile(2)` 的 errno 映射成可判別的 case：
 /// 呼叫端能區分「換個目的地就好」（``destinationExists(_:)``）與「佈局違反
 /// 同卷契約、需人為介入」（``crossVolume(source:destination:)``）。
-public enum GuestClonerError: Error, Equatable {
+public enum MacGuestClonerError: Error, Equatable {
 
 	/// 來源 bundle 不存在（`ENOENT` 且來源查無）。
 	case sourceMissing(URL)
@@ -39,7 +39,7 @@ public enum GuestClonerError: Error, Equatable {
 	/// 把 `clonefile(2)` 的 errno 映射成型別化錯誤。ENOENT 語義雙關（來源缺 vs
 	/// 目的地父目錄缺），由呼叫端以 `sourceExists`（事後 stat、供 triage 用、容忍
 	/// TOCTOU）消歧。
-	static func map(errno code: Int32, source: URL, destination: URL, sourceExists: Bool) -> GuestClonerError {
+	static func map(errno code: Int32, source: URL, destination: URL, sourceExists: Bool) -> MacGuestClonerError {
 		switch code {
 		case ENOENT:
 			sourceExists ? .destinationParentMissing(destination) : .sourceMissing(source)

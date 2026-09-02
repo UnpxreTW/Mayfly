@@ -19,9 +19,9 @@ import Virtualization
 ///
 /// 刻意**不標 Sendable**：出生與被呼叫都只在 vmQueue 上，讓編譯器替我們
 /// 守「不得跨界傳遞」；可變狀態（waiters / stopReason）全靠該 queue 序列化。
-final class GuestEventRelay: NSObject, VZVirtualMachineDelegate {
+final class MacGuestEventRelay: NSObject, VZVirtualMachineDelegate {
 
-	init(queue: DispatchQueue, eventContinuation: AsyncStream<GuestEvent>.Continuation) {
+	init(queue: DispatchQueue, eventContinuation: AsyncStream<MacGuestEvent>.Continuation) {
 		self.queue = queue
 		self.eventContinuation = eventContinuation
 	}
@@ -34,17 +34,17 @@ final class GuestEventRelay: NSObject, VZVirtualMachineDelegate {
 	}
 
 	/// 等停止的 waiter 們；vmQueue 保護。
-	var stopWaiters: [UUID: CheckedContinuation<GuestStopReason, any Error>] = [:]
+	var stopWaiters: [UUID: CheckedContinuation<MacGuestStopReason, any Error>] = [:]
 
 	/// 取消搶先於註冊的 tombstone；vmQueue 保護。
 	var cancelledWaiterIDs: Set<UUID> = []
 
 	/// 第一個停機原因；settle 後不再覆寫。vmQueue 保護。
-	private(set) var stopReason: GuestStopReason?
+	private(set) var stopReason: MacGuestStopReason?
 
 	/// 收斂停機：發事件（`event` 給 nil 表示 host 硬停、無對應 delegate
 	/// 事件）、記第一個 reason、喚醒並清空所有 waiter。
-	func settle(reason: GuestStopReason, event: GuestEvent?) {
+	func settle(reason: MacGuestStopReason, event: MacGuestEvent?) {
 		dispatchPrecondition(condition: .onQueue(queue))
 		if let event {
 			eventContinuation.yield(event)
@@ -78,7 +78,7 @@ final class GuestEventRelay: NSObject, VZVirtualMachineDelegate {
 	private let queue: DispatchQueue
 
 	/// 事件流出口（自身 Sendable、可安全跨界）。
-	private let eventContinuation: AsyncStream<GuestEvent>.Continuation
+	private let eventContinuation: AsyncStream<MacGuestEvent>.Continuation
 }
 
 #endif

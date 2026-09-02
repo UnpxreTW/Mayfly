@@ -23,12 +23,12 @@ import Foundation
 /// pristine——ephemeral 優先是產品命題、clone 近乎免費（CoW），session 層以型別
 /// 強制這條紀律。與 ``MacGuest`` 同為**一次性生命週期**：停止後不重啟、start 失敗
 /// 即棄，要再跑另 clone 一份。
-public actor GuestSession {
+public actor MacGuestSession {
 
 	// MARK: Public
 
 	/// session 生命週期狀態（單向推進：idle → booting → ready → stopped；任何時點
-	/// 都可能直接跳 stopped）。停止**原因**不入狀態——`GuestStopReason` 帶 error、
+	/// 都可能直接跳 stopped）。停止**原因**不入狀態——`MacGuestStopReason` 帶 error、
 	/// 非 Equatable，單一真相是 ``waitUntilStopped()`` 的回傳值。
 	public enum State: Sendable, Equatable {
 
@@ -49,11 +49,11 @@ public actor GuestSession {
 	public private(set) var state: State = .idle
 
 	/// 建 guest、開機，並啟動 readiness 與停機兩路觀察。一次性：重呼（含首次失敗
-	/// 後）擲 ``GuestSessionError/alreadyStarted``。
+	/// 後）擲 ``MacGuestSessionError/alreadyStarted``。
 	public func start() async throws {
-		guard !started else { throw GuestSessionError.alreadyStarted }
+		guard !started else { throw MacGuestSessionError.alreadyStarted }
 		started = true
-		let spec: MacGuestSpec = GuestBundleLayout.spec(
+		let spec: MacGuestSpec = MacGuestBundleLayout.spec(
 			for: bundle.bundle,
 			metadata: metadata,
 			cpuCount: cpuCount,
@@ -89,11 +89,11 @@ public actor GuestSession {
 	}
 
 	/// 等 readiness 收斂：回解出的 guest IP；gate 逾時無 IP 回 nil（best-effort）、
-	/// guest 提早停止亦回 nil。未 start 擲 ``GuestSessionError/notStarted``。
+	/// guest 提早停止亦回 nil。未 start 擲 ``MacGuestSessionError/notStarted``。
 	///
 	/// 已被 ``promoteIfReady()`` 升成 `.ready` 時直接回報該 IP、不再空等一輪。
 	public func waitUntilReady() async throws -> String? {
-		guard let readinessTask else { throw GuestSessionError.notStarted }
+		guard let readinessTask else { throw MacGuestSessionError.notStarted }
 		if case let .ready(ip) = state {
 			return ip
 		}
@@ -115,32 +115,32 @@ public actor GuestSession {
 		if case .ready = state {
 			return true
 		}
-		guard state == .booting, let ip = GuestLease.currentIP(macAddress: metadata.macAddress) else { return false }
+		guard state == .booting, let ip = MacGuestLease.currentIP(macAddress: metadata.macAddress) else { return false }
 		state = .ready(ip: ip)
 		return true
 	}
 
 	/// 等 guest 停止、回停止原因（單一真相；語義同 ``MacGuest/waitUntilStopped()``）。
-	public func waitUntilStopped() async throws -> GuestStopReason {
-		guard let guest else { throw GuestSessionError.notStarted }
+	public func waitUntilStopped() async throws -> MacGuestStopReason {
+		guard let guest else { throw MacGuestSessionError.notStarted }
 		return try await guest.waitUntilStopped()
 	}
 
 	/// 等 guest 自行停止、逾時 fallback 硬停（語義同 ``MacGuest/ensureStopped(within:)``；
 	/// guest 內關機仍由呼叫端驅動、例如 SSH `sudo shutdown -h now`）。
-	public func ensureStopped(within gracePeriod: Duration) async throws -> GuestStopReason {
-		guard let guest else { throw GuestSessionError.notStarted }
+	public func ensureStopped(within gracePeriod: Duration) async throws -> MacGuestStopReason {
+		guard let guest else { throw MacGuestSessionError.notStarted }
 		return try await guest.ensureStopped(within: gracePeriod)
 	}
 
 	/// host 硬停（destructive；ephemeral 複本本就可拋，這是 CI cleanup 的預設收法）。
 	public func forceStop() async throws {
-		guard let guest else { throw GuestSessionError.notStarted }
+		guard let guest else { throw MacGuestSessionError.notStarted }
 		try await guest.forceStop()
 	}
 
 	/// - Parameters:
-	///   - bundle: 要開的可拋複本（``GuestCloner/clone(_:to:)`` 的產物）。
+	///   - bundle: 要開的可拋複本（``MacGuestCloner/clone(_:to:)`` 的產物）。
 	///   - cpuCount: 要求的 vCPU 數，超出 host 上限由引擎收斂（見 ``MacGuestSpec``）。
 	///   - memoryBytes: 要求的記憶體，同上收斂。
 	///   - display: 顯示器設定；macOS guest 一定掛圖形裝置、headless 只是不開視窗。
@@ -157,7 +157,7 @@ public actor GuestSession {
 		self.bundle = bundle
 		self.metadata = try JSONDecoder().decode(
 			BundleMetadata.self,
-			from: Data(contentsOf: GuestBundleLayout.metadata(in: bundle.bundle))
+			from: Data(contentsOf: MacGuestBundleLayout.metadata(in: bundle.bundle))
 		)
 		self.cpuCount = cpuCount
 		self.memoryBytes = memoryBytes

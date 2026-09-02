@@ -45,25 +45,25 @@ private func provisionApfsPlist() throws -> Data {
 private func makeBundleWithDiskImage() throws -> URL {
 	let bundle = FileManager.default.temporaryDirectory.appending(path: "gp-\(UUID().uuidString).bundle")
 	try FileManager.default.createDirectory(at: bundle, withIntermediateDirectories: true)
-	try Data().write(to: GuestBundleLayout.diskImage(in: bundle))
+	try Data().write(to: MacGuestBundleLayout.diskImage(in: bundle))
 	return bundle
 }
 
-// MARK: - GuestProvisionerTests
+// MARK: - MacGuestProvisionerTests
 
-private final class GuestProvisionerTests {
+private final class MacGuestProvisionerTests {
 
 	/// payload 串出 12 檔：dslocal 使用者紀錄 + Setup Assistant 跳過（7）+ first-boot（3）+ authorized_keys。
 	@Test
 	private func `payload assembles all injected files`() throws {
-		let files = try GuestProvisioner.payload(spec: sampleSpec())
+		let files = try MacGuestProvisioner.payload(spec: sampleSpec())
 		#expect(files.count == 12)
 	}
 
 	/// dslocal 使用者紀錄落正確路徑、root:wheel 0600。
 	@Test
 	private func `payload writes dslocal user record`() throws {
-		let files = try GuestProvisioner.payload(spec: sampleSpec())
+		let files = try MacGuestProvisioner.payload(spec: sampleSpec())
 		let record = try #require(files.first {
 			$0.relativePath == "private/var/db/dslocal/nodes/Default/users/runner.plist"
 		})
@@ -75,7 +75,7 @@ private final class GuestProvisionerTests {
 	/// authorized_keys 落帳號自有 .ssh、owner=帳號、0600、內容為公鑰逐行。
 	@Test
 	private func `payload writes authorized keys owned by account`() throws {
-		let files = try GuestProvisioner.payload(spec: sampleSpec(keys: ["key-one", "key-two"]))
+		let files = try MacGuestProvisioner.payload(spec: sampleSpec(keys: ["key-one", "key-two"]))
 		let keys = try #require(files.first { $0.relativePath == "Users/runner/.ssh/authorized_keys" })
 		#expect(keys.owner.uid == 501)
 		#expect(keys.owner.gid == 20)
@@ -87,14 +87,14 @@ private final class GuestProvisionerTests {
 	/// first-boot daemon 的 plist 檔名帶 spec 的 label（label threading）。
 	@Test
 	private func `payload threads first boot label`() throws {
-		let files = try GuestProvisioner.payload(spec: sampleSpec())
+		let files = try MacGuestProvisioner.payload(spec: sampleSpec())
 		#expect(files.contains { $0.relativePath == "Library/LaunchDaemons/test.firstboot.plist" })
 	}
 
 	/// Setup Assistant 跳過標記在 payload 內（.AppleSetupDone）。
 	@Test
 	private func `payload includes setup assistant skip`() throws {
-		let files = try GuestProvisioner.payload(spec: sampleSpec())
+		let files = try MacGuestProvisioner.payload(spec: sampleSpec())
 		#expect(files.contains { $0.relativePath == "private/var/db/.AppleSetupDone" })
 	}
 
@@ -121,11 +121,11 @@ private final class GuestProvisionerTests {
 			}
 			return .success(Data())
 		}
-		let provisioner: GuestProvisioner = .init(runner: fake)
+		let provisioner: MacGuestProvisioner = .init(runner: fake)
 		do {
 			_ = try await provisioner.provision(bundle: bundle, spec: sampleSpec())
 			Issue.record("預期擲 requiresRecoveryFallback")
-		} catch GuestProvisionerError.requiresRecoveryFallback {
+		} catch MacGuestProvisionerError.requiresRecoveryFallback {
 			// 預期路徑
 		} catch {
 			Issue.record("預期 .requiresRecoveryFallback、得 \(error)")
@@ -157,13 +157,13 @@ private final class GuestProvisionerTests {
 			}
 			return .success(Data())
 		}
-		let provisioner: GuestProvisioner = .init(runner: fake)
+		let provisioner: MacGuestProvisioner = .init(runner: fake)
 		do {
 			_ = try await provisioner.provision(bundle: bundle, spec: sampleSpec())
 			Issue.record("預期擲原始 commandFailed")
-		} catch GuestProvisionerError.requiresRecoveryFallback {
+		} catch MacGuestProvisionerError.requiresRecoveryFallback {
 			Issue.record("非 locked 失敗不應被轉成 requiresRecoveryFallback")
-		} catch GuestVolumeMounterError.commandFailed {
+		} catch MacGuestVolumeMounterError.commandFailed {
 			// 預期：原始錯誤原樣上拋
 		}
 		#expect(fake.calls.contains { $0.arguments == ["detach", "/dev/disk8"] })

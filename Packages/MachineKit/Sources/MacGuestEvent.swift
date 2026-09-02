@@ -8,7 +8,7 @@
 
 /// guest 生命週期事件——delegate callback 的 Sendable 轉譯，經
 /// ``MacGuest/events`` 外送。
-public enum GuestEvent: Sendable {
+public enum MacGuestEvent: Sendable {
 
 	/// guest 自行關機完成。唯一可靠的退出信號。
 	case guestDidStop

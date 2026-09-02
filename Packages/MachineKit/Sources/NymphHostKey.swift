@@ -10,8 +10,8 @@ import Foundation
 
 /// nymph daemon 的**穩定身份金鑰**：首啟在 state dir 生成、爾後載入同一把——所有
 /// ephemeral guest 共用這把公鑰（golden provisioning 把 ``publicKeyLine`` 併進
-/// ``ProvisionSpec/authorizedKeys`` 注入 runner 帳號、見 ``GuestProvisioner``），nymph
-/// 以對應私鑰 SSH 進任一 clone（見 ``GuestExec``）。契約決策 #31①。
+/// ``ProvisionSpec/authorizedKeys`` 注入 runner 帳號、見 ``MacGuestProvisioner``），nymph
+/// 以對應私鑰 SSH 進任一 clone（見 ``MacGuestExec``）。契約決策 #31①。
 ///
 /// 「host key」沿用契約用語：實為 nymph 的**客戶端身份鑰**（穩定、跨 VM 不變），非
 /// guest 自身的 SSH host key。私鑰以 state dir 的檔案權限（ssh-keygen 寫 0600）保護；

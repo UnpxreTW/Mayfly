@@ -16,7 +16,7 @@ import Foundation
 /// 「持久狀態檔位置」、不該知道 bundle 封裝慣例；bundle 是 installer / CLI 層的
 /// 約定。builder 的 LOAD 路徑透過 ``spec(for:metadata:cpuCount:memoryBytes:display:)``
 /// 取得可直接餵的 spec，寫端與讀端不會漂移。
-public enum GuestBundleLayout {
+public enum MacGuestBundleLayout {
 
 	/// 主磁碟（RAW sparse）。
 	public static let diskImageName = "disk.img"

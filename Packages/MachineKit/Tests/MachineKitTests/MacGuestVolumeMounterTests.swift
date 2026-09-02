@@ -50,23 +50,23 @@ private func busyFailure() -> Result<Data, any Error> {
 	))
 }
 
-private func captureMounterError(_ body: () async throws -> Void) async -> GuestVolumeMounterError? {
+private func captureMounterError(_ body: () async throws -> Void) async -> MacGuestVolumeMounterError? {
 	do {
 		try await body()
 		return nil
-	} catch let error as GuestVolumeMounterError {
+	} catch let error as MacGuestVolumeMounterError {
 		return error
 	} catch {
 		// 型別不對就地記下——否則呼叫端只看到 nil，看不出漏出來的是什麼（錯誤契約
 		// 轉譯回歸時，那正是唯一想診斷的事）。
-		Issue.record("預期 GuestVolumeMounterError、得 \(error)")
+		Issue.record("預期 MacGuestVolumeMounterError、得 \(error)")
 		return nil
 	}
 }
 
-// MARK: - GuestVolumeMounterTests
+// MARK: - MacGuestVolumeMounterTests
 
-private final class GuestVolumeMounterTests {
+private final class MacGuestVolumeMounterTests {
 
 	/// 跨呼叫安全的計數器（給「前 N 次 busy 後成功」這類腳本）。
 	private final class Counter: @unchecked Sendable {
@@ -87,7 +87,7 @@ private final class GuestVolumeMounterTests {
 	@Test
 	private func `parse attach base disk extracts whole disk`() throws {
 		let data = try hdiutilAttachPlist(wholeDisk: "disk8", slices: ["disk8s1", "disk8s2", "disk8s3"])
-		#expect(try GuestVolumeMounter.parseAttachBaseDisk(data) == "disk8")
+		#expect(try MacGuestVolumeMounter.parseAttachBaseDisk(data) == "disk8")
 	}
 
 	@Test
@@ -98,9 +98,9 @@ private final class GuestVolumeMounterTests {
 			options: 0
 		)
 		do {
-			_ = try GuestVolumeMounter.parseAttachBaseDisk(slicesOnly)
+			_ = try MacGuestVolumeMounter.parseAttachBaseDisk(slicesOnly)
 			Issue.record("預期擲 unparseableAttachOutput")
-		} catch let error as GuestVolumeMounterError {
+		} catch let error as MacGuestVolumeMounterError {
 			guard case .unparseableAttachOutput = error else {
 				Issue.record("預期 .unparseableAttachOutput、得 \(error)")
 				return
@@ -111,16 +111,16 @@ private final class GuestVolumeMounterTests {
 	@Test
 	private func `parse mount point extracts point`() throws {
 		let data = try diskutilInfoPlist(mountPoint: "/Volumes/Data")
-		#expect(try GuestVolumeMounter.parseMountPoint(data) == "/Volumes/Data")
+		#expect(try MacGuestVolumeMounter.parseMountPoint(data) == "/Volumes/Data")
 	}
 
 	@Test
 	private func `parse mount point throws when absent`() throws {
 		let data = try diskutilInfoPlist(mountPoint: nil)
 		do {
-			_ = try GuestVolumeMounter.parseMountPoint(data)
+			_ = try MacGuestVolumeMounter.parseMountPoint(data)
 			Issue.record("預期擲 notReady")
-		} catch let error as GuestVolumeMounterError {
+		} catch let error as MacGuestVolumeMounterError {
 			guard case .notReady = error else {
 				Issue.record("預期 .notReady、得 \(error)")
 				return
@@ -148,7 +148,7 @@ private final class GuestVolumeMounterTests {
 			}
 			return .success(Data())
 		}
-		let mounter: GuestVolumeMounter = .init(diskImage: image, runner: fake)
+		let mounter: MacGuestVolumeMounter = .init(diskImage: image, runner: fake)
 		#expect(try await mounter.attach() == "disk8")
 		#expect(try await mounter.locateDataVolume() == "disk11s5")
 		#expect(try await mounter.mount().path == "/Volumes/Data")
@@ -175,7 +175,7 @@ private final class GuestVolumeMounterTests {
 			}
 			return .success(Data())
 		}
-		let mounter: GuestVolumeMounter = .init(
+		let mounter: MacGuestVolumeMounter = .init(
 			diskImage: image,
 			runner: fake,
 			retryBaseDelayMilliseconds: 1,
@@ -192,7 +192,7 @@ private final class GuestVolumeMounterTests {
 		let fake = FakeCommandRunner { _, arguments in
 			arguments.first == "attach" ? busyFailure() : .success(Data())
 		}
-		let mounter: GuestVolumeMounter = .init(
+		let mounter: MacGuestVolumeMounter = .init(
 			diskImage: image,
 			runner: fake,
 			retryBaseDelayMilliseconds: 1,
@@ -227,7 +227,7 @@ private final class GuestVolumeMounterTests {
 			}
 			return .success(Data())
 		}
-		let mounter: GuestVolumeMounter = .init(diskImage: image, runner: fake)
+		let mounter: MacGuestVolumeMounter = .init(diskImage: image, runner: fake)
 		_ = try await mounter.attach()
 		_ = try await mounter.locateDataVolume()
 		let error = await captureMounterError { _ = try await mounter.mount() }
@@ -238,7 +238,7 @@ private final class GuestVolumeMounterTests {
 	}
 
 	/// 釘住錯誤契約轉譯：runner 擲通用 ``CommandRunnerError``、本型別對外擲自己的
-	/// ``GuestVolumeMounterError/commandFailed(executable:status:stderr:)``，三個欄位逐項保真。
+	/// ``MacGuestVolumeMounterError/commandFailed(executable:status:stderr:)``，三個欄位逐項保真。
 	/// 轉譯漏掉時 `captureMounterError` 會收不到（回 nil）而失敗。
 	@Test
 	private func `command failure surfaces as mounter error`() async throws {
@@ -251,7 +251,7 @@ private final class GuestVolumeMounterTests {
 				stderr: "hdiutil: attach failed - no mountable file systems"
 			))
 		}
-		let mounter: GuestVolumeMounter = .init(diskImage: image, runner: fake)
+		let mounter: MacGuestVolumeMounter = .init(diskImage: image, runner: fake)
 		let error = await captureMounterError { _ = try await mounter.attach() }
 		guard case let .commandFailed(executable, status, stderr) = error else {
 			Issue.record("預期 .commandFailed、得 \(String(describing: error))")
@@ -267,7 +267,7 @@ private final class GuestVolumeMounterTests {
 		let image = try makeTempDiskImage()
 		defer { try? FileManager.default.removeItem(at: image) }
 		let fake = FakeCommandRunner { _, _ in .success(Data()) }
-		let mounter: GuestVolumeMounter = .init(diskImage: image, runner: fake)
+		let mounter: MacGuestVolumeMounter = .init(diskImage: image, runner: fake)
 		let error = await captureMounterError { _ = try await mounter.locateDataVolume() }
 		guard case .notReady = error else {
 			Issue.record("預期 .notReady、得 \(String(describing: error))")
@@ -281,7 +281,7 @@ private final class GuestVolumeMounterTests {
 		let image = try makeTempDiskImage()
 		defer { try? FileManager.default.removeItem(at: image) }
 		let fake = FakeCommandRunner { _, _ in .success(Data()) }
-		let mounter: GuestVolumeMounter = .init(diskImage: image, runner: fake)
+		let mounter: MacGuestVolumeMounter = .init(diskImage: image, runner: fake)
 		try await mounter.detach()
 		#expect(fake.calls.isEmpty)
 	}
@@ -293,7 +293,7 @@ private final class GuestVolumeMounterTests {
 		let image = try makeTempDiskImage()
 		defer { try? FileManager.default.removeItem(at: image) }
 		let fake = FakeCommandRunner { _, _ in .success(Data()) }
-		let mounter: GuestVolumeMounter = .init(diskImage: image, runner: fake)
+		let mounter: MacGuestVolumeMounter = .init(diskImage: image, runner: fake)
 		let ownershipError = await captureMounterError { try await mounter.enableOwnership() }
 		guard case .requiresRoot = ownershipError else {
 			Issue.record("enableOwnership 預期 .requiresRoot、得 \(String(describing: ownershipError))")

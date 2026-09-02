@@ -16,7 +16,7 @@ import Foundation
 ///   但**實機驗證發現 macOS guest 的 `/dev/console` 未必路由到 VZVirtioConsole serial**（marker
 ///   可能永遠不出現）——故只當「有就更快」的機會路徑、不倚賴。
 /// - **lease 輪詢（可靠主路徑）**：以 guest MAC 反查 host `dhcpd_leases` 解 IP（解析正本
-///   在 ``GuestLease``）。同樣 TCC-free（host 讀自己的 lease 檔、非對 guest 發網路），且給
+///   在 ``MacGuestLease``）。同樣 TCC-free（host 讀自己的 lease 檔、非對 guest 發網路），且給
 ///   的是 SSH 真正要的 IP。marker 可能永久無輸出，故 lease 輪詢與逾時 guard 保證整體有界。
 ///   到逾時仍無 IP → `provisioningReady(ip: nil)`（best-effort）。
 ///
@@ -136,7 +136,7 @@ public struct ReadinessGate: Sendable {
 	private func pollLeaseIP() async -> String? {
 		var elapsedMS = 0
 		while true {
-			if let ip = GuestLease.resolveIP(fromLeases: readLeases() ?? "", matching: macAddress ?? "") {
+			if let ip = MacGuestLease.resolveIP(fromLeases: readLeases() ?? "", matching: macAddress ?? "") {
 				return ip
 			}
 			guard elapsedMS < leaseResolveTimeoutMilliseconds else { return nil }

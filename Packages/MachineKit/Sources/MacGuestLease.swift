@@ -13,7 +13,7 @@ import Foundation
 /// ``ReadinessGate`` 的 lease 輪詢與外殼層的即時查詢（CLI `ip`、MCP status）都
 /// 消費這裡：TCC-free（host 讀自己的 lease 檔、非對 guest 發網路），給的是 SSH
 /// 真正要的 IP。純 Foundation、無 arch gate。
-public enum GuestLease {
+public enum MacGuestLease {
 
 	/// 從 `dhcpd_leases` 內容以 guest MAC byte-match 解 IP。兩邊 MAC 皆 per-byte
 	/// radix:16 正規化（lease 檔省略前導零：`a:1b:2` == `0a:1b:02`），去掉

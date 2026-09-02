@@ -105,7 +105,7 @@ private final class NymphHostKeyTests {
 		#expect(reloaded.privateKeyURL == key.privateKeyURL)
 	}
 
-	/// 注入 round-trip：nymph 公鑰併進 ``ProvisionSpec/authorizedKeys`` → ``GuestProvisioner``
+	/// 注入 round-trip：nymph 公鑰併進 ``ProvisionSpec/authorizedKeys`` → ``MacGuestProvisioner``
 	/// 的 authorized_keys 檔逐行含之（沿用現行 provisioning 管線、無需改引擎）。
 	@Test
 	private func `nymph public key injects into provisioning authorized keys`() throws {
@@ -119,7 +119,7 @@ private final class NymphHostKeyTests {
 			authorizedKeys: ["ssh-ed25519 AAAAEXISTING ci@host", key.publicKeyLine],
 			firstBootLabel: "test.firstboot"
 		)
-		let files = try GuestProvisioner.payload(spec: spec)
+		let files = try MacGuestProvisioner.payload(spec: spec)
 		let authorized = try #require(files.first { $0.relativePath == "Users/runner/.ssh/authorized_keys" })
 		let text = try #require(String(bytes: authorized.contents, encoding: .utf8))
 		#expect(text.contains(key.publicKeyLine))

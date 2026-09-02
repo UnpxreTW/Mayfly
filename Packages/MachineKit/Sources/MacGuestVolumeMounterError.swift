@@ -10,10 +10,10 @@ import Foundation
 
 /// host 側離線掛載 / 注入 guest 卷時的錯誤。
 ///
-/// 涵蓋兩層：純識別核心 ``GuestDiskTopology``（`noDataVolume` / `ambiguousVolume` /
-/// `malformedTopology`）＋ Process 薄殼 ``GuestVolumeMounter``（attach / mount /
+/// 涵蓋兩層：純識別核心 ``MacGuestDiskTopology``（`noDataVolume` / `ambiguousVolume` /
+/// `malformedTopology`）＋ Process 薄殼 ``MacGuestVolumeMounter``（attach / mount /
 /// enableOwnership / chown 的命令與生命週期錯誤）。
-public enum GuestVolumeMounterError: Error {
+public enum MacGuestVolumeMounterError: Error {
 
 	/// attached image 上找不到 macOS guest 的 Data 卷——非 macOS 映像、或 APFS
 	/// 結構不含「同時具 System 與 Data role」的 container。

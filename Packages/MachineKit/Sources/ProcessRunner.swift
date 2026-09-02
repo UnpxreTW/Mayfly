@@ -12,8 +12,8 @@ import Foundation
 ///
 /// 與 ``CommandRunner`` 的關鍵差異：``CommandRunner`` 把非零 exit 當**失敗**擲錯、
 /// 只回 stdout；本協定把**結束碼當資料**（非零是正常 envelope）、stdout 與 stderr
-/// 分開回傳——``GuestExec`` 要的正是這語義（遠端命令非零退出是結果、非傳輸錯誤）。
-/// 抽成協定是為了讓 ``GuestExec`` 的 **argv 構造與結果 / 錯誤映射可單測**：測試注入
+/// 分開回傳——``MacGuestExec`` 要的正是這語義（遠端命令非零退出是結果、非傳輸錯誤）。
+/// 抽成協定是為了讓 ``MacGuestExec`` 的 **argv 構造與結果 / 錯誤映射可單測**：測試注入
 /// 假執行器、驗「下了什麼 ssh 指令、把結果映成什麼」，完全不必真連 VM。真實作見
 /// ``SystemProcessRunner``。
 public protocol ProcessRunner: Sendable {
@@ -32,7 +32,7 @@ public protocol ProcessRunner: Sendable {
 
 /// 一次行程執行的完整結果：stdout / stderr 的原始 bytes 與行程結束碼。
 ///
-/// 結束碼是資料——非零由呼叫端依語境詮釋（``GuestExec`` 視 255 為 SSH 傳輸失敗、
+/// 結束碼是資料——非零由呼叫端依語境詮釋（``MacGuestExec`` 視 255 為 SSH 傳輸失敗、
 /// 其餘為遠端命令的真實退出碼）。
 public struct ProcessRunResult: Sendable {
 

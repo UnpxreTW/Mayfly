@@ -12,14 +12,14 @@
 import Foundation
 import Testing
 
-private final class GuestSessionTests {
+private final class MacGuestSessionTests {
 
 	/// init 只解 metadata（不碰 VZ）：佈局完整的 fixture 建得起 session、狀態 idle。
 	@Test
 	private func `init decodes metadata without touching vz`() async throws {
 		let fixture = try makeEphemeralFixture()
 		defer { try? FileManager.default.removeItem(at: fixture.root) }
-		let session: GuestSession = try .init(bundle: fixture.clone)
+		let session: MacGuestSession = try .init(bundle: fixture.clone)
 		#expect(await session.state == .idle)
 	}
 
@@ -29,7 +29,7 @@ private final class GuestSessionTests {
 		let fixture = try makeEphemeralFixture(withMetadata: false)
 		defer { try? FileManager.default.removeItem(at: fixture.root) }
 		#expect(throws: (any Error).self) {
-			try GuestSession(bundle: fixture.clone)
+			try MacGuestSession(bundle: fixture.clone)
 		}
 	}
 
@@ -38,8 +38,8 @@ private final class GuestSessionTests {
 	private func `wait until ready before start throws not started`() async throws {
 		let fixture = try makeEphemeralFixture()
 		defer { try? FileManager.default.removeItem(at: fixture.root) }
-		let session: GuestSession = try .init(bundle: fixture.clone)
-		await #expect(throws: GuestSessionError.notStarted) {
+		let session: MacGuestSession = try .init(bundle: fixture.clone)
+		await #expect(throws: MacGuestSessionError.notStarted) {
 			try await session.waitUntilReady()
 		}
 	}
@@ -50,7 +50,7 @@ private final class GuestSessionTests {
 	private func `promote if ready does not lift an idle session`() async throws {
 		let fixture: (clone: EphemeralBundle, root: URL) = try makeEphemeralFixture()
 		defer { try? FileManager.default.removeItem(at: fixture.root) }
-		let session: GuestSession = try .init(bundle: fixture.clone)
+		let session: MacGuestSession = try .init(bundle: fixture.clone)
 		#expect(await session.promoteIfReady() == false)
 		#expect(await session.state == .idle)
 	}
@@ -60,8 +60,8 @@ private final class GuestSessionTests {
 	private func `force stop before start throws not started`() async throws {
 		let fixture = try makeEphemeralFixture()
 		defer { try? FileManager.default.removeItem(at: fixture.root) }
-		let session: GuestSession = try .init(bundle: fixture.clone)
-		await #expect(throws: GuestSessionError.notStarted) {
+		let session: MacGuestSession = try .init(bundle: fixture.clone)
+		await #expect(throws: MacGuestSessionError.notStarted) {
 			try await session.forceStop()
 		}
 	}
@@ -73,18 +73,18 @@ private final class GuestSessionTests {
 	private func `start failure keeps idle and latches already started`() async throws {
 		let fixture = try makeEphemeralFixture()
 		defer { try? FileManager.default.removeItem(at: fixture.root) }
-		let session: GuestSession = try .init(bundle: fixture.clone)
+		let session: MacGuestSession = try .init(bundle: fixture.clone)
 		await #expect(throws: (any Error).self) {
 			try await session.start()
 		}
 		#expect(await session.state == .idle)
-		await #expect(throws: GuestSessionError.alreadyStarted) {
+		await #expect(throws: MacGuestSessionError.alreadyStarted) {
 			try await session.start()
 		}
-		await #expect(throws: GuestSessionError.notStarted) {
+		await #expect(throws: MacGuestSessionError.notStarted) {
 			try await session.waitUntilStopped()
 		}
-		await #expect(throws: GuestSessionError.notStarted) {
+		await #expect(throws: MacGuestSessionError.notStarted) {
 			try await session.forceStop()
 		}
 	}
@@ -94,13 +94,13 @@ private final class GuestSessionTests {
 	private func makeEphemeralFixture(withMetadata: Bool = true) throws -> (clone: EphemeralBundle, root: URL) {
 		let root: URL = FileManager.default
 			.temporaryDirectory
-			.appending(component: "GuestSessionTests-\(UUID().uuidString)")
+			.appending(component: "MacGuestSessionTests-\(UUID().uuidString)")
 		let bundle: URL = root.appending(component: "job.bundle")
 		try FileManager.default.createDirectory(at: bundle, withIntermediateDirectories: true)
-		try Data("disk".utf8).write(to: GuestBundleLayout.diskImage(in: bundle))
-		try Data("aux".utf8).write(to: GuestBundleLayout.auxiliaryStorage(in: bundle))
-		try Data("machine-identifier".utf8).write(to: GuestBundleLayout.machineIdentifier(in: bundle))
-		try Data("hardware-model".utf8).write(to: GuestBundleLayout.hardwareModel(in: bundle))
+		try Data("disk".utf8).write(to: MacGuestBundleLayout.diskImage(in: bundle))
+		try Data("aux".utf8).write(to: MacGuestBundleLayout.auxiliaryStorage(in: bundle))
+		try Data("machine-identifier".utf8).write(to: MacGuestBundleLayout.machineIdentifier(in: bundle))
+		try Data("hardware-model".utf8).write(to: MacGuestBundleLayout.hardwareModel(in: bundle))
 		if withMetadata {
 			let metadata: BundleMetadata = .init(
 				macAddress: "0a:1b:2c:3d:4e:5f",
@@ -108,7 +108,7 @@ private final class GuestSessionTests {
 				osVersion: "26.5.1",
 				restoreImageSHA256: "deadbeef"
 			)
-			try JSONEncoder().encode(metadata).write(to: GuestBundleLayout.metadata(in: bundle))
+			try JSONEncoder().encode(metadata).write(to: MacGuestBundleLayout.metadata(in: bundle))
 		}
 		return (EphemeralBundle(bundle: bundle), root)
 	}

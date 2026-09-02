@@ -10,33 +10,33 @@ import Foundation
 
 /// provisioning 的**第三軸 orchestrator**：把離線 builder（``DslocalUser`` /
 /// ``SetupAssistantSkip`` / ``FirstBootDaemon``）的 payload + authorized_keys 串成一組
-/// ``InjectedFile``，經 ``GuestVolumeMounter`` 的 `attach → locate → mount →
+/// ``InjectedFile``，經 ``MacGuestVolumeMounter`` 的 `attach → locate → mount →
 /// enableOwnership → write → detach` 寫進剛裝好的 guest bundle，回傳 ``GoldenBundle``。
 ///
 /// **需 root**（`enableOwnership` / `write` 的 numeric chown 要 root；呼叫端負責 `sudo`
 /// 或 CI 本就 root）。任何步驟失敗都會先 `detach` 再上拋，不留掛載中的 image。掛載回報
-/// `.encryptedLocked` → 轉 ``GuestProvisionerError/requiresRecoveryFallback``（P6 Recovery
+/// `.encryptedLocked` → 轉 ``MacGuestProvisionerError/requiresRecoveryFallback``（P6 Recovery
 /// fallback 的 seam、本型別不自解鎖）。
 ///
 /// **範圍（v1）**：只做離線注入 + GoldenBundle marker。設計的 "seal-boot"（開機跑
 /// first-boot daemon、偵測 readiness 後關機封存）依賴尚未建的 ReadinessGate（P5），
 /// 另拆後續切片。
-public struct GuestProvisioner: Sendable {
+public struct MacGuestProvisioner: Sendable {
 
 	/// 對剛裝好（未 provisioned）的 guest bundle 離線注入帳號 / 跳過 Setup Assistant /
 	/// first-boot daemon / authorized_keys，回傳 ``GoldenBundle``。需 root。
 	public func provision(bundle: URL, spec: ProvisionSpec) async throws -> GoldenBundle {
-		let diskImage: URL = GuestBundleLayout.diskImage(in: bundle)
-		let mounter: GuestVolumeMounter = .init(diskImage: diskImage, runner: runner)
+		let diskImage: URL = MacGuestBundleLayout.diskImage(in: bundle)
+		let mounter: MacGuestVolumeMounter = .init(diskImage: diskImage, runner: runner)
 		do {
 			try await mounter.attach()
 			try await mounter.locateDataVolume()
 			try await mounter.mount()
 			try await mounter.enableOwnership()
 			try await mounter.write(Self.payload(spec: spec))
-		} catch GuestVolumeMounterError.encryptedLocked {
+		} catch MacGuestVolumeMounterError.encryptedLocked {
 			try? await mounter.detach()
-			throw GuestProvisionerError.requiresRecoveryFallback
+			throw MacGuestProvisionerError.requiresRecoveryFallback
 		} catch {
 			try? await mounter.detach()
 			throw error
@@ -83,6 +83,6 @@ public struct GuestProvisioner: Sendable {
 		return files
 	}
 
-	/// 命令執行器（傳給內部 ``GuestVolumeMounter``；預設真 Process、測試注入假）。
+	/// 命令執行器（傳給內部 ``MacGuestVolumeMounter``；預設真 Process、測試注入假）。
 	private let runner: any CommandRunner
 }

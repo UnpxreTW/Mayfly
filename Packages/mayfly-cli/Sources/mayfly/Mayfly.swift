@@ -10,8 +10,8 @@ import ArgumentParser
 
 /// `mayfly` CLI 門面：ephemeral macOS VM 的兩用 binary。
 ///
-/// **薄殼紀律**：編排單一正本在 MachineKit（``GuestSession`` / ``GuestCloner`` /
-/// ``GuestLease``）與 nymph daemon 的 `SessionStore`，這層只做 argv 與 stdout / exit code
+/// **薄殼紀律**：編排單一正本在 MachineKit（``MacGuestSession`` / ``MacGuestCloner`` /
+/// ``MacGuestLease``）與 nymph daemon 的 `SessionStore`，這層只做 argv 與 stdout / exit code
 /// 的轉接。subcommand 依「是否需要 daemon」分兩組（設計 §7 / 契約 #31）：
 ///
 /// - **standalone（無 daemon、直連引擎）**：`clone` / `run` / `ip` / `destroy <path>`——CI

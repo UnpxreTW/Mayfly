@@ -13,20 +13,20 @@ import Foundation
 /// 見 #31 決策① / 實作順序①。
 ///
 /// **通道 = SSH（非 console）**：golden provisioning 已把 nymph 公鑰注入 runner 帳號的
-/// `authorized_keys`（見 ``GuestProvisioner`` / ``ProvisionSpec/authorizedKeys``）、sshd 為
+/// `authorized_keys`（見 ``MacGuestProvisioner`` / ``ProvisionSpec/authorizedKeys``）、sshd 為
 /// key-only（見 ``FirstBootDaemon``）；本型別以對應私鑰連入。**結束碼是資料**——遠端
 /// 命令非零退出照常回在 ``GuestExecResult/exitCode``；唯傳輸層失敗（連不上 / 認證被拒 /
-/// 逾時 / ssh 起不來）擲 ``GuestExecError``。
+/// 逾時 / ssh 起不來）擲 ``MacGuestExecError``。
 ///
 /// 無共享可變狀態（身份 / 使用者 / 執行器皆 `let`）、天然 `Sendable`——daemon 持單一
-/// 實例即可對任意 session 併發執行。VM 生命週期不歸這裡（屬 ``GuestSession``）；本型別
+/// 實例即可對任意 session 併發執行。VM 生命週期不歸這裡（屬 ``MacGuestSession``）；本型別
 /// 只做「一次連入、一次執行」。
 ///
 /// **MVP 依賴取捨（待使用者確認）**：現以 Foundation `Process` 呼叫系統 `ssh` /
 /// `ssh-keygen`（零新外部依賴）。引入 swift-nio-ssh / Citadel 等原生 SSH 客戶端可換掉
 /// 對系統二進位的依賴、細分傳輸錯誤、去掉 255 誤判邊界（見下），屬**新外部依賴、留待
 /// 使用者定奪**、不在本切片擅引。
-public struct GuestExec: Sendable {
+public struct MacGuestExec: Sendable {
 
 	// MARK: Public
 
@@ -51,15 +51,15 @@ public struct GuestExec: Sendable {
 	///
 	/// - Parameters:
 	///   - command: 遠端命令 argv（非空；ssh 以登入 shell 跑、各片段硬跳脫保 argv 邊界）。
-	///   - ipAddress: guest 現時 IP（由呼叫端 / session overload 以 ``GuestLease`` 解出）。
+	///   - ipAddress: guest 現時 IP（由呼叫端 / session overload 以 ``MacGuestLease`` 解出）。
 	///   - timeout: 整體上限；同時下給 ssh `ConnectTimeout`（連線層）與行程壁鐘（見
 	///     ``SystemProcessRunner``）。nil＝不設限。
 	///   - standardInput: 餵給遠端命令 stdin 的文字；nil＝無輸入（送 EOF）。
 	///   - workingDirectory: 遠端執行前 `cd` 的目錄；nil＝登入預設目錄。
 	///   - environment: 遠端命令的額外環境變數（走 `env K=V`、不依賴 sshd `AcceptEnv`）。
 	/// - Returns: stdout / stderr / 結束碼（非零是資料、不擲錯）。
-	/// - Throws: ``GuestExecError/transportFailure(_:)``（ssh 255）/ ``GuestExecError/timedOut(_:)``
-	///   / ``GuestExecError/launchFailed(_:)``。
+	/// - Throws: ``MacGuestExecError/transportFailure(_:)``（ssh 255）/ ``MacGuestExecError/timedOut(_:)``
+	///   / ``MacGuestExecError/launchFailed(_:)``。
 	public func run(
 		_ command: [String],
 		onHost ipAddress: String,
@@ -86,17 +86,17 @@ public struct GuestExec: Sendable {
 		} catch let error as ProcessRunnerError {
 			switch error {
 			case let .timedOut(duration):
-				throw GuestExecError.timedOut(duration)
+				throw MacGuestExecError.timedOut(duration)
 			}
 		} catch {
-			throw GuestExecError.launchFailed(String(describing: error))
+			throw MacGuestExecError.launchFailed(String(describing: error))
 		}
 		// ssh 以 255 收斂＝SSH 層錯誤（man ssh：「exits with 255 if an error occurred」）：
 		// 連線 / 認證 / 通道失敗。其餘結束碼是遠端命令的真實退出碼（資料）。已知邊界：
 		// 真的以 255 退出的遠端命令會被誤判為傳輸失敗——system-ssh MVP 的取捨、原生 SSH
 		// 客戶端可去除（見型別註解的依賴取捨）。
 		if outcome.exitCode == Self.sshTransportFailureCode {
-			throw GuestExecError.transportFailure(Self.decodeUTF8(outcome.standardError))
+			throw MacGuestExecError.transportFailure(Self.decodeUTF8(outcome.standardError))
 		}
 		return GuestExecResult(
 			standardOutput: Self.decodeUTF8(outcome.standardOutput),
@@ -193,16 +193,16 @@ public struct GuestExec: Sendable {
 
 #if arch(arm64)
 
-// GuestSession 觸碰 VZ（arm64 限定）——session overload 整段 arch gate，核心 ip-based
+// MacGuestSession 觸碰 VZ（arm64 限定）——session overload 整段 arch gate，核心 ip-based
 // run 不受影響（純 Foundation、可跨 arch 建 / 測）。
-public extension GuestExec {
+public extension MacGuestExec {
 
 	/// 以 `session` 現時 IP 執行 `command`。語意同 ``run(_:onHost:timeout:standardInput:workingDirectory:environment:)``、
-	/// 只是 IP 由 session 解出：狀態非 ready → ``GuestExecError/notReady``；解不到 IP →
-	/// ``GuestExecError/ipUnavailable``。
+	/// 只是 IP 由 session 解出：狀態非 ready → ``MacGuestExecError/notReady``；解不到 IP →
+	/// ``MacGuestExecError/ipUnavailable``。
 	func run(
 		_ command: [String],
-		on session: GuestSession,
+		on session: MacGuestSession,
 		timeout: Duration? = nil,
 		standardInput: String? = nil,
 		workingDirectory: String? = nil,
@@ -219,12 +219,12 @@ public extension GuestExec {
 		)
 	}
 
-	/// 解 session 的目標 IP：狀態非 ready → notReady；ready 則先以 ``GuestLease/currentIP(macAddress:leasesFile:)``
+	/// 解 session 的目標 IP：狀態非 ready → notReady；ready 則先以 ``MacGuestLease/currentIP(macAddress:leasesFile:)``
 	/// 現查（長駐 daemon 下比開機當下的 readiness IP 更即時）、退回 readiness 解出的 IP；
 	/// 兩者皆無 → ipUnavailable。
-	private func resolveIP(of session: GuestSession) async throws -> String {
+	private func resolveIP(of session: MacGuestSession) async throws -> String {
 		guard case let .ready(readinessIP) = await session.state else {
-			throw GuestExecError.notReady
+			throw MacGuestExecError.notReady
 		}
 		if let live = liveIP(of: session) {
 			return live
@@ -232,20 +232,20 @@ public extension GuestExec {
 		if let readinessIP {
 			return readinessIP
 		}
-		throw GuestExecError.ipUnavailable
+		throw MacGuestExecError.ipUnavailable
 	}
 
-	/// 從 session 的 bundle metadata 取 MAC、以 ``GuestLease`` 現查 host lease。讀不到
+	/// 從 session 的 bundle metadata 取 MAC、以 ``MacGuestLease`` 現查 host lease。讀不到
 	/// metadata / lease 無此 MAC → nil（交由 ``resolveIP(of:)`` fallback）。
-	private func liveIP(of session: GuestSession) -> String? {
-		let metadataURL: URL = GuestBundleLayout.metadata(in: session.bundle.bundle)
+	private func liveIP(of session: MacGuestSession) -> String? {
+		let metadataURL: URL = MacGuestBundleLayout.metadata(in: session.bundle.bundle)
 		guard
 			let data = try? Data(contentsOf: metadataURL),
 			let metadata = try? JSONDecoder().decode(BundleMetadata.self, from: data)
 		else {
 			return nil
 		}
-		return GuestLease.currentIP(macAddress: metadata.macAddress)
+		return MacGuestLease.currentIP(macAddress: metadata.macAddress)
 	}
 }
 

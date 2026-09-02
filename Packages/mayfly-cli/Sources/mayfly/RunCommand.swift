@@ -49,7 +49,7 @@ struct RunCommand: AsyncParsableCommand {
 	func run() async throws {
 #if arch(arm64)
 		let clone: EphemeralBundle = try .load(from: URL(fileURLWithPath: bundle))
-		let session: GuestSession = try .init(
+		let session: MacGuestSession = try .init(
 			bundle: clone,
 			cpuCount: cpus,
 			memoryBytes: memoryGiB * 1_073_741_824,
@@ -69,7 +69,7 @@ struct RunCommand: AsyncParsableCommand {
 		let ip: String? = try await session.waitUntilReady()
 		// 直接寫 handle：stdout 接 pipe 時 print 會 block-buffer，executor 讀不到行。
 		FileHandle.standardOutput.write(Data("READY ip=\(ip ?? "none")\n".utf8))
-		let reason: GuestStopReason = try await session.waitUntilStopped()
+		let reason: MacGuestStopReason = try await session.waitUntilStopped()
 		// cancel 兼作生命週期錨點：source 若提早釋放、handler 隨之失效。
 		terminate.cancel()
 		interrupt.cancel()

@@ -120,7 +120,7 @@ final class LinuxGuestControl: GuestControl, @unchecked Sendable {
 		}
 	}
 
-	/// Linux 容器無 macOS `GuestSession` 式「guest 自行回報停機」通道（vminitd 無此
+	/// Linux 容器無 macOS `MacGuestSession` 式「guest 自行回報停機」通道（vminitd 無此
 	/// 語意）；優雅停機退化為直接 forceStop——grace 窗口留待未來主行程支援 SIGTERM
 	/// 優雅結束時補。
 	func gracefulStop(within grace: Duration) async throws {

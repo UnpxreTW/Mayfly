@@ -9,7 +9,7 @@
 import Foundation
 
 /// host 側「離線掛載 guest 磁碟、把注入檔寫進去」的 Process 薄殼——provisioning 的
-/// **第三軸**（既非 create 也非 load）。把 ``GuestDiskTopology`` 的安全識別接上實際
+/// **第三軸**（既非 create 也非 load）。把 ``MacGuestDiskTopology`` 的安全識別接上實際
 /// `hdiutil` / `diskutil` / `chown` 命令，串成 `attach → locate → mount → enableOwnership
 /// → write → detach` 的生命週期。
 ///
@@ -20,21 +20,21 @@ import Foundation
 /// **root 邊界**：`attach` / `locateDataVolume` / `mount` / `detach` 不需 root（探針實證
 /// owners-disabled 下可掛可讀）；但 `enableOwnership` 與 `write` 的 numeric `chown` **需
 /// root**——否則注入檔帶錯 owner（host uid），guest 開機不認。兩者開頭 preflight
-/// `geteuid()==0`、否則擲 ``GuestVolumeMounterError/requiresRoot``。呼叫端負責提供 root
+/// `geteuid()==0`、否則擲 ``MacGuestVolumeMounterError/requiresRoot``。呼叫端負責提供 root
 /// （人 `sudo` / CI 本就 root），本型別不自行提權。
-public actor GuestVolumeMounter {
+public actor MacGuestVolumeMounter {
 
 	// MARK: Public
 
 	/// `hdiutil attach -nomount` RAW image、解出 GUID base disk（如 `disk8`）存起。
 	///
 	/// install 後 VZ 可能仍持有 disk fd → attach 失敗報 busy；以 250ms 起跳的指數退避
-	/// 重試到 ~5s 上限，仍 busy 擲 ``GuestVolumeMounterError/stillBusy``。`-nomount`：先
+	/// 重試到 ~5s 上限，仍 busy 擲 ``MacGuestVolumeMounterError/stillBusy``。`-nomount`：先
 	/// 不掛、由 ``mount()`` 帶 `nobrowse` 精確掛 Data 卷。
 	@discardableResult
 	public func attach() async throws -> String {
 		guard FileManager.default.fileExists(atPath: diskImage.path) else {
-			throw GuestVolumeMounterError.notReady(step: "disk image 不存在：\(diskImage.path)")
+			throw MacGuestVolumeMounterError.notReady(step: "disk image 不存在：\(diskImage.path)")
 		}
 		var delayMS = retryBaseDelayMilliseconds
 		var elapsedMS = 0
@@ -48,8 +48,8 @@ public actor GuestVolumeMounter {
 				let base = try Self.parseAttachBaseDisk(output)
 				attachedBaseDisk = base
 				return base
-			} catch let error as GuestVolumeMounterError where Self.isBusy(error) {
-				guard elapsedMS < capMS else { throw GuestVolumeMounterError.stillBusy }
+			} catch let error as MacGuestVolumeMounterError where Self.isBusy(error) {
+				guard elapsedMS < capMS else { throw MacGuestVolumeMounterError.stillBusy }
 				try await Task.sleep(for: .milliseconds(delayMS))
 				elapsedMS += delayMS
 				delayMS = min(delayMS * 2, 2000)
@@ -57,13 +57,13 @@ public actor GuestVolumeMounter {
 		}
 	}
 
-	/// `diskutil apfs list -plist` → ``GuestDiskTopology`` 在 attached base disk 上找出
+	/// `diskutil apfs list -plist` → ``MacGuestDiskTopology`` 在 attached base disk 上找出
 	/// guest Data 卷的 device id（如 `disk11s5`）存起。需先 ``attach()``。
 	@discardableResult
 	public func locateDataVolume() async throws -> String {
-		guard let base = attachedBaseDisk else { throw GuestVolumeMounterError.notReady(step: "attach") }
+		guard let base = attachedBaseDisk else { throw MacGuestVolumeMounterError.notReady(step: "attach") }
 		let output = try await runCommand(executable: "/usr/sbin/diskutil", arguments: ["apfs", "list", "-plist"])
-		let topology = try GuestDiskTopology(plistData: output)
+		let topology = try MacGuestDiskTopology(plistData: output)
 		let identifier = try topology.dataVolumeDeviceID(onAttachedDisk: base)
 		dataVolumeID = identifier
 		return identifier
@@ -71,21 +71,21 @@ public actor GuestVolumeMounter {
 
 	/// `diskutil mount -mountOptions nobrowse` 把 Data 卷 RW 掛起、回掛載點。需先
 	/// ``locateDataVolume()``。`nobrowse` 讓卷不進 Finder 側欄。掛載報 locked / encrypted
-	/// 擲 ``GuestVolumeMounterError/encryptedLocked``（走 Recovery fallback、非崩潰）。
+	/// 擲 ``MacGuestVolumeMounterError/encryptedLocked``（走 Recovery fallback、非崩潰）。
 	///
 	/// 〔Spotlight 索引防護待議、刻意不在此處理：`noindex` 不是合法 mount 選項；也不可寫
 	/// `.metadata_never_index`——那會持久進 golden、永久關掉 guest 自己的 Spotlight。正解是
 	/// host 端**短暫** `mdutil -i off <mountpoint>`（不持久進卷）或靠短窗口 + 快速 detach。〕
 	@discardableResult
 	public func mount() async throws -> URL {
-		guard let identifier = dataVolumeID else { throw GuestVolumeMounterError.notReady(step: "locateDataVolume") }
+		guard let identifier = dataVolumeID else { throw MacGuestVolumeMounterError.notReady(step: "locateDataVolume") }
 		do {
 			_ = try await runCommand(
 				executable: "/usr/sbin/diskutil",
 				arguments: ["mount", "-mountOptions", "nobrowse", identifier]
 			)
-		} catch let error as GuestVolumeMounterError where Self.isLocked(error) {
-			throw GuestVolumeMounterError.encryptedLocked
+		} catch let error as MacGuestVolumeMounterError where Self.isLocked(error) {
+			throw MacGuestVolumeMounterError.encryptedLocked
 		}
 		let info = try await runCommand(executable: "/usr/sbin/diskutil", arguments: ["info", "-plist", identifier])
 		let url = try URL(fileURLWithPath: Self.parseMountPoint(info))
@@ -97,7 +97,7 @@ public actor GuestVolumeMounter {
 	/// （否則 owners-disabled、注入檔帶 host uid）。需先 ``locateDataVolume()``。
 	public func enableOwnership() async throws {
 		try Self.requireRoot()
-		guard let identifier = dataVolumeID else { throw GuestVolumeMounterError.notReady(step: "locateDataVolume") }
+		guard let identifier = dataVolumeID else { throw MacGuestVolumeMounterError.notReady(step: "locateDataVolume") }
 		_ = try await runCommand(executable: "/usr/sbin/diskutil", arguments: ["enableOwnership", identifier])
 	}
 
@@ -112,7 +112,7 @@ public actor GuestVolumeMounter {
 	/// chown 寫入的檔本身、不推斷目錄 owner）。
 	public func write(_ files: [InjectedFile]) async throws {
 		try Self.requireRoot()
-		guard let mountPoint else { throw GuestVolumeMounterError.notReady(step: "mount") }
+		guard let mountPoint else { throw MacGuestVolumeMounterError.notReady(step: "mount") }
 		for file in files {
 			let target = mountPoint.appending(path: file.relativePath)
 			_ = try await runCommand(
@@ -122,7 +122,7 @@ public actor GuestVolumeMounter {
 			do {
 				try file.contents.write(to: target, options: .atomic)
 			} catch {
-				throw GuestVolumeMounterError.writeFailed(relativePath: file.relativePath, underlying: error)
+				throw MacGuestVolumeMounterError.writeFailed(relativePath: file.relativePath, underlying: error)
 			}
 			_ = try await runCommand(
 				executable: "/usr/sbin/chown",
@@ -164,13 +164,13 @@ public actor GuestVolumeMounter {
 			let root = object as? [String: Any],
 			let entities = root["system-entities"] as? [[String: Any]]
 		else {
-			throw GuestVolumeMounterError.unparseableAttachOutput
+			throw MacGuestVolumeMounterError.unparseableAttachOutput
 		}
 		// 整顆盤 = dev-entry 形如 `/dev/disk8`（無 `s<N>` slice 尾）。
 		let wholeDisk = entities.lazy.compactMap { $0["dev-entry"] as? String }.first { entry in
 			entry.wholeMatch(of: /\/dev\/disk[0-9]+/) != nil
 		}
-		guard let devEntry = wholeDisk else { throw GuestVolumeMounterError.unparseableAttachOutput }
+		guard let devEntry = wholeDisk else { throw MacGuestVolumeMounterError.unparseableAttachOutput }
 		return String(devEntry.dropFirst("/dev/".count))
 	}
 
@@ -182,7 +182,7 @@ public actor GuestVolumeMounter {
 			let point = root["MountPoint"] as? String,
 			!point.isEmpty
 		else {
-			throw GuestVolumeMounterError.notReady(step: "mount point（diskutil info 無 MountPoint）")
+			throw MacGuestVolumeMounterError.notReady(step: "mount point（diskutil info 無 MountPoint）")
 		}
 		return point
 	}
@@ -190,14 +190,14 @@ public actor GuestVolumeMounter {
 	// MARK: Private
 
 	/// busy-like 失敗才值得 attach 重試（其餘錯立刻上拋、不空轉）。
-	private static func isBusy(_ error: GuestVolumeMounterError) -> Bool {
+	private static func isBusy(_ error: MacGuestVolumeMounterError) -> Bool {
 		guard case let .commandFailed(_, _, stderr) = error else { return false }
 		let lowered = stderr.lowercased()
 		return lowered.contains("busy") || lowered.contains("resource temporarily unavailable") || lowered.contains("in use")
 	}
 
 	/// 掛載失敗是否因卷加密 / 鎖定（→ `encryptedLocked` 走 fallback、非通用錯）。
-	private static func isLocked(_ error: GuestVolumeMounterError) -> Bool {
+	private static func isLocked(_ error: MacGuestVolumeMounterError) -> Bool {
 		guard case let .commandFailed(_, _, stderr) = error else { return false }
 		let lowered = stderr.lowercased()
 		return lowered.contains("locked") || lowered.contains("encrypt") || lowered.contains("passphrase")
@@ -205,10 +205,10 @@ public actor GuestVolumeMounter {
 
 	/// 需 root 步驟的 preflight。
 	private static func requireRoot() throws {
-		guard geteuid() == 0 else { throw GuestVolumeMounterError.requiresRoot }
+		guard geteuid() == 0 else { throw MacGuestVolumeMounterError.requiresRoot }
 	}
 
-	/// 跑外部命令，並把 ``CommandRunnerError`` 收斂成本層的 ``GuestVolumeMounterError``。
+	/// 跑外部命令，並把 ``CommandRunnerError`` 收斂成本層的 ``MacGuestVolumeMounterError``。
 	///
 	/// runner 是共用的執行器抽象、其錯誤契約不帶掛載層語義；轉譯集中在這一處，
 	/// `isBusy` / `isLocked` 的 stderr 判讀與呼叫端的 catch 合約都不受影響。
@@ -223,7 +223,7 @@ public actor GuestVolumeMounter {
 		} catch let error as CommandRunnerError {
 			switch error {
 			case let .commandFailed(failedExecutable, status, stderr):
-				throw GuestVolumeMounterError.commandFailed(
+				throw MacGuestVolumeMounterError.commandFailed(
 					executable: failedExecutable,
 					status: status,
 					stderr: stderr
@@ -241,7 +241,7 @@ public actor GuestVolumeMounter {
 	/// attach busy-retry 的起始退避（ms、之後指數加倍至 2s 上限）。
 	private let retryBaseDelayMilliseconds: Int
 
-	/// attach busy-retry 的累積上限（ms、超過擲 ``GuestVolumeMounterError/stillBusy``）。
+	/// attach busy-retry 的累積上限（ms、超過擲 ``MacGuestVolumeMounterError/stillBusy``）。
 	private let retryCapMilliseconds: Int
 
 	/// attach 後的 GUID base disk（如 `disk8`）；detach 後 nil。

@@ -17,7 +17,7 @@ public enum GoldenBundleError: Error, Equatable {
 	/// `metadata.json` 存在但解不開（毀損或非本格式）。
 	case metadataUndecodable(URL)
 
-	/// bundle 標了 `ephemeral`（是 ``GuestCloner`` 的可拋複本）——開過機就髒、
+	/// bundle 標了 `ephemeral`（是 ``MacGuestCloner`` 的可拋複本）——開過機就髒、
 	/// 不得回鍋當 golden。
 	case markedEphemeral(URL)
 }

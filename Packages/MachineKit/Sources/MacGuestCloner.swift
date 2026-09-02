@@ -13,7 +13,7 @@ import Foundation
 ///
 /// `clonefile(2)` 對整個 bundle 目錄做 APFS CoW：clone 近乎即時、額外空間趨近 0
 /// （寫入才分裂）。**同卷是硬性契約**（CoW 的物理前提）：跨卷回
-/// ``GuestClonerError/crossVolume(source:destination:)``、不退化成數十 GB 的完整
+/// ``MacGuestClonerError/crossVolume(source:destination:)``、不退化成數十 GB 的完整
 /// 複製——要退化該由呼叫端顯式決定，不由 cloner 靜默吸收。
 ///
 /// **身份再生**：clone 內 `metadata.json` 的 MAC **無條件換新**（locally-administered
@@ -22,7 +22,7 @@ import Foundation
 /// **原樣保留**：對已安裝 guest 再生識別碼的行為未經驗證（Apple 僅軟性要求併發
 /// 實例不同 ID、主流 CI 工具生產環境長期併發跑同 ID 複本）；真機驗出問題再開
 /// 後續切片。
-public struct GuestCloner: Sendable {
+public struct MacGuestCloner: Sendable {
 
 	/// 隨機 locally-administered unicast MAC（第一個 byte：local bit 置 1、
 	/// multicast bit 清 0），與 CREATE 路徑 `VZMACAddress.randomLocallyAdministered()`
@@ -44,7 +44,7 @@ public struct GuestCloner: Sendable {
 		let status: Int32 = clonefile(golden.bundle.path, destination.path, 0)
 		if status != 0 {
 			let code = errno
-			throw GuestClonerError.map(
+			throw MacGuestClonerError.map(
 				errno: code,
 				source: golden.bundle,
 				destination: destination,
@@ -72,7 +72,7 @@ public struct GuestCloner: Sendable {
 	///   預設值包一層閉包字面值：unapplied method reference 不帶 `@Sendable`、會觸發
 	///   strict concurrency 轉換警告。
 	public init(
-		makeMACAddress: @escaping @Sendable () -> String = { GuestCloner.randomLocallyAdministeredMACAddress() }
+		makeMACAddress: @escaping @Sendable () -> String = { MacGuestCloner.randomLocallyAdministeredMACAddress() }
 	) {
 		self.makeMACAddress = makeMACAddress
 	}
@@ -85,7 +85,8 @@ public struct GuestCloner: Sendable {
 	/// 重寫 clone 內 `metadata.json`：換新 MAC、標 `ephemeral=true`（跨行程重開時
 	/// ``EphemeralBundle/load(from:)`` 的識別依據）、其餘欄位原樣帶過。
 	private func rewriteIdentity(in bundle: URL) throws {
-		let metadataURL: URL = GuestBundleLayout.metadata(in: bundle) // propertyTypes 誤判防護：回傳型別是 URL、非 GuestBundleLayout
+		// propertyTypes 誤判防護：回傳型別是 URL、非 MacGuestBundleLayout
+		let metadataURL: URL = MacGuestBundleLayout.metadata(in: bundle)
 		var metadata = try JSONDecoder().decode(BundleMetadata.self, from: Data(contentsOf: metadataURL))
 		metadata.macAddress = makeMACAddress()
 		metadata.ephemeral = true
