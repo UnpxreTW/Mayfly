@@ -30,6 +30,6 @@ struct CloneCommand: ParsableCommand {
 	func run() throws {
 		let bundle: GoldenBundle = try .load(from: URL(fileURLWithPath: golden))
 		let clone: EphemeralBundle = try MacGuestCloner().clone(bundle, to: URL(fileURLWithPath: destination))
-		print(clone.bundle.path)
+		CommandOutput.write(clone.bundle.path)
 	}
 }

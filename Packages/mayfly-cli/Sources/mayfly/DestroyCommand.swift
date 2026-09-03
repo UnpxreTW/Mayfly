@@ -44,7 +44,7 @@ struct DestroyCommand: AsyncParsableCommand {
 		}
 		switch try await NymphClientSupport.send(.destroy(DestroyParams(id: target, force: !noForce))) {
 		case let .destroy(result):
-			print("\(result.id) destroyed")
+			CommandOutput.write("\(result.id) destroyed")
 
 		case let .toolError(error):
 			throw NymphClientSupport.fail(error)

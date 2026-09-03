@@ -63,7 +63,7 @@ struct NymphCommand: AsyncParsableCommand {
 		let registry: CloneRegistry = .init(fileURL: NymphPaths.cloneRegistryURL())
 		let reclaimed: [URL] = registry.sweepOrphans()
 		if !reclaimed.isEmpty {
-			FileHandle.standardError.write(Data("nymph: reclaimed \(reclaimed.count) orphan clone(s)\n".utf8))
+			CommandOutput.logger.info("reclaimed \(reclaimed.count) orphan clone(s)")
 		}
 		let macEngine: RealGuestEngine = .init(
 			hostKey: hostKey,
@@ -83,7 +83,7 @@ struct NymphCommand: AsyncParsableCommand {
 		let socketURL: URL = NymphPaths.socketURL()
 		let server: NymphServer = .init(socketPath: socketURL, dispatcher: store)
 		try server.start()
-		FileHandle.standardOutput.write(Data("nymph: listening on \(socketURL.path)\n".utf8))
+		CommandOutput.logger.info("listening on \(socketURL.path)")
 		// SIGTERM / SIGINT → drain + shutdown + exit；sources 綁在 run() frame（下方阻塞
 		// 迴圈維持存活）。
 		let sources: [any DispatchSourceSignal] = Self.installDrainHandlers(store: store, server: server)
@@ -98,8 +98,9 @@ struct NymphCommand: AsyncParsableCommand {
 
 #if arch(arm64)
 
-	/// stderr sink：一事件一行、直接寫 handle（stdout 接 pipe 時 print 會 block-buffer）。與
-	/// 孤兒回收那行訊息同一條輸出面、同 `nymph: ` 前綴。
+	/// stderr sink：一事件一行、直接寫 handle，**不經 `Logger`**——這一行的欄序是對外的固定
+	/// 格式（`nymph: session ts=… op=… result=…`），套上紀錄後端的時間戳與標籤前綴就多一個
+	/// 冗餘的時間欄、也不再是原本那個形狀。要不要把它一併收進紀錄系統另議。
 	///
 	/// - Note: 走會擲錯的 `write(contentsOf:)` 並吞掉錯誤——stderr 接到已關閉的 pipe 時，
 	///   非擲錯版會丟出無人接的例外、把常駐 daemon 整支帶走；而這條每次操作都會跑。

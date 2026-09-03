@@ -16,6 +16,7 @@ let package = Package(
 		.package(path: "../NymphKit"),
 		.package(path: "../LinuxNodeKit"),
 		.package(url: "https://github.com/apple/swift-argument-parser.git", from: "1.5.0"),
+		.package(url: "https://github.com/apple/swift-log.git", from: "1.5.0"),
 		.package(url: "https://github.com/UnpxreTW/SwiftStyleKit.git", from: "2.0.0"),
 		// pre-1.0（0.12.1）——風險關在 NymphMCPShim 這個薄 shim，daemon 核心協議走自訂
 		// NymphProtocol，不依賴此 SDK。exact pin（非 from:）：API 未凍結、升級走人工復驗。
@@ -40,6 +41,7 @@ let package = Package(
 				.product(name: "ArgumentParser", package: "swift-argument-parser"),
 				.product(name: "NymphKit", package: "NymphKit"),
 				.product(name: "LinuxNodeKit", package: "LinuxNodeKit"),
+				.product(name: "Logging", package: "swift-log"),
 				"NymphMCPShim",
 			],
 			path: "Sources/mayfly",

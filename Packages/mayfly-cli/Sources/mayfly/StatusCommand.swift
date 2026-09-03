@@ -27,15 +27,15 @@ struct StatusCommand: AsyncParsableCommand {
 		switch try await NymphClientSupport.send(.status(StatusParams(id: id))) {
 		case let .status(result):
 			let session: SessionSummary = result.summary
-			print("id: \(session.id)")
-			print("state: \(session.state.rawValue)")
-			print("ip: \(session.ip ?? "none")")
-			print("golden: \(session.golden)")
-			print("cpus: \(session.cpus)")
-			print("memory_gib: \(session.memoryGiB)")
-			print("uptime_s: \(session.uptimeSeconds)")
+			CommandOutput.write("id: \(session.id)")
+			CommandOutput.write("state: \(session.state.rawValue)")
+			CommandOutput.write("ip: \(session.ip ?? "none")")
+			CommandOutput.write("golden: \(session.golden)")
+			CommandOutput.write("cpus: \(session.cpus)")
+			CommandOutput.write("memory_gib: \(session.memoryGiB)")
+			CommandOutput.write("uptime_s: \(session.uptimeSeconds)")
 			if let reason = result.stopReason {
-				print("stop_reason: \(reason)")
+				CommandOutput.write("stop_reason: \(reason)")
 			}
 
 		case let .toolError(error):

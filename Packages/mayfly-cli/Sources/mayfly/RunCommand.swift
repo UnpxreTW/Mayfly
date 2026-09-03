@@ -67,14 +67,14 @@ struct RunCommand: AsyncParsableCommand {
 		interrupt.setEventHandler { Task { try? await session.forceStop() } }
 		interrupt.resume()
 		let ip: String? = try await session.waitUntilReady()
-		// 直接寫 handle：stdout 接 pipe 時 print 會 block-buffer，executor 讀不到行。
-		FileHandle.standardOutput.write(Data("READY ip=\(ip ?? "none")\n".utf8))
+		// `READY ip=` 是呼叫端要讀走的那一行資料、不是紀錄，走 stdout（見 ``CommandOutput``）。
+		CommandOutput.write("READY ip=\(ip ?? "none")")
 		let reason: MacGuestStopReason = try await session.waitUntilStopped()
 		// cancel 兼作生命週期錨點：source 若提早釋放、handler 隨之失效。
 		terminate.cancel()
 		interrupt.cancel()
 		if case let .error(underlying) = reason {
-			FileHandle.standardError.write(Data("guest stopped with error: \(underlying)\n".utf8))
+			CommandOutput.logger.error("guest stopped with error: \(underlying)")
 			throw ExitCode(1)
 		}
 #else

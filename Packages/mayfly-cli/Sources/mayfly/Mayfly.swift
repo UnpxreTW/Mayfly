@@ -24,6 +24,8 @@ import ArgumentParser
 ///   ``MCPCommand``）。
 ///
 /// `destroy` 過載依 socket 連通性消歧（NY-2、見 ``DestroyCommand``）。
+///
+/// 輸出分兩面：要被讀走的資料走 stdout、紀錄走 stderr 的 `Logger`（見 ``CommandOutput``）。
 @main
 struct Mayfly: AsyncParsableCommand {
 
@@ -43,4 +45,12 @@ struct Mayfly: AsyncParsableCommand {
 			MCPCommand.self
 		]
 	)
+
+	/// 起手裝上紀錄後端，再把 argv 交給 ArgumentParser 的預設入口。
+	///
+	/// 後端只能裝一次、且要在第一行紀錄送出之前 ⇒ 落點是這支 binary 唯一的進入點。
+	internal static func main() async {
+		CommandOutput.bootstrap()
+		await Self.main(nil)
+	}
 }

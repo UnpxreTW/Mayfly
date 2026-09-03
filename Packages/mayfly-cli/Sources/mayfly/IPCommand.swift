@@ -29,6 +29,6 @@ struct IPCommand: ParsableCommand {
 		guard let ip = MacGuestLease.currentIP(macAddress: metadata.macAddress) else {
 			throw ExitCode(1)
 		}
-		print(ip)
+		CommandOutput.write(ip)
 	}
 }
