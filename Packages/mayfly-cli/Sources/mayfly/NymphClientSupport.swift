@@ -7,34 +7,33 @@
 //  SPDX-License-Identifier: Apache-2.0
 
 import ArgumentParser
-import Foundation
 import NymphKit
 
 /// daemon-client 動詞（spawn / execute / list / status / destroy&lt;id&gt;）的共用執行——連 nymph
-/// socket、送請求、把傳輸失敗與非預期回應收斂成一致的 stderr + 非零退出。薄殼紀律：真正的
+/// socket、送請求、把傳輸失敗與非預期回應收斂成一致的紀錄 + 非零退出。薄殼紀律：真正的
 /// 編排在 daemon 的 `SessionStore`、CLI 只做 argv ↔ socket ↔ stdout 轉接。
 enum NymphClientSupport {
 
-	/// 送請求；連不上 daemon → stderr + `ExitCode(1)`。工具錯誤（toolError）由呼叫端各自
+	/// 送請求；連不上 daemon → 記一行 error + `ExitCode(1)`。工具錯誤（toolError）由呼叫端各自
 	/// 以 ``fail(_:)`` 收斂（不同動詞的成功分支不同、無法在此統一 switch）。
 	static func send(_ request: NymphRequest) async throws -> NymphResponse {
 		do {
 			return try await NymphClient().send(request)
 		} catch let error as NymphTransportError {
-			FileHandle.standardError.write(Data("nymph: \(describe(error))\n".utf8))
+			CommandOutput.logger.error("\(describe(error))")
 			throw ExitCode(1)
 		}
 	}
 
-	/// 工具錯誤 → stderr（帶穩定 code）+ `ExitCode(1)`。
+	/// 工具錯誤 → 記一行 error（帶穩定 code）+ `ExitCode(1)`。
 	static func fail(_ error: ToolError) -> ExitCode {
-		FileHandle.standardError.write(Data("error [\(error.code)]: \(error.message)\n".utf8))
+		CommandOutput.logger.error("[\(error.code)] \(error.message)")
 		return ExitCode(1)
 	}
 
-	/// 非預期回應型別（協議錯配）→ stderr + `ExitCode(1)`。
+	/// 非預期回應型別（協議錯配）→ 記一行 error + `ExitCode(1)`。
 	static func unexpectedResponse() -> ExitCode {
-		FileHandle.standardError.write(Data("nymph: unexpected response for request\n".utf8))
+		CommandOutput.logger.error("unexpected response for request")
 		return ExitCode(1)
 	}
 

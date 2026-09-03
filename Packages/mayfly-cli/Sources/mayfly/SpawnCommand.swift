@@ -57,7 +57,7 @@ struct SpawnCommand: AsyncParsableCommand {
 		))
 		switch try await NymphClientSupport.send(request) {
 		case let .spawn(result):
-			print("\(result.id) \(result.state.rawValue) \(result.ip ?? "none")")
+			CommandOutput.write("\(result.id) \(result.state.rawValue) \(result.ip ?? "none")")
 
 		case let .toolError(error):
 			throw NymphClientSupport.fail(error)

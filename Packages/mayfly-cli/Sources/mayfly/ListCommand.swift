@@ -27,7 +27,7 @@ struct ListCommand: AsyncParsableCommand {
 	func run() async throws {
 		switch try await NymphClientSupport.send(.list(ListParams(all: all))) {
 		case let .list(result):
-			print("ID\tSTATE\tIP\tGOLDEN\tCPUS\tMEM_GIB\tUPTIME_S")
+			CommandOutput.write("ID\tSTATE\tIP\tGOLDEN\tCPUS\tMEM_GIB\tUPTIME_S")
 			for session in result.sessions {
 				let columns: [String] = [
 					session.id,
@@ -38,7 +38,7 @@ struct ListCommand: AsyncParsableCommand {
 					"\(session.memoryGiB)",
 					"\(session.uptimeSeconds)"
 				]
-				print(columns.joined(separator: "\t"))
+				CommandOutput.write(columns.joined(separator: "\t"))
 			}
 
 		case let .toolError(error):
