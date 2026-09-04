@@ -50,7 +50,7 @@ struct NymphCommand: AsyncParsableCommand {
 	@Flag(
 		name: .customLong("log-sessions"),
 		help: """
-		Log one line per spawn/execute/status/destroy with phase timings to stderr, plus a log entry \\
+		Log one line per spawn/execute/status/destroy with phase timings to stderr, plus a log entry \
 		when a session begins or ends.
 		"""
 	)
@@ -109,7 +109,7 @@ struct NymphCommand: AsyncParsableCommand {
 	private static func emit(sessionEvent event: SessionLogEvent) {
 		writeSessionEvent(toStandardError: event)
 		guard let message: String = event.lifecycleMessage else { return }
-		CommandOutput.logger.info("\\(message)")
+		CommandOutput.logger.info("\(message)")
 	}
 
 	/// 資料行的寫出口：一事件一行、直接寫 handle，**不經 `Logger`**。
