@@ -26,6 +26,8 @@ import ArgumentParser
 /// `destroy` 過載依 socket 連通性消歧（NY-2、見 ``DestroyCommand``）。
 ///
 /// 輸出分兩面：要被讀走的資料走 stdout、紀錄走 stderr 的 `Logger`（見 ``CommandOutput``）。
+/// 紀錄門檻每支子命令都收 `--log-level`（未給時看 `LOG_LEVEL` 環境變數，兩者都沒有就是
+/// `info`；見 ``LoggingOptions``）。
 @main
 struct Mayfly: AsyncParsableCommand {
 

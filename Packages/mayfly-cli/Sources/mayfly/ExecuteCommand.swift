@@ -49,6 +49,10 @@ struct ExecuteCommand: AsyncParsableCommand {
 	@Flag(name: .customLong("stdin"), help: "Forward this process's stdin to the remote command.")
 	var forwardStdin = false
 
+	/// 紀錄門檻（`--log-level`；未給時看 `LOG_LEVEL`）。
+	@OptionGroup
+	internal var logging: LoggingOptions
+
 	func run() async throws {
 		guard !command.isEmpty else {
 			throw ValidationError("execute requires a command to run.")

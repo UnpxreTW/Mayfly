@@ -36,6 +36,10 @@ struct DestroyCommand: AsyncParsableCommand {
 	@Flag(name: .customLong("no-force"), help: "Graceful stop instead of force (daemon id path only).")
 	var noForce = false
 
+	/// 紀錄門檻（`--log-level`；未給時看 `LOG_LEVEL`）。
+	@OptionGroup
+	internal var logging: LoggingOptions
+
 	func run() async throws {
 		guard NymphClient.isDaemonPresent() else {
 			let clone: EphemeralBundle = try .load(from: URL(fileURLWithPath: target))

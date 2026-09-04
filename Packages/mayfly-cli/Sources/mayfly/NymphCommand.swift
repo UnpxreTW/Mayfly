@@ -53,6 +53,10 @@ struct NymphCommand: AsyncParsableCommand {
 	)
 	internal var logSessions: Bool = false
 
+	/// 紀錄門檻（`--log-level`；未給時看 `LOG_LEVEL`）。
+	@OptionGroup
+	internal var logging: LoggingOptions
+
 	func run() async throws {
 #if arch(arm64)
 		// 對端斷線時 socket write 收 EPIPE、不讓 SIGPIPE 打死常駐 daemon。

@@ -46,6 +46,10 @@ struct RunCommand: AsyncParsableCommand {
 		}
 	}
 
+	/// 紀錄門檻（`--log-level`；未給時看 `LOG_LEVEL`）。
+	@OptionGroup
+	internal var logging: LoggingOptions
+
 	func run() async throws {
 #if arch(arm64)
 		let clone: EphemeralBundle = try .load(from: URL(fileURLWithPath: bundle))

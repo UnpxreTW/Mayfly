@@ -24,6 +24,10 @@ struct ListCommand: AsyncParsableCommand {
 	@Flag(help: "Include stopped, unreaped sessions.")
 	var all = false
 
+	/// 紀錄門檻（`--log-level`；未給時看 `LOG_LEVEL`）。
+	@OptionGroup
+	internal var logging: LoggingOptions
+
 	func run() async throws {
 		switch try await NymphClientSupport.send(.list(ListParams(all: all))) {
 		case let .list(result):

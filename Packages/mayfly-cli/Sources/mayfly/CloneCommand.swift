@@ -27,6 +27,10 @@ struct CloneCommand: ParsableCommand {
 	@Argument(help: "Destination path for the clone (same APFS volume as the golden).")
 	var destination: String
 
+	/// 紀錄門檻（`--log-level`；未給時看 `LOG_LEVEL`）。
+	@OptionGroup
+	internal var logging: LoggingOptions
+
 	func run() throws {
 		let bundle: GoldenBundle = try .load(from: URL(fileURLWithPath: golden))
 		let clone: EphemeralBundle = try MacGuestCloner().clone(bundle, to: URL(fileURLWithPath: destination))
