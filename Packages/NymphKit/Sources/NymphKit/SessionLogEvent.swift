@@ -277,3 +277,36 @@ extension SessionLogEvent: CustomStringConvertible {
 		return compact.count > detailLimit ? String(compact.prefix(detailLimit)) + "…" : compact
 	}
 }
+
+/// 生命週期的紀錄面：session 起、session 訖各給一句話。
+///
+/// 單行事件本身是資料——欄序固定、不帶時間戳與標籤，因此不經紀錄系統（見 ``description``）。
+/// 只讀紀錄那一面的人於是看不到 session 何時起、何時收，這裡補上那兩句：句中帶著 session id，
+/// 拿它就能在同一份 stderr 裡找到 `id=` 相同的那幾行資料，逐段耗時仍只在資料行上。
+extension SessionLogEvent {
+
+	/// 這筆事件對應的生命週期訊息；不是起也不是訖的事件回 nil。
+	///
+	/// 只有收斂成功的 `spawn`（起）與 `destroy`（訖）算數：擲錯的 spawn 沒有活著的 session、
+	/// 擲錯的 destroy 沒把 session 收掉，兩者都不構成生命週期的端點。`execute` 與 `status`
+	/// 發生在兩端之間、不是端點。
+	///
+	/// - Note: 訊息內的 id 未再消毒——會走到這裡的兩條路徑都已收斂成功，其 id 由 store 自己
+	///   鑄出（`destroy` 的 id 得先命中 table 才會成功），不是外來字串。
+	public var lifecycleMessage: String? {
+		guard
+			case .ok = outcome,
+			let sessionID
+		else { return nil }
+		return switch operation {
+		case .spawn:
+			"session \(sessionID) began; phase timings in the session line with the same id"
+
+		case .destroy:
+			"session \(sessionID) ended; phase timings in the session line with the same id"
+
+		case .execute, .status:
+			nil
+		}
+	}
+}

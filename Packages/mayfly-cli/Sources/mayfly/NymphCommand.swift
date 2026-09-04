@@ -45,11 +45,14 @@ struct NymphCommand: AsyncParsableCommand {
 	)
 	internal var guestUsername: String = "runner"
 
-	/// 把每次 spawn／execute／status／destroy 的分段耗時寫成一行到 stderr。預設關；開了也只是
-	/// 多一條診斷輸出、不改任何回應內容。
+	/// 把每次 spawn／execute／status／destroy 的分段耗時寫成一行到 stderr，並在紀錄面補上
+	/// session 起訖各一行。預設關；開了也只是多出診斷輸出、不改任何回應內容。
 	@Flag(
 		name: .customLong("log-sessions"),
-		help: "Log one line per spawn/execute/status/destroy with phase timings to stderr."
+		help: """
+		Log one line per spawn/execute/status/destroy with phase timings to stderr, plus a log entry \\
+		when a session begins or ends.
+		"""
 	)
 	internal var logSessions: Bool = false
 
@@ -73,7 +76,7 @@ struct NymphCommand: AsyncParsableCommand {
 		// 預設不接網路（network: nil）：容器沒有對外連線、`currentIP()` 恆回 nil，readiness
 		// 改由容器內探測驅動（見 `LinuxGuestControl`）；接上容器網路另行處理。
 		let linuxEngine: LinuxGuestEngine = .init()
-		let logSink: SessionLogSink? = logSessions ? NymphCommand.writeSessionEvent(toStandardError:) : nil
+		let logSink: SessionLogSink? = logSessions ? NymphCommand.emit(sessionEvent:) : nil
 		let store: SessionStore = .init(
 			engines: [.mac: macEngine, .linux: linuxEngine],
 			maxSessions: maxSessions,
@@ -98,9 +101,18 @@ struct NymphCommand: AsyncParsableCommand {
 
 #if arch(arm64)
 
-	/// stderr sink：一事件一行、直接寫 handle，**不經 `Logger`**——這一行的欄序是對外的固定
-	/// 格式（`nymph: session ts=… op=… result=…`），套上紀錄後端的時間戳與標籤前綴就多一個
-	/// 冗餘的時間欄、也不再是原本那個形狀。要不要把它一併收進紀錄系統另議。
+	/// store 每次操作的落點：資料行照舊直寫 stderr，起訖兩種事件另在紀錄面留一行 `info`。
+	///
+	/// 兩條線刻意分開——資料行的欄序是對外的固定格式（`nymph: session ts=… op=… result=…`），
+	/// 套上紀錄後端的時間戳與標籤前綴就多一個冗餘的時間欄、也不再是原本那個形狀；而只看紀錄
+	/// 那一面的人需要知道 session 何時起、何時收，那句話帶著同一個 id、指回資料行。
+	private static func emit(sessionEvent event: SessionLogEvent) {
+		writeSessionEvent(toStandardError: event)
+		guard let message: String = event.lifecycleMessage else { return }
+		CommandOutput.logger.info("\\(message)")
+	}
+
+	/// 資料行的寫出口：一事件一行、直接寫 handle，**不經 `Logger`**。
 	///
 	/// - Note: 走會擲錯的 `write(contentsOf:)` 並吞掉錯誤——stderr 接到已關閉的 pipe 時，
 	///   非擲錯版會丟出無人接的例外、把常駐 daemon 整支帶走；而這條每次操作都會跑。
