@@ -195,6 +195,101 @@ private final class SessionLogEventTests {
 		#expect(escaped.description.contains("golden=x_[1Kbase"))
 	}
 
+	/// 起訖兩端各給一句話，句中帶著 session id——只讀紀錄那一面的人靠它找回資料行。
+	@Test
+	private func `lifecycle message covers both ends of a session`() {
+		let began: SessionLogEvent = .init(
+			timestamp: Self.timestamp,
+			operation: .spawn,
+			sessionID: "mfly-3fa2c1d9",
+			golden: "base",
+			kind: .mac,
+			segments: [],
+			total: .zero,
+			outcome: .ok,
+			state: .ready
+		)
+		let ended: SessionLogEvent = .init(
+			timestamp: Self.timestamp,
+			operation: .destroy,
+			sessionID: "mfly-3fa2c1d9",
+			force: true,
+			segments: [],
+			total: .zero,
+			outcome: .ok
+		)
+		#expect(began.lifecycleMessage == "session mfly-3fa2c1d9 began; phase timings in the session line with the same id")
+		#expect(ended.lifecycleMessage == "session mfly-3fa2c1d9 ended; phase timings in the session line with the same id")
+	}
+
+	/// 兩端之間的操作不是端點：execute 與 status 不出生命週期那一行。
+	@Test
+	private func `lifecycle message skips operations between both ends`() {
+		let executed: SessionLogEvent = .init(
+			timestamp: Self.timestamp,
+			operation: .execute,
+			sessionID: "mfly-3fa2c1d9",
+			command: "security",
+			segments: [],
+			total: .zero,
+			outcome: .ok,
+			exitCode: 0
+		)
+		let queried: SessionLogEvent = .init(
+			timestamp: Self.timestamp,
+			operation: .status,
+			sessionID: "mfly-3fa2c1d9",
+			segments: [],
+			total: .zero,
+			outcome: .ok,
+			state: .ready
+		)
+		#expect(executed.lifecycleMessage == nil)
+		#expect(queried.lifecycleMessage == nil)
+	}
+
+	/// 沒收斂成功就沒有端點：擲錯的 spawn 沒有活著的 session、擲錯的 destroy 沒把 session 收掉。
+	@Test
+	private func `lifecycle message skips failed operations`() {
+		let failedSpawn: SessionLogEvent = .init(
+			timestamp: Self.timestamp,
+			operation: .spawn,
+			sessionID: "mfly-3fa2c1d9",
+			golden: "base",
+			kind: .mac,
+			segments: [],
+			total: .zero,
+			outcome: .error(ToolError(code: "internal_error", message: "boom"))
+		)
+		let failedDestroy: SessionLogEvent = .init(
+			timestamp: Self.timestamp,
+			operation: .destroy,
+			sessionID: "mfly-3fa2c1d9",
+			force: false,
+			segments: [],
+			total: .zero,
+			outcome: .error(ToolError(code: "no_such_id", message: "no such id"))
+		)
+		#expect(failedSpawn.lifecycleMessage == nil)
+		#expect(failedDestroy.lifecycleMessage == nil)
+	}
+
+	/// 連 id 都還沒鑄出來的 spawn（provision 階段就失敗）同樣不出那一行。
+	@Test
+	private func `lifecycle message needs a session id`() {
+		let event: SessionLogEvent = .init(
+			timestamp: Self.timestamp,
+			operation: .spawn,
+			sessionID: nil,
+			golden: "base",
+			kind: .mac,
+			segments: [],
+			total: .zero,
+			outcome: .ok
+		)
+		#expect(event.lifecycleMessage == nil)
+	}
+
 	/// 固定時間戳——用整數秒，避免浮點毫秒讓期望行變得含糊。
 	private static let timestamp: Date = .init(timeIntervalSince1970: 0)
 
