@@ -50,6 +50,14 @@ let package = Package(
 			]
 		),
 		.testTarget(
+			name: "mayflyTests",
+			dependencies: [
+				"mayfly",
+				.product(name: "Logging", package: "swift-log"),
+			],
+			path: "Tests/mayflyTests"
+		),
+		.testTarget(
 			name: "NymphMCPShimTests",
 			dependencies: [
 				"NymphMCPShim",

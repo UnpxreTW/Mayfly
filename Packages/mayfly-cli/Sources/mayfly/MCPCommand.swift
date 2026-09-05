@@ -23,6 +23,10 @@ struct MCPCommand: AsyncParsableCommand {
 		abstract: "Run the stdio MCP shim, bridging an MCP client to the nymph daemon socket."
 	)
 
+	/// 紀錄門檻（`--log-level`；未給時看 `LOG_LEVEL`）。
+	@OptionGroup
+	internal var logging: LoggingOptions
+
 	func run() async throws {
 		try await NymphMCPServer.run()
 	}
