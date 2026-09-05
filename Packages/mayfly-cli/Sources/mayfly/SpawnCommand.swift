@@ -42,6 +42,10 @@ struct SpawnCommand: AsyncParsableCommand {
 	@Option(name: .customLong("readiness-timeout"), help: "Readiness wait ceiling in seconds.")
 	var readinessTimeoutSeconds: Int = 180
 
+	/// 紀錄門檻（`--log-level`；未給時看 `LOG_LEVEL`）。
+	@OptionGroup
+	internal var logging: LoggingOptions
+
 	func run() async throws {
 		guard let guestKind: GuestKind = .init(rawValue: os) else {
 			let expected: String = GuestKind.allCases.map(\.rawValue).joined(separator: ", ")

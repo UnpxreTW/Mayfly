@@ -23,6 +23,10 @@ struct IPCommand: ParsableCommand {
 	@Argument(help: "Path to a guest bundle.")
 	var bundle: String
 
+	/// 紀錄門檻（`--log-level`；未給時看 `LOG_LEVEL`）。
+	@OptionGroup
+	internal var logging: LoggingOptions
+
 	func run() throws {
 		let metadataURL: URL = MacGuestBundleLayout.metadata(in: URL(fileURLWithPath: bundle))
 		let metadata = try JSONDecoder().decode(BundleMetadata.self, from: Data(contentsOf: metadataURL))
