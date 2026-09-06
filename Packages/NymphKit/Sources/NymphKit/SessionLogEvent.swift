@@ -13,7 +13,7 @@ import Foundation
 /// `CustomStringConvertible` 的 ``description`` 給。
 public struct SessionLogEvent: Sendable, Equatable {
 
-	/// 被記錄的 store 操作。`list`（app 定時輪詢、會洗版）與 `drain`（關機收束）刻意不記。
+	/// 被記錄的 store 操作。`list`（app 定時輪詢、會洗版）刻意不記。
 	public enum Operation: String, Sendable, Equatable {
 
 		/// clone、開機、依 NY-1 收斂。
@@ -27,6 +27,10 @@ public struct SessionLogEvent: Sendable, Equatable {
 
 		/// 停機、刪 clone、移出 table。
 		case destroy
+
+		/// daemon 關機收束時收掉的 session：強制停機、刪 clone、清空 table。與 `destroy` 分開
+		/// 記——收掉它的是關機流程、不是哪個請求端。
+		case drain
 	}
 
 	/// 操作內的一段耗時；``Name`` 的 `rawValue` 即單行紀錄裡的欄名。
@@ -183,7 +187,7 @@ extension SessionLogEvent: CustomStringConvertible {
 			columns.append("result=" + renderedResult)
 			columns.append("state=" + (state?.rawValue ?? SessionLogEvent.unavailable))
 
-		case .destroy:
+		case .destroy, .drain:
 			columns.append("force=" + (force.map { String($0) } ?? SessionLogEvent.unavailable))
 			columns.append("stop=" + renderSegment(.stop))
 			columns.append("total=" + SessionLogEvent.renderDuration(total))
@@ -287,9 +291,9 @@ extension SessionLogEvent {
 
 	/// 這筆事件對應的生命週期訊息；不是起也不是訖的事件回 nil。
 	///
-	/// 只有收斂成功的 `spawn`（起）與 `destroy`（訖）算數：擲錯的 spawn 沒有活著的 session、
-	/// 擲錯的 destroy 沒把 session 收掉，兩者都不構成生命週期的端點。`execute` 與 `status`
-	/// 發生在兩端之間、不是端點。
+	/// 只有收斂成功的 `spawn`（起）與 `destroy`／`drain`（訖）算數：擲錯的 spawn 沒有活著的
+	/// session、擲錯的 destroy 沒把 session 收掉，兩者都不構成生命週期的端點。`execute` 與
+	/// `status` 發生在兩端之間、不是端點。
 	///
 	/// - Note: 訊息內的 id 未再消毒——會走到這裡的兩條路徑都已收斂成功，其 id 由 store 自己
 	///   鑄出（`destroy` 的 id 得先命中 table 才會成功），不是外來字串。
@@ -304,6 +308,9 @@ extension SessionLogEvent {
 
 		case .destroy:
 			"session \(sessionID) ended; phase timings in the session line with the same id"
+
+		case .drain:
+			"session \(sessionID) ended during daemon shutdown; phase timings in the session line with the same id"
 
 		case .execute, .status:
 			nil

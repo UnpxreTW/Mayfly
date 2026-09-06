@@ -225,11 +225,18 @@ public actor SessionStore {
 
 	/// daemon 關閉收束（SIGTERM / SIGINT）：對每個 session forceStop + 刪 clone（設計
 	/// §4.3；ephemeral 可拋、硬停是預設收法）。清空 table 與登記檔。
+	///
+	/// 每個被收掉的 session 各記一筆 `drain` 事件——關機這條路上 session 一樣走到了終點，
+	/// 不記的話紀錄面只看得到「起」、看不到「訖」。收束本身不擲錯（單一 session 停不下來或
+	/// clone 刪不掉都不該擋住其餘 session），事件因此恆為 `ok`。
 	public func drain() async {
 		for entry in table.values {
-			try? await entry.control.forceStop()
-			try? entry.control.destroyClone()
-			cloneRegistry?.remove(entry.clonePath)
+			_ = try? await logging(.drain, sessionID: entry.id, force: true) { trace in
+				try? await entry.control.forceStop()
+				trace?.mark(.stop)
+				try? entry.control.destroyClone()
+				cloneRegistry?.remove(entry.clonePath)
+			}
 		}
 		table.removeAll()
 	}
