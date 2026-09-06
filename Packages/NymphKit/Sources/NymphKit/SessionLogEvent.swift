@@ -295,7 +295,7 @@ extension SessionLogEvent {
 	/// session、擲錯的 destroy 沒把 session 收掉，兩者都不構成生命週期的端點。`execute` 與
 	/// `status` 發生在兩端之間、不是端點。
 	///
-	/// - Note: 訊息內的 id 未再消毒——會走到這裡的兩條路徑都已收斂成功，其 id 由 store 自己
+	/// - Note: 訊息內的 id 未再消毒——會走到這裡的路徑都已收斂成功，其 id 由 store 自己
 	///   鑄出（`destroy` 的 id 得先命中 table 才會成功），不是外來字串。
 	public var lifecycleMessage: String? {
 		guard
