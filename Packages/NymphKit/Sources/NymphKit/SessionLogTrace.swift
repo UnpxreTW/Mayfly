@@ -85,7 +85,7 @@ internal final class SessionLogTrace {
 	/// 遠端命令的 argv[0]（僅 execute）。
 	private let command: String?
 
-	/// 停機模式（僅 destroy）。
+	/// 停機模式（destroy 依請求、drain 恆為強制）。
 	private let force: Bool?
 
 	/// 進入操作的時刻。

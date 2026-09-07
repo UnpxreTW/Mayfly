@@ -240,16 +240,45 @@ private final class SessionStoreLogTests {
 		#expect(gracefulEvent.force == false)
 	}
 
-	/// list（app 定時輪詢、會洗版）與 drain（關機收束）刻意不記——事件數不因它們增加。
+	/// list（app 定時輪詢、會洗版）刻意不記——事件數不因它增加。
 	@Test
-	private func `list and drain emit nothing`() async throws {
+	private func `list emits nothing`() async throws {
 		let recorder: (sink: SessionLogSink, events: Locked<[SessionLogEvent]>) = recordingLogSink()
 		let engine: FakeGuestEngine = .init { FakeGuestControl() }
 		let store: SessionStore = makeStore(engine: engine, sink: recorder.sink)
 		_ = try await store.spawn(golden: "base", cpus: 2, memoryGiB: 2, wait: true, readinessTimeout: .seconds(1))
 		_ = await store.list(all: true)
-		await store.drain()
 		#expect(recorder.events.current.count == 1)
+	}
+
+	/// drain：每個被收掉的 session 各一筆 `drain` 事件，帶停機段、force 恆真、結果恆 ok。
+	@Test
+	private func `drain emits one event per session`() async throws {
+		let recorder: (sink: SessionLogSink, events: Locked<[SessionLogEvent]>) = recordingLogSink()
+		let engine: FakeGuestEngine = .init { FakeGuestControl() }
+		let store: SessionStore = makeStore(engine: engine, sink: recorder.sink)
+		let first: SpawnResult = try await store.spawn(
+			golden: "base",
+			cpus: 2,
+			memoryGiB: 2,
+			wait: true,
+			readinessTimeout: .seconds(1)
+		)
+		let second: SpawnResult = try await store.spawn(
+			golden: "base",
+			cpus: 2,
+			memoryGiB: 2,
+			wait: true,
+			readinessTimeout: .seconds(1)
+		)
+		await store.drain()
+		let drained: [SessionLogEvent] = recorder.events.current.filter { $0.operation == .drain }
+		#expect(drained.count == 2)
+		#expect(Set(drained.compactMap(\.sessionID)) == Set([first.id, second.id]))
+		#expect(drained.allSatisfy { $0.force == true })
+		#expect(drained.allSatisfy { $0.outcome == .ok })
+		#expect(drained.allSatisfy { $0.segments.map(\.name) == [.stop] })
+		#expect(drained.allSatisfy { $0.lifecycleMessage != nil })
 	}
 
 	/// 事件時間戳取自注入的時間源、不自己讀系統時鐘。
