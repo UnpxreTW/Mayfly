@@ -87,6 +87,24 @@ private final class SessionLogEventTests {
 		""")
 	}
 
+	/// drain 行與 destroy 同一組欄位、只有 `op=` 不同——關機收束一律強制停機，`force=true`。
+	@Test
+	private func `drain line renders the destroy columns`() {
+		let drained: SessionLogEvent = .init(
+			timestamp: Self.timestamp,
+			operation: .drain,
+			sessionID: "mfly-3fa2c1d9",
+			force: true,
+			segments: [SessionLogEvent.Segment(name: .stop, duration: .milliseconds(120))],
+			total: .milliseconds(133),
+			outcome: .ok
+		)
+		#expect(drained.description == """
+		nymph: session ts=1970-01-01T00:00:00.000Z op=drain id=mfly-3fa2c1d9 force=true stop=0.120s \
+		total=0.133s result=ok
+		""")
+	}
+
 	/// provision 就失敗：id 與三段皆未達、印佔位字元，`error=` 收在最後一欄。
 	@Test
 	private func `unreached columns render as dash`() {
@@ -220,6 +238,23 @@ private final class SessionLogEventTests {
 		)
 		#expect(began.lifecycleMessage == "session mfly-3fa2c1d9 began; phase timings in the session line with the same id")
 		#expect(ended.lifecycleMessage == "session mfly-3fa2c1d9 ended; phase timings in the session line with the same id")
+	}
+
+	/// 關機收束也是訖：句子指明是 daemon 在收工，免得讀紀錄的人以為有誰送了 destroy。
+	@Test
+	private func `lifecycle message marks the drained end as shutdown`() {
+		let drained: SessionLogEvent = .init(
+			timestamp: Self.timestamp,
+			operation: .drain,
+			sessionID: "mfly-3fa2c1d9",
+			force: true,
+			segments: [],
+			total: .zero,
+			outcome: .ok
+		)
+		#expect(drained.lifecycleMessage == """
+		session mfly-3fa2c1d9 ended during daemon shutdown; phase timings in the session line with the same id
+		""")
 	}
 
 	/// 兩端之間的操作不是端點：execute 與 status 不出生命週期那一行。
