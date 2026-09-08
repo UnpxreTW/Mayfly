@@ -28,7 +28,7 @@ private final class SessionStoreTests {
 		#expect(engine.lastControl?.recorded.current.started == true)
 	}
 
-	/// NY-1：readiness 逾時無 IP → 降級 booting、**不自殺**（VM 未 forceStop / destroy、仍在 table）。
+	/// readiness 逾時無 IP → 降級 booting、**不自殺**（VM 未 forceStop / destroy、仍在 table）。
 	@Test
 	private func `spawn timeout downgrades to booting without killing`() async throws {
 		let engine: FakeGuestEngine = .init { FakeGuestControl(timeoutOnReady: true) }

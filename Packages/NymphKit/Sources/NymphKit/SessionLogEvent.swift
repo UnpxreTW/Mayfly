@@ -16,7 +16,7 @@ public struct SessionLogEvent: Sendable, Equatable {
 	/// 被記錄的 store 操作。`list`（app 定時輪詢、會洗版）刻意不記。
 	public enum Operation: String, Sendable, Equatable {
 
-		/// clone、開機、依 NY-1 收斂。
+		/// clone、開機、等 readiness 收斂。
 		case spawn
 
 		/// 在既有 session 內執行遠端命令。
@@ -71,7 +71,7 @@ public struct SessionLogEvent: Sendable, Equatable {
 	/// 操作結果：成功、或帶穩定錯誤碼的失敗（沿用 ``ToolError`` 的 code 與 message）。
 	public enum Outcome: Sendable, Equatable {
 
-		/// 操作正常收斂。readiness 逾時降級 booting 亦屬此類（NY-1：逾時不是錯誤）。
+		/// 操作正常收斂。readiness 逾時降級 booting 亦屬此類（逾時不是錯誤）。
 		case ok
 
 		/// 操作擲錯，帶對外穩定錯誤碼。
@@ -100,7 +100,7 @@ public struct SessionLogEvent: Sendable, Equatable {
 	public let force: Bool?
 
 	/// 依發生順序記錄，只收「跑完」的段：會擲錯的段（provision／start／exec）一失敗即不入列；
-	/// `ready` 逾時與 `stop` 停機失敗都被上層吞掉、仍各記一段（NY-1：逾時是降級、不是錯誤）。
+	/// `ready` 逾時與 `stop` 停機失敗都被上層吞掉、仍各記一段（逾時是降級、不是錯誤）。
 	/// 缺席的段印 `-`，其耗時可由 ``total`` 減已記段之和粗估——spawn 的 start 失敗另含回滾
 	/// 耗時，該情況會高估。
 	public let segments: [Segment]

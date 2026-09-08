@@ -9,7 +9,7 @@
 import ArgumentParser
 import NymphKit
 
-/// `mayfly spawn <golden>`（daemon client）：向 nymph 要一台可拋 VM。NY-1：預設阻塞到
+/// `mayfly spawn <golden>`（daemon client）：向 nymph 要一台可拋 VM。預設阻塞到
 /// READY、逾時降級印 `booting`（不自殺）；`--no-wait` 即回 booting。印 `<id> <state> <ip>` 一行。
 struct SpawnCommand: AsyncParsableCommand {
 

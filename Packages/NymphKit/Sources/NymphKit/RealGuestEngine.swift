@@ -23,7 +23,7 @@ public struct RealGuestEngine: GuestEngine {
 
 	/// - Parameters:
 	///   - hostKey: nymph 穩定身份鑰（`mayfly nymph` 首啟 loadOrGenerate）。
-	///   - resolver: golden 別名解析 + clone 落點（NY-3）。
+	///   - resolver: golden 別名解析 + clone 落點。
 	///   - username: SSH 連入的 guest 帳號（golden 注入公鑰的那個），預設 `runner`。
 	///   - cloner: CoW 複製器。
 	public init(

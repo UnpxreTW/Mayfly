@@ -19,7 +19,7 @@ import Foundation
 /// client → daemon 的請求。動詞集對映契約 #31 的五工具。
 public enum NymphRequest: Codable, Sendable, Equatable {
 
-	/// clone + boot + 等 READY（依 NY-1 阻塞 / 逾時降級）。
+	/// clone + boot + 等 READY（預設阻塞、逾時降級）。
 	case spawn(SpawnParams)
 
 	/// 在既有 session 內執行命令（SSH、經 ``MacGuestExec``）。
@@ -72,7 +72,7 @@ public struct SpawnParams: Codable, Sendable, Equatable {
 	/// 要求記憶體（GiB、引擎收斂）。
 	public let memoryGiB: Int
 
-	/// 是否阻塞到 READY（NY-1 預設 true；逾時降級 booting 不自殺）。
+	/// 是否阻塞到 READY（預設 true；逾時降級 booting 不自殺）。
 	public let wait: Bool
 
 	/// readiness 等待上限（秒）。

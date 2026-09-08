@@ -80,7 +80,7 @@ public actor SessionStore {
 		return "mfly-" + bytes.map { String(format: "%02x", $0) }.joined()
 	}
 
-	/// clone + boot + 依 NY-1 收斂：`wait=true`（預設）阻塞到 READY、逾時無 IP **降級回
+	/// clone + boot + 等 readiness 收斂：`wait=true`（預設）阻塞到 READY、逾時無 IP **降級回
 	/// booting 不自殺**（VM 續跑、client 之後以 status 輪詢）；`wait=false` 即回 booting。
 	///
 	/// 引擎由 `kind` 選定（線協議 `os` 欄、非別名字面推斷）；該 kind 未註冊引擎時擲

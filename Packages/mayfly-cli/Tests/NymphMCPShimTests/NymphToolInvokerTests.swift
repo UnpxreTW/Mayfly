@@ -75,7 +75,7 @@ private final class NymphToolInvokerTests {
 	}
 
 	/// spawn 的 `golden` 是 `/` 開頭絕對路徑 → tool-error（`invalid_arguments`），連 daemon 都
-	/// 不連（無 socket harness）——MCP 邊界只收具名 alias、不開放絕對路徑逃生梯（#33 NY-3）；
+	/// 不連（無 socket harness）——MCP 邊界只收具名 alias、不開放絕對路徑逃生梯（#33）；
 	/// 對外訊息通稱化、整份結果不回顯該路徑。
 	@Test
 	private func `spawn with absolute path golden is a tool error before reaching the daemon`() async throws {
@@ -176,7 +176,7 @@ private final class NymphToolInvokerTests {
 		#expect(result.structuredContent?.objectValue?["code"] == "invalid_arguments")
 	}
 
-	/// booting 逾時降級：`ip` 為 nil → JSON `null`（NY-1）。
+	/// booting 逾時降級：`ip` 為 nil → JSON `null`。
 	@Test
 	private func `spawn booting result encodes null ip`() async throws {
 		let harness = makeHarness(response: .spawn(SpawnResult(id: "mfly-boot", state: .booting, ip: nil)))

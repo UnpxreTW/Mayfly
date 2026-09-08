@@ -18,7 +18,7 @@ public protocol GuestControl: Sendable {
 	/// 開機（一次性；重呼由實作擲錯）。
 	func start() async throws
 
-	/// 等 readiness 收斂、回解出的 IP；逾時 / 提早停回 nil（不擲錯——NY-1 降級語義）。
+	/// 等 readiness 收斂、回解出的 IP；逾時 / 提早停回 nil（不擲錯——逾時是降級、不是錯誤）。
 	func waitUntilReady() async throws -> String?
 
 	/// 目前狀態快照。

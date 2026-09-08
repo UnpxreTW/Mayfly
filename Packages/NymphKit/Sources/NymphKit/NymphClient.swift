@@ -27,7 +27,7 @@ public struct NymphClient: Sendable {
 		self.socketPath = socketPath
 	}
 
-	/// daemon 是否在跑——嘗試連 socket、連得上即視為在（連完即關）。**NY-2** 的 destroy
+	/// daemon 是否在跑——嘗試連 socket、連得上即視為在（連完即關）。destroy 的
 	/// path/id 消歧就靠這個判斷（socket 在 → id 語義、不在 → path 語義）。
 	public static func isDaemonPresent(socketPath: URL = NymphPaths.socketURL()) -> Bool {
 		guard let fd = try? UnixSocket.connect(path: socketPath.path) else {
