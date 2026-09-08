@@ -15,12 +15,11 @@ import Foundation
 ///
 /// **需 root**（`enableOwnership` / `write` 的 numeric chown 要 root；呼叫端負責 `sudo`
 /// 或 CI 本就 root）。任何步驟失敗都會先 `detach` 再上拋，不留掛載中的 image。掛載回報
-/// `.encryptedLocked` → 轉 ``MacGuestProvisionerError/requiresRecoveryFallback``（P6 Recovery
+/// `.encryptedLocked` → 轉 ``MacGuestProvisionerError/requiresRecoveryFallback``（Recovery
 /// fallback 的 seam、本型別不自解鎖）。
 ///
 /// **範圍（v1）**：只做離線注入 + GoldenBundle marker。設計的 "seal-boot"（開機跑
-/// first-boot daemon、偵測 readiness 後關機封存）依賴尚未建的 ReadinessGate（P5），
-/// 另拆後續切片。
+/// first-boot daemon、偵測 readiness 後關機封存）另拆後續切片。
 public struct MacGuestProvisioner: Sendable {
 
 	/// 對剛裝好（未 provisioned）的 guest bundle 離線注入帳號 / 跳過 Setup Assistant /
