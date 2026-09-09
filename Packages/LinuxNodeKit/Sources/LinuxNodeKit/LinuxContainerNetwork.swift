@@ -61,8 +61,11 @@ public final class LinuxContainerNetwork: Network, @unchecked Sendable {
 	/// 配發表——整個引擎壽命內只該開一顆。故刻意做成顯式呼叫、不藏進 ``LinuxGuestEngine``
 	/// 的 init：否則每建一顆引擎就會悄悄多開一張網路，容器散落在互不相通的子網裡，而那是個
 	/// 要到兩個容器彼此連不到才會發現的錯。
+	///
+	/// - Important: 呼叫端是 ``LinuxNetworkProvider``——它替整支 daemon 持有唯一那一顆、
+	///   並把建立時機遞延到第一次真的要用時。要接網路的人拿 provider，不自己呼叫本方法。
 	/// - Parameter mtu: 介面 MTU，預設 ``defaultMTU``。
-	/// - Returns: 可交給 ``LinuxGuestEngine`` 的共用網路。
+	/// - Returns: 可交給 ``LinuxNetworkProvider`` 快取的共用網路。
 	public static func vmnet(mtu: UInt32 = LinuxContainerNetwork.defaultMTU) throws -> LinuxContainerNetwork {
 		let network: VmnetNetwork = try .init()
 		return .init(allocator: network, mtu: mtu)
