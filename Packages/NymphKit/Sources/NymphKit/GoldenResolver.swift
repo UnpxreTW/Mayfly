@@ -8,8 +8,7 @@
 
 import Foundation
 
-/// golden 別名 → host 路徑的解析，與 clone 落點策略。**NY-3 拍板：實作 PR 附提案、
-/// review 時定**——本型別即該提案，以下為建議規則，reviewer 可否決 / 調整。
+/// golden 別名 → host 路徑的解析，與 clone 落點策略。以下為現行規則。
 ///
 /// **別名解析**（依序）：
 /// 1. 別名是**絕對路徑**且存在 → 原樣passthrough（逃生梯，讓進階用途直接指 bundle）。

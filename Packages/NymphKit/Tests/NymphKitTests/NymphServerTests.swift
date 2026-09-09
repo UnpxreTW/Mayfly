@@ -46,7 +46,7 @@ private final class NymphServerTests {
 		#expect(response == expected)
 	}
 
-	/// isDaemonPresent：未起 false、起後 true、shutdown 後 false（NY-2 destroy 消歧的依據）。
+	/// isDaemonPresent：未起 false、起後 true、shutdown 後 false（destroy 消歧的依據）。
 	@Test
 	private func `daemon presence tracks lifecycle`() async throws {
 		let socketURL: URL = temporarySocketURL()

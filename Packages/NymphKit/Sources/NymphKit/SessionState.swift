@@ -19,7 +19,7 @@ public enum SessionState: String, Sendable, Equatable, Codable {
 	case booting
 
 	/// 已收斂（IP 由協議層另欄帶；沒接對外網路的 guest 是 ready 但 IP 為 nil，readiness
-	/// 逾時則不升 ready、留在 booting，見 NY-1）。
+	/// 逾時則不升 ready、留在 booting）。
 	case ready
 
 	/// 已停止（自行關機 / 錯誤 / 硬停）。

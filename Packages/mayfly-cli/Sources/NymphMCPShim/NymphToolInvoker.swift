@@ -56,7 +56,7 @@ enum NymphToolInvoker {
 		case .spawn:
 			let golden: String = try arguments.requiredString("golden")
 			// MCP 邊界視為不可信呼叫端：golden 只收 golden root 下的具名 alias，擋
-			// ``GoldenResolver`` 的 `/` 開頭絕對路徑逃生梯（#33 NY-3）——逃生梯留給受信任的
+			// ``GoldenResolver`` 的 `/` 開頭絕對路徑逃生梯（#33）——逃生梯留給受信任的
 			// daemon socket 直連方（CLI 等），不對 MCP 開放。
 			guard !golden.hasPrefix("/") else {
 				throw NymphShimError.invalidGoldenAlias
@@ -246,7 +246,7 @@ enum NymphToolInvoker {
 	}
 
 	/// `golden` 欄位的對外值：具名 alias 原樣；`/` 開頭（受信任的 daemon socket 直連方以絕對
-	/// 路徑逃生梯 spawn 的 session、見 #33 NY-3）換成固定通稱字串。daemon socket 是跨管道
+	/// 路徑逃生梯 spawn 的 session、見 #33）換成固定通稱字串。daemon socket 是跨管道
 	/// 共用的——直連方與 MCP shim 談同一張 session table，session 不保證源自 MCP、host 路徑
 	/// 不因來源不同而外流；縱深防禦，不依賴「兩者不共用 daemon」的部署拓樸保證。
 	private static func outwardGoldenValue(_ golden: String) -> String {

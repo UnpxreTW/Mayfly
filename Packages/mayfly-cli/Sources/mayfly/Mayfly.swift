@@ -23,7 +23,7 @@ import ArgumentParser
 /// - **MCP shim**：`mcp`（短命 stdio 轉接殼、橋接同一顆 socket；契約 #31 步③，見
 ///   ``MCPCommand``）。
 ///
-/// `destroy` 過載依 socket 連通性消歧（NY-2、見 ``DestroyCommand``）。
+/// `destroy` 過載依 socket 連通性消歧（見 ``DestroyCommand``）。
 ///
 /// 輸出分兩面：要被讀走的資料走 stdout、紀錄走 stderr 的 `Logger`（見 ``CommandOutput``）。
 /// 紀錄門檻每支子命令都收 `--log-level`（未給時看 `LOG_LEVEL` 環境變數，兩者都沒有就是

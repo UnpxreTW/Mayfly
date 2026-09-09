@@ -132,7 +132,7 @@ enum NymphShimError: Error {
 	case invalidArgument(String)
 
 	/// `spawn` 的 `golden` 是 `/` 開頭絕對路徑——MCP 邊界（不可信呼叫端）只收 golden root 下的
-	/// 具名 alias；``GoldenResolver`` 的絕對路徑逃生梯（#33 NY-3）留給受信任的 daemon socket
+	/// 具名 alias；``GoldenResolver`` 的絕對路徑逃生梯（#33）留給受信任的 daemon socket
 	/// 直連方（CLI 等），不對 MCP 開放。
 	case invalidGoldenAlias
 

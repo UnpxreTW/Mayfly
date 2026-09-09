@@ -47,7 +47,7 @@ private final class SessionStoreLogTests {
 		#expect(event.outcome == .ok)
 	}
 
-	/// NY-1：readiness 逾時是降級、不是錯誤——三段齊、結果仍 ok、狀態留 booting。
+	/// readiness 逾時是降級、不是錯誤——三段齊、結果仍 ok、狀態留 booting。
 	@Test
 	private func `spawn readiness timeout is not an error`() async throws {
 		let recorder: (sink: SessionLogSink, events: Locked<[SessionLogEvent]>) = recordingLogSink()

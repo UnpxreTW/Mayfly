@@ -11,7 +11,7 @@ import Foundation
 import MachineKit
 import NymphKit
 
-/// `mayfly destroy <target>`：過載——**NY-2 拍板**依 nymph socket 連通性消歧：
+/// `mayfly destroy <target>`：過載——依 nymph socket 連通性消歧：
 ///
 /// - **socket 在（daemon 在跑）** → `<target>` 當 **session id**：向 daemon 送 destroy（停 VM +
 ///   刪 clone + 移出 table）。
@@ -23,7 +23,7 @@ struct DestroyCommand: AsyncParsableCommand {
 		commandName: "destroy",
 		abstract: "Destroy a session by id (daemon up) or a disposable clone by path (daemon down).",
 		discussion: """
-		Disambiguated by the nymph socket (NY-2): when the daemon is running the argument is a \
+		Disambiguated by the nymph socket: when the daemon is running the argument is a \
 		session id; otherwise it is a clone path made by `mayfly clone`.
 		"""
 	)
