@@ -91,7 +91,7 @@ struct NymphCommand: AsyncParsableCommand {
 			username: guestUsername
 		)
 		// 網路交給 provider 持有：整支 daemon 共用一顆、第一次 Linux spawn 才建。啟動期不建，
-		// vmnet 開不起來時 macOS 路徑不受牵連（`--linux-network none` 則從頭就不接網路）。
+		// vmnet 開不起來時 macOS 路徑不受牽連（`--linux-network none` 則從頭就不接網路）。
 		let networkProvider: LinuxNetworkProvider = .init(mode: networkMode)
 		let linuxEngine: LinuxGuestEngine = .init(networkProvider: networkProvider)
 		CommandOutput.logger.info("linux network: \(NymphCommand.startupDescription(for: networkMode))")
