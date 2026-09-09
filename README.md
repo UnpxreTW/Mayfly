@@ -14,10 +14,12 @@ macOS 26+（Apple Silicon）、Xcode 26+。建置 app 另需 Tuist，版本釘�
 
 ```shell
 swift build --package-path Packages/MachineKit
+swift build --package-path Packages/NymphKit
 swift build --package-path Packages/mayfly-cli
 swift build --package-path Packages/LinuxNodeKit
 swift build --package-path Packages/MayflyUI
 swift test --package-path Packages/MachineKit
+swift test --package-path Packages/NymphKit
 swift test --package-path Packages/mayfly-cli
 swift test --package-path Packages/LinuxNodeKit
 swift test --package-path Packages/MayflyUI
