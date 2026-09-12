@@ -56,12 +56,25 @@ struct NymphCommand: AsyncParsableCommand {
 	)
 	internal var logSessions: Bool = false
 
+	/// Linux 容器接哪一種網路（`vmnet`／`none`）。字面值在 `run()` 內驗，不對
+	/// ``LinuxNetworkMode`` 補 `ExpressibleByArgument`——那是跨模組替別人的型別套別人的
+	/// 協定，比照 `spawn` 的 `--os` 既有形。
+	@Option(
+		name: .customLong("linux-network"),
+		help: "Network for Linux guests: vmnet (shared, outbound connectivity) or none."
+	)
+	internal var linuxNetwork: String = LinuxNetworkMode.vmnet.rawValue
+
 	/// 紀錄門檻（`--log-level`；未給時看 `LOG_LEVEL`）。
 	@OptionGroup
 	internal var logging: LoggingOptions
 
 	func run() async throws {
 #if arch(arm64)
+		guard let networkMode: LinuxNetworkMode = .init(rawValue: linuxNetwork) else {
+			let expected: String = LinuxNetworkMode.allCases.map(\.rawValue).joined(separator: ", ")
+			throw ValidationError("unknown --linux-network value \"\(linuxNetwork)\"; expected one of: \(expected).")
+		}
 		// 對端斷線時 socket write 收 EPIPE、不讓 SIGPIPE 打死常駐 daemon。
 		signal(SIGPIPE, SIG_IGN)
 		let stateDirectory: URL = NymphPaths.stateDirectory()
@@ -77,9 +90,11 @@ struct NymphCommand: AsyncParsableCommand {
 			resolver: .fromEnvironment(),
 			username: guestUsername
 		)
-		// 預設不接網路（network: nil）：容器沒有對外連線、`currentIP()` 恆回 nil，readiness
-		// 改由容器內探測驅動（見 `LinuxGuestControl`）；接上容器網路另行處理。
-		let linuxEngine: LinuxGuestEngine = .init()
+		// 網路交給 provider 持有：整支 daemon 共用一顆、第一次 Linux spawn 才建。啟動期不建，
+		// vmnet 開不起來時 macOS 路徑不受牽連（`--linux-network none` 則從頭就不接網路）。
+		let networkProvider: LinuxNetworkProvider = .init(mode: networkMode)
+		let linuxEngine: LinuxGuestEngine = .init(networkProvider: networkProvider)
+		CommandOutput.logger.info("linux network: \(NymphCommand.startupDescription(for: networkMode))")
 		let logSink: SessionLogSink? = logSessions ? NymphCommand.emit(sessionEvent:) : nil
 		let store: SessionStore = .init(
 			engines: [.mac: macEngine, .linux: linuxEngine],
@@ -104,6 +119,22 @@ struct NymphCommand: AsyncParsableCommand {
 	}
 
 #if arch(arm64)
+
+	/// 啟動日誌那一行的網路描述。
+	///
+	/// vmnet 明寫「首次 session 才建」——這一行印出來時網路還不存在，寫成既成事實會讓讀日誌
+	/// 的人把「daemon 起來了」當成「網路已經備妥」。
+	/// - Parameter mode: 啟動參數解出來的模式。
+	/// - Returns: 接在 `linux network: ` 後面的描述。
+	private static func startupDescription(for mode: LinuxNetworkMode) -> String {
+		switch mode {
+		case .vmnet:
+			"vmnet (mtu \(LinuxContainerNetwork.defaultMTU), created on first session)"
+
+		case .disabled:
+			"none"
+		}
+	}
 
 	/// store 每次操作的落點：資料行照舊直寫 stderr，起訖兩種事件另在紀錄面留一行 `info`。
 	///
