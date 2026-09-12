@@ -40,23 +40,24 @@ public struct LinuxGuestEngine: GuestEngine {
 	///   - stateRoot: 容器 image store／rootfs 根目錄，預設 ``LinuxNodePaths/containerRoot(environment:)``。
 	///   - initfsReference: vminitd guest agent 的 OCI 參照。
 	///   - rootfsSizeInBytes: 容器 rootfs 上限，M1 沿用 PoC 驗證過的 1 GiB。
-	///   - network: 容器網路。`nil`（預設）＝不接網路，容器沒有對外連線、也不會有 IP；
-	///     要接網路時傳一顆**整個引擎壽命共用**的 ``LinuxContainerNetwork``
-	///     （見 ``LinuxContainerNetwork/vmnet(mtu:)``，該型別文件說明為何必須共用同一顆）。
+	///   - networkProvider: 容器網路的來源。整支 daemon 共用一顆網路，由 provider 持有並在
+	///     第一次 provision 時才建（見 ``LinuxNetworkProvider``）；不接網路的 provider
+	///     恆回 `nil`，容器沒有對外連線、也不會有 IP。**無預設值**：接不接網路是部署決策，
+	///     漏傳就靜默沒網路正是這裡最難查的失敗，故要求呼叫端明講。
 	public init(
 		resolver: LinuxImageResolver = .init(),
 		kernelProvisioner: LinuxKernelProvisioner = .init(),
 		stateRoot: URL = LinuxNodePaths.containerRoot(),
 		initfsReference: String = LinuxGuestEngine.defaultInitfsReference,
 		rootfsSizeInBytes: UInt64 = 1.gib(),
-		network: LinuxContainerNetwork? = nil
+		networkProvider: LinuxNetworkProvider
 	) {
 		self.resolver = resolver
 		self.kernelProvisioner = kernelProvisioner
 		self.stateRoot = stateRoot
 		self.initfsReference = initfsReference
 		self.rootfsSizeInBytes = rootfsSizeInBytes
-		self.network = network
+		self.networkProvider = networkProvider
 	}
 
 	public func provision(
@@ -67,6 +68,14 @@ public struct LinuxGuestEngine: GuestEngine {
 	) async throws -> ProvisionedGuest {
 		guard memoryGiB > 0, UInt64(memoryGiB) <= UInt64.max >> 30 else {
 			throw NymphError.internalFailure("memory_gib out of range: \(memoryGiB)")
+		}
+		// 網路在此取用（首次呼叫才真的建）：啟動期不建網，vmnet 開不起來時只有 Linux spawn
+		// 失敗、macOS 路徑照常。失敗包成 clone_failed——這一次 spawn 確實沒能備妥 guest。
+		let network: LinuxContainerNetwork?
+		do {
+			network = try networkProvider.network()
+		} catch {
+			throw NymphError.cloneFailed("linux container network unavailable: \(error)")
 		}
 		let spec: LinuxGuestSpec = try resolver.resolve(golden)
 		let kernelPath: URL = try await kernelProvisioner.prepare(spec.kernel)
@@ -134,7 +143,8 @@ public struct LinuxGuestEngine: GuestEngine {
 
 	private let rootfsSizeInBytes: UInt64
 
-	private let network: LinuxContainerNetwork?
+	/// 容器網路的來源；`provision` 開頭才取用，取不到就讓那一次 provision 失敗。
+	private let networkProvider: LinuxNetworkProvider
 
 	/// 容器 id：`mfly-linux-` 前綴 + UUID，避免與其他 Linux 節點或並行 provision 撞號。
 	private static func makeContainerID() -> String {
