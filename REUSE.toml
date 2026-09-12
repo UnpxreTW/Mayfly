@@ -8,6 +8,7 @@ path = [
 	"NOTICE",
 	"README.md",
 	"SECURITY.md",
+	"Containers/README.md",
 	"docs/CODEOWNERS",
 	"docs/SECURITY.md",
 	"Packages/MachineKit/NOTICE",
