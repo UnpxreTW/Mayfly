@@ -27,4 +27,19 @@ public enum LinuxNodePaths {
 	) -> URL {
 		NymphPaths.stateDirectory(environment: environment).appending(component: "kernels")
 	}
+
+	/// 操作者維護的 Linux 別名表（`<goldenRoot>/linux-images.json`）。
+	///
+	/// 跟著 golden root 走、不另開一個環境變數：macOS 的 golden 與 Linux 的別名由同一個
+	/// 操作者維護，兩者分兩個家只是多一個會設錯、也會忘記一起搬的旋鈕。
+	///
+	/// - Parameter environment: 解析 golden root 用的環境變數。
+	/// - Returns: 別名表路徑；停用別名模式（無 golden root）時為 `nil`。
+	public static func imageManifestURL(
+		environment: [String: String] = ProcessInfo.processInfo.environment
+	) -> URL? {
+		GoldenResolver.fromEnvironment(environment: environment)
+			.goldenRoot?
+			.appending(component: LinuxImageManifest.fileName)
+	}
 }
