@@ -48,6 +48,37 @@ ghcr.io/unpxretw/mayfly-ci-lint@sha256:...
 docker build --platform linux/arm64 -t mayfly-ci-lint Containers/ci-lint
 ```
 
+## 把 digest 註冊成別名
+
+`mayfly spawn <別名> --os linux` 只收別名，別名要指到哪顆映像由 golden root 下的 `linux-images.json` 決定（golden root＝`MAYFLY_GOLDEN_ROOT`，沒設就是 `~/.mayfly/golden`）：
+
+```json
+{
+  "version": 1,
+  "images": {
+    "ci-lint": {
+      "reference": "ghcr.io/unpxretw/mayfly-ci-lint@sha256:...",
+      "rootfsGiB": 4
+    },
+    "ci-swift": {
+      "reference": "ghcr.io/unpxretw/mayfly-ci-swift@sha256:...",
+      "rootfsGiB": 16
+    }
+  }
+}
+```
+
+| 欄 | 說明 |
+|---|---|
+| `version` | 目前只收 `1` |
+| 別名 | 只能是 `[A-Za-z0-9][A-Za-z0-9._-]*`——含 `/` 或 `:` 的字串會被當成完整的 OCI 參照直接使用，寫成別名永遠不會生效，所以改檔當下就會被擋 |
+| `reference` | 貼上一節印出來的 digest 形參照 |
+| `rootfsGiB` | 省略就用內建預設（1 GiB）。兩顆映像的體積差一個量級，大小是逐別名的事，不是一個全域值調得動的 |
+
+daemon 啟動時讀這份檔，日誌會印出讀到的路徑與條目數；檔案不在就只用內建別名（`alpine`，冒煙用）。**檔案在但解不開時 daemon 會拒絕啟動**——那份檔是寫給這台機器的意圖，解不開卻照樣起來，`spawn` 會拿內建別名回一個看起來成功的結果，錯誤要到 job 在錯的映像裡跑失敗才浮出來。
+
+改完檔要重啟 daemon 才生效。第一次用新別名 spawn 會當場拉映像（還沒有 kernel 快取時另加一次 kernel 下載，初次約十幾分鐘），這段沒有逾時、呼叫端會一直等——換 digest 之後先手動 spawn 一次暖快取，再讓 job 進來。
+
 ## 更新工具版本
 
 SwiftLint 與 SwiftFormat 的版本與 sha256 釘在 `Containers/ci-lint/Dockerfile` 的 `ARG` 裡。要升版就改那四行：版本號自己填，checksum 取下載回來的 zip 自己算（release 沒有附 checksum 檔）。
