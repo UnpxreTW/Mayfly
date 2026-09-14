@@ -1,0 +1,97 @@
+# SPDX-FileCopyrightText: 2026 Unpxre (GitHub: UnpxreTW)
+# SPDX-License-Identifier: Apache-2.0
+
+name: Container images
+
+# pull_request 只建置與冒煙、不推；要推得是 main 或手動觸發——
+# 未經 review 的分支不該把東西送進 registry。
+on:
+  pull_request:
+    paths:
+      - 'Containers/**'
+      - '.github/workflows/containers.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'Containers/**'
+      - '.github/workflows/containers.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  image:
+    # guest 只跑 arm64（無 Rosetta），所以建置也在 arm64 上做，不繞 QEMU。
+    runs-on: ubuntu-24.04-arm
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: ci-lint
+            tools: swiftlint version && swiftformat --version
+          - name: ci-swift
+            tools: swift --version
+    steps:
+      - uses: actions/checkout@v7
+      - uses: docker/setup-buildx-action@v3
+      - name: 建置（不推）
+        uses: docker/build-push-action@v6
+        with:
+          context: Containers/${{ matrix.name }}
+          platforms: linux/arm64
+          load: true
+          tags: mayfly-${{ matrix.name }}:smoke
+          cache-from: type=gha,scope=${{ matrix.name }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.name }}
+      - name: 冒煙（逐項對 job runner 要的東西）
+        run: |
+          docker run --rm mayfly-${{ matrix.name }}:smoke /bin/bash -lc '
+            set -eux
+            [ "$(id -un)" = root ]
+            [ "$(uname -m)" = aarch64 ]
+            [ -n "$HOME" ]
+            [ -x /bin/sh ]
+            command -v git
+            [ -s /etc/ssl/certs/ca-certificates.crt ]
+            [ -x /bin/true ]
+            [ -x /bin/sleep ]
+            printf x | base64 | base64 -d
+            command -v dirname
+            command -v chmod
+            umask 077
+            mkdir -p /tmp/mayfly-smoke/files
+            touch /tmp/mayfly-smoke/files/probe
+            ${{ matrix.tools }}
+          '
+      - name: 登入 GHCR
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: 推上 GHCR
+        id: push
+        if: github.event_name != 'pull_request'
+        uses: docker/build-push-action@v6
+        with:
+          context: Containers/${{ matrix.name }}
+          platforms: linux/arm64
+          push: true
+          tags: |
+            ghcr.io/unpxretw/mayfly-${{ matrix.name }}:latest
+            ghcr.io/unpxretw/mayfly-${{ matrix.name }}:${{ github.sha }}
+          cache-from: type=gha,scope=${{ matrix.name }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.name }}
+      - name: 印出 digest
+        if: github.event_name != 'pull_request'
+        run: |
+          {
+            echo "### mayfly-${{ matrix.name }}"
+            echo ''
+            echo '```'
+            echo "ghcr.io/unpxretw/mayfly-${{ matrix.name }}@${{ steps.push.outputs.digest }}"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
