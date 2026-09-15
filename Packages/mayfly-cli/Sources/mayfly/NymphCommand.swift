@@ -93,7 +93,11 @@ struct NymphCommand: AsyncParsableCommand {
 		// 網路交給 provider 持有：整支 daemon 共用一顆、第一次 Linux spawn 才建。啟動期不建，
 		// vmnet 開不起來時 macOS 路徑不受牽連（`--linux-network none` 則從頭就不接網路）。
 		let networkProvider: LinuxNetworkProvider = .init(mode: networkMode)
-		let linuxEngine: LinuxGuestEngine = .init(networkProvider: networkProvider)
+		let imageManifest: LinuxImageManifest? = try NymphCommand.loadImageManifest()
+		let linuxEngine: LinuxGuestEngine = .init(
+			resolver: .init(manifest: imageManifest),
+			networkProvider: networkProvider
+		)
 		CommandOutput.logger.info("linux network: \(NymphCommand.startupDescription(for: networkMode))")
 		let logSink: SessionLogSink? = logSessions ? NymphCommand.emit(sessionEvent:) : nil
 		let store: SessionStore = .init(
@@ -133,6 +137,30 @@ struct NymphCommand: AsyncParsableCommand {
 
 		case .disabled:
 			"none"
+		}
+	}
+
+	/// 載入操作者維護的 Linux 別名表；順帶把這次用的是哪一份、有幾條寫進紀錄。
+	///
+	/// 三種結果分得很開：**檔案不在**是正常部署（只用內建別名），**檔案在但解不開**則拒絕
+	/// 啟動——那份檔是操作者寫給這台機器的意圖，解不開卻照樣起來，`spawn` 會拿內建表回一個
+	/// 看起來成功的結果，錯誤要到 job 在錯的映像裡跑失敗才浮出來。
+	///
+	/// - Returns: 別名表；這台機器沒有這份檔時為 `nil`。
+	/// - Throws: `ExitCode(1)`——檔案在但讀不了或解不開，錯誤已寫進紀錄。
+	private static func loadImageManifest() throws -> LinuxImageManifest? {
+		guard let url: URL = LinuxNodePaths.imageManifestURL() else { return nil }
+		guard FileManager.default.fileExists(atPath: url.path) else {
+			CommandOutput.logger.info("linux images: built-in only (\(url.path) not found)")
+			return nil
+		}
+		do {
+			let manifest: LinuxImageManifest = try LinuxImageManifest.load(from: url)
+			CommandOutput.logger.info("linux images: \(url.path) (\(manifest.images.count) aliases)")
+			return manifest
+		} catch {
+			CommandOutput.logger.error("linux images: \(error)")
+			throw ExitCode(1)
 		}
 	}
 

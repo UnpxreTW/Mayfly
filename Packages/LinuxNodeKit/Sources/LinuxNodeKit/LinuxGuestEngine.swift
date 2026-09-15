@@ -39,7 +39,8 @@ public struct LinuxGuestEngine: GuestEngine {
 	///   - kernelProvisioner: kernel fetch-on-demand（快取命中直接回、否則抓＋驗＋落地）。
 	///   - stateRoot: 容器 image store／rootfs 根目錄，預設 ``LinuxNodePaths/containerRoot(environment:)``。
 	///   - initfsReference: vminitd guest agent 的 OCI 參照。
-	///   - rootfsSizeInBytes: 容器 rootfs 上限，M1 沿用 PoC 驗證過的 1 GiB。
+	///   - rootfsSizeInBytes: 別名沒指定大小時的 rootfs 上限，沿用 PoC 驗證過的 1 GiB；
+	///     別名表（``LinuxImageManifest``）寫了 `rootfsGiB` 的條目以該值為準。
 	///   - networkProvider: 容器網路的來源。整支 daemon 共用一顆網路，由 provider 持有並在
 	///     第一次 provision 時才建（見 ``LinuxNetworkProvider``）；不接網路的 provider
 	///     恆回 `nil`，容器沒有對外連線、也不會有 IP。**無預設值**：接不接網路是部署決策，
@@ -104,7 +105,7 @@ public struct LinuxGuestEngine: GuestEngine {
 			container = try await manager.create(
 				containerID,
 				reference: spec.imageReference,
-				rootfsSizeInBytes: rootfsSizeInBytes,
+				rootfsSizeInBytes: spec.rootfsSizeInBytes ?? rootfsSizeInBytes,
 				networking: network != nil
 			) { configuration in
 				configuration.cpus = cpus
