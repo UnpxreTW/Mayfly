@@ -105,6 +105,27 @@ private final class SessionLogEventTests {
 		""")
 	}
 
+	/// reap 行帶 kind、不帶 force 與 stop 段——被收掉的 session 早就停了。
+	@Test
+	private func `reap line renders kind without stop columns`() {
+		let reaped: SessionLogEvent = .init(
+			timestamp: Self.timestamp,
+			operation: .reap,
+			sessionID: "mfly-3fa2c1d9",
+			kind: .linux,
+			segments: [],
+			total: .milliseconds(7),
+			outcome: .ok
+		)
+		#expect(reaped.description == """
+		nymph: session ts=1970-01-01T00:00:00.000Z op=reap id=mfly-3fa2c1d9 kind=linux total=0.007s result=ok
+		""")
+		#expect(
+			reaped.lifecycleMessage
+				== "session mfly-3fa2c1d9 ended; it had stopped without a destroy call and was reclaimed"
+		)
+	}
+
 	/// provision 就失敗：id 與三段皆未達、印佔位字元，`error=` 收在最後一欄。
 	@Test
 	private func `unreached columns render as dash`() {

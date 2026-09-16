@@ -32,9 +32,19 @@ struct NymphCommand: AsyncParsableCommand {
 		abstract: "Run the long-lived nymph daemon (listens on a Unix domain socket)."
 	)
 
-	/// 併發 session 上限（admission）。
-	@Option(name: .customLong("max-sessions"), help: "Maximum concurrent sessions (admission ceiling).")
+	/// macOS guest 的併發上限（admission）。預設值沿用既有的 8——這是 daemon 這層的軟上限，
+	/// 實際天花板由 Virtualization.framework 給（同時最多兩台），部署端自行調低。
+	@Option(name: .customLong("max-sessions"), help: "Maximum concurrent macOS sessions (admission ceiling).")
 	var maxSessions: Int = 8
+
+	/// Linux guest 的併發上限（admission）。與 `--max-sessions` 各數各的——macOS 的席位受
+	/// Virtualization.framework 限制、Linux 容器沒有這條限制，兩者共用一個計數會讓 Linux 把
+	/// macOS 的席位吃掉。
+	@Option(
+		name: .customLong("max-linux-sessions"),
+		help: "Maximum concurrent Linux sessions (counted separately from --max-sessions)."
+	)
+	internal var maxLinuxSessions: Int = 2
 
 	/// macOS guest 的 SSH 帳號——golden image 把 nymph 公鑰注進哪個帳號，這裡就填哪個。
 	/// 預設 `runner`。readiness 走 host lease 解 IP、不經 SSH，所以帳號填錯的 session 照樣
@@ -103,6 +113,7 @@ struct NymphCommand: AsyncParsableCommand {
 		let store: SessionStore = .init(
 			engines: [.mac: macEngine, .linux: linuxEngine],
 			maxSessions: maxSessions,
+			maxLinuxSessions: maxLinuxSessions,
 			cloneRegistry: registry,
 			logSink: logSink
 		)

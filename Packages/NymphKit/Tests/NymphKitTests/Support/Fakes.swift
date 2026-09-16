@@ -34,6 +34,53 @@ final class Locked<Value>: @unchecked Sendable {
 	private var value: Value
 }
 
+/// 半途閘：讓 fake 的某一步停在半途（優雅停機、readiness 等待、exec、狀態查詢），測試因此能在
+/// 那段窗口裡插進另一次呼叫（actor 重入），把原本只在真機上偶發的交錯變成確定序。
+///
+/// 兩道訊號各走一條 `AsyncStream`：`enterAndWait()` 先通知「被閘住的那一步已經走進來了」再等放行，
+/// `release()` 放它走完。兩邊誰先到都不會卡住——先 yield 的值進緩衝、先 finish 的串流讓等待
+/// 端立刻拿到 nil。
+internal final class Gate: Sendable {
+
+	internal init() {
+		let entered: Pipe = AsyncStream.makeStream()
+		let released: Pipe = AsyncStream.makeStream()
+		enteredStream = entered.stream
+		enteredContinuation = entered.continuation
+		releaseStream = released.stream
+		releaseContinuation = released.continuation
+	}
+
+	/// 被測那側呼叫：標記已走進被閘住的那一步，然後等測試放行。
+	internal func enterAndWait() async {
+		enteredContinuation.yield()
+		var iterator: AsyncStream<Void>.Iterator = releaseStream.makeAsyncIterator()
+		_ = await iterator.next()
+	}
+
+	/// 測試側呼叫：等被閘住的那一步真的走進來。
+	internal func waitUntilEntered() async {
+		var iterator: AsyncStream<Void>.Iterator = enteredStream.makeAsyncIterator()
+		_ = await iterator.next()
+	}
+
+	/// 測試側呼叫：放被閘住的那一步走完。
+	internal func release() {
+		releaseContinuation.finish()
+	}
+
+	/// 一條訊號線：串流本體與它的送出端。
+	private typealias Pipe = (stream: AsyncStream<Void>, continuation: AsyncStream<Void>.Continuation)
+
+	private let enteredStream: AsyncStream<Void>
+
+	private let enteredContinuation: AsyncStream<Void>.Continuation
+
+	private let releaseStream: AsyncStream<Void>
+
+	private let releaseContinuation: AsyncStream<Void>.Continuation
+}
+
 /// 遞增 handle 產生器（確定序 `mfly-testN`）——把 `SessionStore` 的 id 鑄造變確定、方便斷言。
 func sequentialHandles() -> @Sendable () -> String {
 	let counter: Locked<Int> = .init(0)
@@ -93,13 +140,21 @@ final class FakeGuestControl: GuestControl, @unchecked Sendable {
 		timeoutOnReady: Bool = false,
 		stateOverride: SessionState? = nil,
 		execOutcome: Swift.Result<GuestExecResult, NymphError> = .success(GuestExecResult(standardOutput: "ok\n", standardError: "", exitCode: 0)),
-		startError: NymphError? = nil
+		startError: NymphError? = nil,
+		stopGate: Gate? = nil,
+		readyGate: Gate? = nil,
+		execGate: Gate? = nil,
+		stateGate: Gate? = nil
 	) {
 		self.readyIP = readyIP
 		self.timeoutOnReady = timeoutOnReady
 		self.stateOverride = stateOverride
 		self.execOutcome = execOutcome
 		self.startError = startError
+		self.stopGate = stopGate
+		self.readyGate = readyGate
+		self.execGate = execGate
+		self.stateGate = stateGate
 	}
 
 	let recorded: Locked<Recorded> = .init(Recorded())
@@ -115,6 +170,13 @@ final class FakeGuestControl: GuestControl, @unchecked Sendable {
 	}
 
 	func waitUntilReady() async throws -> String? {
+		// 真機上 guest 可能在 readiness 收斂前就自行關機（golden 開機即 panic、跑完就 halt）；掛了
+		// 閘的 fake 先把狀態翻成 stopped 再停在這裡，讓測試得以在「spawn 還沒回」那段窗口裡動作。
+		if let readyGate {
+			recorded.withLock { $0.state = .stopped }
+			await readyGate.enterAndWait()
+			return nil
+		}
 		if timeoutOnReady {
 			recorded.withLock { $0.state = .booting }
 			return nil
@@ -124,7 +186,15 @@ final class FakeGuestControl: GuestControl, @unchecked Sendable {
 	}
 
 	func currentState() async -> SessionState {
-		stateOverride ?? recorded.current.state
+		// 只擋第一次查詢：准入的計數會在這裡向控制面查狀態，測試要讓「第一個請求數到一半」停住，
+		// 但第二個請求必須走得完（`Gate` 的訊號線只供一個等待端，兩邊一起等會壞）。
+		if let stateGate, stateGateArmed.withLock({ armed -> Bool in
+			defer { armed = false }
+			return armed
+		}) {
+			await stateGate.enterAndWait()
+		}
+		return stateOverride ?? recorded.current.state
 	}
 
 	func currentIP() async -> String? {
@@ -143,6 +213,11 @@ final class FakeGuestControl: GuestControl, @unchecked Sendable {
 			$0.gracefulStopped = true
 			$0.state = .stopped
 		}
+		// 真機的停機在狀態翻成 stopped 之後還要跑一段（容器 stop、VM 的 grace），掛了閘的 fake
+		// 就停在這裡，讓測試得以在那段窗口裡動作。
+		if let stopGate {
+			await stopGate.enterAndWait()
+		}
 	}
 
 	func exec(
@@ -153,6 +228,12 @@ final class FakeGuestControl: GuestControl, @unchecked Sendable {
 		environment: [String: String]
 	) async throws -> GuestExecResult {
 		recorded.withLock { $0.execCommands.append(command) }
+		// exec 進行中 guest 自行關機：掛了閘的 fake 翻成 stopped 後停在這裡，測試得以在 exec 還沒
+		// 回的窗口裡插進別的呼叫。
+		if let execGate {
+			recorded.withLock { $0.state = .stopped }
+			await execGate.enterAndWait()
+		}
 		return try execOutcome.get()
 	}
 
@@ -169,6 +250,17 @@ final class FakeGuestControl: GuestControl, @unchecked Sendable {
 	private let execOutcome: Swift.Result<GuestExecResult, NymphError>
 
 	private let startError: NymphError?
+
+	private let stopGate: Gate?
+
+	private let readyGate: Gate?
+
+	private let execGate: Gate?
+
+	private let stateGate: Gate?
+
+	/// `stateGate` 尚未被用掉（見 ``currentState()``）。
+	private let stateGateArmed: Locked<Bool> = .init(true)
 }
 
 /// 假引擎：每次 provision 造一個 ``FakeGuestControl`` 並記錄它與 clonePath，供斷言。可配

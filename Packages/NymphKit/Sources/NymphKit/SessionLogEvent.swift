@@ -31,6 +31,10 @@ public struct SessionLogEvent: Sendable, Equatable {
 		/// daemon 關機收束時收掉的 session：強制停機、刪 clone、清空 table。與 `destroy` 分開
 		/// 記——收掉它的是關機流程、不是哪個請求端。
 		case drain
+
+		/// 准入檢查順手收掉的殘留：已 stopped 而呼叫端沒 destroy 的 session，刪 clone、移出
+		/// table。與 `destroy` 分開記——收掉它的是下一次 spawn，不是哪個請求端。
+		case reap
 	}
 
 	/// 操作內的一段耗時；``Name`` 的 `rawValue` 即單行紀錄裡的欄名。
@@ -90,7 +94,7 @@ public struct SessionLogEvent: Sendable, Equatable {
 	/// golden 別名（僅 spawn）。
 	public let golden: String?
 
-	/// guest 種類（僅 spawn）。
+	/// guest 種類（spawn 與 reap）。
 	public let kind: GuestKind?
 
 	/// 遠端命令的 argv[0]（僅 execute；不記完整 argv——引數可能含祕密）。
@@ -192,6 +196,12 @@ extension SessionLogEvent: CustomStringConvertible {
 			columns.append("stop=" + renderSegment(.stop))
 			columns.append("total=" + SessionLogEvent.renderDuration(total))
 			columns.append("result=" + renderedResult)
+
+		case .reap:
+			// 沒有 stop 段：被收掉的 session 早就停了，這裡只刪 clone、移出 table。
+			columns.append("kind=" + (kind?.rawValue ?? SessionLogEvent.unavailable))
+			columns.append("total=" + SessionLogEvent.renderDuration(total))
+			columns.append("result=" + renderedResult)
 		}
 		if case let .error(error) = outcome {
 			columns.append("error=" + error.code + ": " + SessionLogEvent.renderDetail(error.message))
@@ -291,7 +301,7 @@ extension SessionLogEvent {
 
 	/// 這筆事件對應的生命週期訊息；不是起也不是訖的事件回 nil。
 	///
-	/// 只有收斂成功的 `spawn`（起）與 `destroy`／`drain`（訖）算數：擲錯的 spawn 沒有活著的
+	/// 只有收斂成功的 `spawn`（起）與 `destroy`／`drain`／`reap`（訖）算數：擲錯的 spawn 沒有活著的
 	/// session、擲錯的 destroy 沒把 session 收掉，兩者都不構成生命週期的端點。`execute` 與
 	/// `status` 發生在兩端之間、不是端點。
 	///
@@ -311,6 +321,9 @@ extension SessionLogEvent {
 
 		case .drain:
 			"session \(sessionID) ended during daemon shutdown; phase timings in the session line with the same id"
+
+		case .reap:
+			"session \(sessionID) ended; it had stopped without a destroy call and was reclaimed"
 
 		case .execute, .status:
 			nil
