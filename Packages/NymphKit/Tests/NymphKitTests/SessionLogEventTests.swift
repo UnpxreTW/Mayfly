@@ -33,7 +33,7 @@ private final class SessionLogEventTests {
 			state: .ready
 		)
 		#expect(event.description == """
-		nymph: session ts=1970-01-01T00:00:00.000Z op=spawn id=mfly-3fa2c1d9 golden=base kind=mac \
+		nymph: session ts=1970-01-01T00:00:00.000Z op=spawn id=mfly-3fa2c1d9 golden=base kind=mac \\
 		provision=1.204s start=0.312s ready=22.981s total=24.770s result=ok state=ready
 		""")
 	}
@@ -52,7 +52,7 @@ private final class SessionLogEventTests {
 			exitCode: 1
 		)
 		#expect(event.description == """
-		nymph: session ts=1970-01-01T00:00:00.000Z op=execute id=mfly-3fa2c1d9 command=security \
+		nymph: session ts=1970-01-01T00:00:00.000Z op=execute id=mfly-3fa2c1d9 command=security \\
 		exec=3.417s total=3.418s result=ok exit=1
 		""")
 	}
@@ -82,7 +82,7 @@ private final class SessionLogEventTests {
 			outcome: .ok
 		)
 		#expect(destroy.description == """
-		nymph: session ts=1970-01-01T00:00:00.000Z op=destroy id=mfly-3fa2c1d9 force=true stop=0.541s \
+		nymph: session ts=1970-01-01T00:00:00.000Z op=destroy id=mfly-3fa2c1d9 force=true stop=0.541s \\
 		total=0.563s result=ok
 		""")
 	}
@@ -100,9 +100,30 @@ private final class SessionLogEventTests {
 			outcome: .ok
 		)
 		#expect(drained.description == """
-		nymph: session ts=1970-01-01T00:00:00.000Z op=drain id=mfly-3fa2c1d9 force=true stop=0.120s \
+		nymph: session ts=1970-01-01T00:00:00.000Z op=drain id=mfly-3fa2c1d9 force=true stop=0.120s \\
 		total=0.133s result=ok
 		""")
+	}
+
+	/// reap 行帶 kind、不帶 force 與 stop 段——被收掉的 session 早就停了。
+	@Test
+	private func `reap line renders kind without stop columns`() {
+		let reaped: SessionLogEvent = .init(
+			timestamp: Self.timestamp,
+			operation: .reap,
+			sessionID: "mfly-3fa2c1d9",
+			kind: .linux,
+			segments: [],
+			total: .milliseconds(7),
+			outcome: .ok
+		)
+		#expect(reaped.description == """
+		nymph: session ts=1970-01-01T00:00:00.000Z op=reap id=mfly-3fa2c1d9 kind=linux total=0.007s result=ok
+		""")
+		#expect(
+			reaped.lifecycleMessage
+				== "session mfly-3fa2c1d9 ended; it had stopped without a destroy call and was reclaimed"
+		)
 	}
 
 	/// provision 就失敗：id 與三段皆未達、印佔位字元，`error=` 收在最後一欄。
@@ -119,7 +140,7 @@ private final class SessionLogEventTests {
 			outcome: .error(ToolError(.goldenNotFound("nope")))
 		)
 		#expect(event.description == """
-		nymph: session ts=1970-01-01T00:00:00.000Z op=spawn id=- golden=nope kind=mac provision=- start=- \
+		nymph: session ts=1970-01-01T00:00:00.000Z op=spawn id=- golden=nope kind=mac provision=- start=- \\
 		ready=- total=0.004s result=error state=- error=golden_not_found: golden alias not found: nope
 		""")
 	}
@@ -127,7 +148,7 @@ private final class SessionLogEventTests {
 	/// 錯誤訊息壓成單行：換行與 tab 換空白、連續空白收一個、過長截斷並標省略號。
 	@Test
 	private func `error detail collapses to one line and truncates`() {
-		let message: String = "boom\nsecond\tline " + String(repeating: "z", count: 300)
+		let message: String = "boom\\nsecond\\tline " + String(repeating: "z", count: 300)
 		let event: SessionLogEvent = .init(
 			timestamp: Self.timestamp,
 			operation: .status,
@@ -137,11 +158,11 @@ private final class SessionLogEventTests {
 			outcome: .error(ToolError(code: "internal_error", message: message))
 		)
 		let line: String = event.description
-		#expect(!line.contains("\n"))
-		#expect(!line.contains("\t"))
+		#expect(!line.contains("\\n"))
+		#expect(!line.contains("\\t"))
 		#expect(line == """
-		nymph: session ts=1970-01-01T00:00:00.000Z op=status id=mfly-3fa2c1d9 total=0.001s result=error \
-		state=- error=internal_error: boom second line \(String(repeating: "z", count: 183))…
+		nymph: session ts=1970-01-01T00:00:00.000Z op=status id=mfly-3fa2c1d9 total=0.001s result=error \\
+		state=- error=internal_error: boom second line \\(String(repeating: "z", count: 183))…
 		""")
 	}
 
@@ -173,7 +194,7 @@ private final class SessionLogEventTests {
 			timestamp: Self.timestamp,
 			operation: .execute,
 			sessionID: "mfly-3fa2c1d9",
-			command: "ec\tho",
+			command: "ec\\tho",
 			segments: [],
 			total: .zero,
 			outcome: .ok
@@ -192,19 +213,19 @@ private final class SessionLogEventTests {
 		let forged: SessionLogEvent = .init(
 			timestamp: Self.timestamp,
 			operation: .status,
-			sessionID: "ghost\nnymph: session op=spawn",
+			sessionID: "ghost\\nnymph: session op=spawn",
 			segments: [],
 			total: .zero,
 			outcome: .ok,
 			state: .ready
 		)
-		#expect(!forged.description.contains("\n"))
+		#expect(!forged.description.contains("\\n"))
 		#expect(forged.description.contains("id=ghost_nymph:_session_op=spawn "))
 		let escaped: SessionLogEvent = .init(
 			timestamp: Self.timestamp,
 			operation: .spawn,
 			sessionID: "mfly-3fa2c1d9",
-			golden: "x\u{1B}[1Kbase",
+			golden: "x\\u{1B}[1Kbase",
 			kind: .mac,
 			segments: [],
 			total: .zero,
