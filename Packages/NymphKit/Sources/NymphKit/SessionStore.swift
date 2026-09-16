@@ -108,10 +108,10 @@ public actor SessionStore {
 			guard let engine: any GuestEngine = engines[kind] else { throw NymphError.engineUnavailable(kind) }
 			let ceiling: Int = limit(for: kind)
 			// 先佔位、再計數，且把自己那一席一併算進去（於是邊界是 `>` 而不是 `<`）。計數本身含
-			// await——回收那一趣要向控制面查狀態——actor 期間可重入，「數完才佔位」會讓兩個同時
+			// await——回收那一趟要向控制面查狀態——actor 期間可重入，「數完才佔位」會讓兩個同時
 			// 進來的請求各自數到同一個較小值而雙雙放行。反過來先佔位，後到的那個必定看得見前一個
-			// 的席位：席位是在任何 await 之前掛上的，而計數的第一趣（走訪佔位席）整趣沒有等待點。
-			// 席位撐到整趣 spawn 回傳才放，另一件事也一併成立：start / waitUntilReady 期間 guest
+			// 的席位：席位是在任何 await 之前掛上的，而計數的第一趟（走訪佔位席）整趟沒有等待點。
+			// 席位撐到整趟 spawn 回傳才放，另一件事也一併成立：start / waitUntilReady 期間 guest
 			// 若自行停機，別人的准入回收不會把這條當成殘留收走——那會讓呼叫端拿到一個當場即
 			// noSuchID 的 handle、紀錄面的「訖」還排在「起」之前。
 			let id: String = mintHandle()
@@ -184,7 +184,7 @@ public actor SessionStore {
 				throw NymphError.noSuchID(id)
 			}
 			// exec 這一段可以很長（呼叫端給的 timeout 可達小時級）；期間 guest 自行停機的話，併發
-			// 的准入回收會把 clone 刪在 exec 進行中。整段掛在佔位席上，回收那一趣就跳過它。
+			// 的准入回收會把 clone 刪在 exec 進行中。整段掛在佔位席上，回收那一趟就跳過它。
 			retainInflight(id, kind: entry.kind)
 			defer { releaseInflight(id) }
 			let result: GuestExecResult = try await entry.control.exec(
@@ -254,7 +254,7 @@ public actor SessionStore {
 	///
 	/// 每個被收掉的 session 各記一筆 `drain` 事件——關機這條路上 session 一樣走到了終點，
 	/// 不記的話紀錄面只看得到「起」、看不到「訖」。收束本身不擲錯（單一 session 停不下來或
-	/// clone 刪不掉都不該擋住其餘 session），事件因此恒為 `ok`。
+	/// clone 刪不掉都不該擋住其餘 session），事件因此恆為 `ok`。
 	public func drain() async {
 		destroying.formUnion(table.keys)
 		defer { destroying.removeAll() }
@@ -317,7 +317,7 @@ public actor SessionStore {
 		/// guest 種類（准入逐種計數用）。
 		internal let kind: GuestKind
 
-		/// 目前握著這條 session 的操作數（spawn 一趣算一個、每個 execute 各算一個）。
+		/// 目前握著這條 session 的操作數（spawn 一趟算一個、每個 execute 各算一個）。
 		internal var holders: Int
 	}
 
@@ -352,14 +352,14 @@ public actor SessionStore {
 	///
 	/// 停機那一步有 await（Linux 的 stop、macOS 的 grace 最長 30 秒），期間 actor 可重入：控制面
 	/// 多半已先翻成 stopped，併發 spawn 的准入回收於是會把它當成沒人收的殘留、就地刪掉同一顆
-	/// clone，紀錄面也多出一筆「訖」。進停機之前先把 id 記在這裡、回收那一趣跳過它，等停機收斂
+	/// clone，紀錄面也多出一筆「訖」。進停機之前先把 id 記在這裡、回收那一趟跳過它，等停機收斂
 	/// 後由 destroy 自己收完再移除。
 	private var destroying: Set<String> = []
 
-	/// 手上還握著某條 session 的操作（spawn 整趣、execute 整段 exec），id → 佔位席。
+	/// 手上還握著某條 session 的操作（spawn 整趟、execute 整段 exec），id → 佔位席。
 	///
 	/// 這些 id 的 table 條目可能還沒寫進去（spawn 佔位在 provision 之前），或狀態已經翻成
-	/// stopped（guest 自行關機）卻還有人在用它的 clone。回收那一趣對集合內的 id 一律跳過、
+	/// stopped（guest 自行關機）卻還有人在用它的 clone。回收那一趟對集合內的 id 一律跳過、
 	/// 且照算一席——資源正握在手上。
 	///
 	/// 計數而非旗標：同一條 session 可以同時有多個 execute，用 Set 的話先收工的那個會把還在跑
@@ -415,7 +415,7 @@ public actor SessionStore {
 		}
 	}
 
-	/// 該種 guest 目前**在跑**的數量；已 stopped 的殘留在同一趣就地回收。
+	/// 該種 guest 目前**在跑**的數量；已 stopped 的殘留在同一趟就地回收。
 	///
 	/// 不計 stopped——席位佔的是真正跑著的 guest，把它們算進去會讓還沒 destroy 的殘留把後面的
 	/// spawn 擋在門外。但「只是不計」會開另一個洞：不呼叫 destroy 的呼叫端（斷線、guest 跑完
@@ -423,21 +423,21 @@ public actor SessionStore {
 	/// 沒有任何回收者，磁碟遲早被 clone 吃光。因此這裡逐條收掉：刪 clone、移出登記與 table，
 	/// 各記一筆 `reap`。
 	///
-	/// 狀態只查一次、回收與計數同一趣——Linux 側的 `currentState()` 會觸發一次 guest 內探測
-	/// （單次逾時 5 秒），分兩趣查等於把 spawn 的等待時間翻倍。
+	/// 狀態只查一次、回收與計數同一趟——Linux 側的 `currentState()` 會觸發一次 guest 內探測
+	/// （單次逾時 5 秒），分兩趟查等於把 spawn 的等待時間翻倍。
 	///
 	/// 已經有人在收的（``destroying``）或還有人握著的（``inflight``）不碰，且仍算它一席——
 	/// 停機尚未收斂、或 clone 正被 spawn／exec 用著，資源都還在手上。尚未寫進 table 的佔位席
 	/// （spawn 在 provision 之前就佔號）另外數，否則那台開到一半的 guest 不佔席。
 	///
 	/// - Important: 這條回收目前只對 macOS 生效——Linux 的控制面只在 start 失敗與強制停止時
-	///   翻成 stopped，容器自行 exit 不翻態、於是永遠不落進這一趣；那是 LinuxNodeKit 的後續
+	///   翻成 stopped，容器自行 exit 不翻態、於是永遠不落進這一趟；那是 LinuxNodeKit 的後續
 	///   工作，本層無從得知。
 	/// - Important: 呼叫端自己那一席也在內——spawn 先佔位才來數，於是回傳值含它自己，准入的
-	///   邊界因此是「超過上限才擋」。走訪佔位席的那一趣（本函式的第一個迴圈）整趣沒有 await，
+	///   邊界因此是「超過上限才擋」。走訪佔位席的那一趟（本函式的第一個迴圈）整趟沒有 await，
 	///   後到的請求必定看得見先到者的席位，兩個併發的 spawn 不會各自數到同一個較小值。
 	/// - Note: 「還有人握著就仍算它一席」有一道窄窗不成立：查狀態那一步讓出之後才掛上的
-	///   ``inflight``，會在回來的重看那一關落進不收也不計的分支——該趣少算一席，下一趣就補回來。
+	///   ``inflight``，會在回來的重看那一關落進不收也不計的分支——該趟少算一席，下一趟就補回來。
 	/// - Parameter kind: guest 種類。
 	/// - Returns: 回收之後，該種仍在跑的 session 數（含呼叫端自己已掛上的佔位席）。
 	private func runningCountReclaimingStopped(of kind: GuestKind) async -> Int {
@@ -465,8 +465,8 @@ public actor SessionStore {
 				!destroying.contains(id),
 				inflight[id] == nil
 			else { continue }
-			// 這一趣是准入的順手清理、不是呼叫端要的操作：收不掉的殘留不該把 spawn 擋在門外，
-			// 也不該擋住同一趣裡其餘殘留的回收，故兩處失敗都只當「沒收成」。
+			// 這一趟是准入的順手清理、不是呼叫端要的操作：收不掉的殘留不該把 spawn 擋在門外，
+			// 也不該擋住同一趟裡其餘殘留的回收，故兩處失敗都只當「沒收成」。
 			// 外層：body 自己不擲，唯一的擲錯來源是發事件那一步。
 			// 內層：clone 刪不掉就留下一個孤兒目錄（占磁碟、不影響正確性），與 destroy／drain
 			// 同一種處置；擲錯反而會讓這條殘留永遠留在 table 裡佔著席位。
