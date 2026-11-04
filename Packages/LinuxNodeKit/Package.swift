@@ -26,6 +26,7 @@ let package = Package(
 				.product(name: "NymphKit", package: "NymphKit"),
 				.product(name: "MachineKit", package: "MachineKit"),
 				.product(name: "Containerization", package: "containerization"),
+				.product(name: "ContainerizationOCI", package: "containerization"),
 				.product(name: "ContainerizationOS", package: "containerization"),
 			],
 			path: "Sources/LinuxNodeKit",
@@ -37,10 +38,11 @@ let package = Package(
 			name: "LinuxNodeKitTests",
 			dependencies: [
 				"LinuxNodeKit",
-				// 測試自己 import 這兩個（假介面用 `CIDRv4`／`Interface`），不靠受測 target
+				// 測試自己 import 這幾個（假介面用 `CIDRv4`／`Interface`、映像 layout 用 OCI 型別），不靠受測 target
 				// 的傳遞 import——後者若改掉依賴，測試會以「找不到模組」的形式壞掉。
 				.product(name: "Containerization", package: "containerization"),
 				.product(name: "ContainerizationExtras", package: "containerization"),
+				.product(name: "ContainerizationOCI", package: "containerization"),
 			],
 			path: "Tests/LinuxNodeKitTests"
 		),
