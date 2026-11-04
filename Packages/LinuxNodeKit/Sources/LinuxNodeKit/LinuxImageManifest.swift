@@ -126,12 +126,25 @@ public struct LinuxImageManifest: Codable, Sendable, Equatable {
 		return manifest
 	}
 
-	// MARK: Private
+	// MARK: Internal
+
+	/// 別名是否符合 `[A-Za-z0-9][A-Za-z0-9._-]*`。
+	/// - Parameter alias: 待驗的別名。
+	/// - Returns: 合規為 `true`。
+	internal static func isValidAlias(_ alias: String) -> Bool {
+		guard
+			let first: Character = alias.first,
+			LinuxImageManifest.isASCIIAlphanumeric(first)
+		else { return false }
+		return alias.allSatisfy { character in
+			LinuxImageManifest.isASCIIAlphanumeric(character) || ".-_".contains(character)
+		}
+	}
 
 	/// 驗版本與每一條目；訊息帶路徑，所以驗證要知道自己是從哪個檔來的。
 	/// - Parameter path: 這份表的來源路徑，只用於錯誤訊息。
 	/// - Throws: ``LoadError``。
-	private func validate(path: String) throws {
+	internal func validate(path: String) throws {
 		guard version == LinuxImageManifest.currentVersion else {
 			throw LoadError.unsupportedVersion(path: path, version: version)
 		}
@@ -147,18 +160,7 @@ public struct LinuxImageManifest: Codable, Sendable, Equatable {
 		}
 	}
 
-	/// 別名是否符合 `[A-Za-z0-9][A-Za-z0-9._-]*`。
-	/// - Parameter alias: 待驗的別名。
-	/// - Returns: 合規為 `true`。
-	private static func isValidAlias(_ alias: String) -> Bool {
-		guard
-			let first: Character = alias.first,
-			LinuxImageManifest.isASCIIAlphanumeric(first)
-		else { return false }
-		return alias.allSatisfy { character in
-			LinuxImageManifest.isASCIIAlphanumeric(character) || ".-_".contains(character)
-		}
-	}
+	// MARK: Private
 
 	/// 是否為 ASCII 的英數字元。
 	///
