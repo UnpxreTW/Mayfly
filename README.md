@@ -8,6 +8,21 @@
 
 macOS 26+（Apple Silicon）、Xcode 26+。建置 app 另需 Tuist，版本釘在 `.config/mise.toml`。
 
+## guest 管理者密碼
+
+guest 裡要用 `sudo` 的步驟（裝系統憑證、改系統設定）需要 guest 管理者的密碼。`mayfly secret` 把它存在本機使用者的 keychain、需要時餵給命令，不必放在腳本旁的明文檔：
+
+```shell
+mayfly secret set <別名>                 # 終端機上無回顯輸入兩次
+mayfly secret set <別名> < <密碼檔>      # 或從既有的檔案匯入一次（之後即可刪掉該檔）
+mayfly secret feed <別名> -- ssh admin@<guest IP> sudo -S <命令…>
+mayfly secret rm <別名>
+```
+
+- 密碼不收命令列參數；`feed` 把密碼加一個換行寫進命令的 stdin 後關閉，命令的輸出與結束碼原樣傳出。
+- 存放處是 generic password 項目（service 為 `Mayfly guest admin password`、account 為別名），一律經 `/usr/bin/security` 讀寫，`mayfly` 重建、重簽後照樣讀得到。`--keychain <絕對路徑>` 可改用另一個已存在的 keychain 檔。
+- keychain 的解鎖狀態綁在登入工作階段上：經 ssh 登入的每一條連線都是新的工作階段。keychain 鎖著時 `mayfly secret` 回報錯誤（等授權最多 30 秒、不會一直卡住），請在**同一個 shell** 裡先 `security unlock-keychain`、再接著跑 `mayfly secret`。
+
 ## 開發
 
 引擎、CLI 與畫面層都在 SwiftPM package 裡，各自建置與測試：
