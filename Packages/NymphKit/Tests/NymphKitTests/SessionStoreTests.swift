@@ -377,6 +377,59 @@ private final class SessionStoreTests {
 		#expect(await store.count == 2)
 	}
 
+	/// execute 進行中被 destroy 的 session 不再佔席：guest 已停、clone 已刪，手上那條 execute 還沒回
+	/// 也一樣。否則同種的下一個 spawn 會被擋到那條 execute 結束（呼叫端給的逾時可達小時級）為止。
+	@Test
+	private func `a destroyed session does not hold its seat while a command is still returning`() async throws {
+		let gate: Gate = .init()
+		let made: Locked<Int> = .init(0)
+		let engine: FakeGuestEngine = .init {
+			let index: Int = made.withLock {
+				$0 += 1
+				return $0
+			}
+			return FakeGuestControl(execGate: index == 1 ? gate : nil)
+		}
+		let store: SessionStore = .init(engines: [.mac: engine], maxSessions: 1, makeHandle: sequentialHandles())
+		let first: SpawnResult = try await store.spawn(
+			golden: "base",
+			kind: .mac,
+			cpus: 1,
+			memoryGiB: 1,
+			wait: false,
+			readinessTimeout: .seconds(1)
+		)
+		let pending: Task<ExecuteResult, any Error> = Task {
+			try await store.execute(
+				id: first.id,
+				command: ["sleep", "1"],
+				timeout: nil,
+				standardInput: nil,
+				workingDirectory: nil,
+				environment: [:]
+			)
+		}
+		await gate.waitUntilEntered()
+		_ = try await store.destroy(id: first.id, force: true)
+		let second: SpawnResult = try await store.spawn(
+			golden: "base",
+			kind: .mac,
+			cpus: 1,
+			memoryGiB: 1,
+			wait: false,
+			readinessTimeout: .seconds(1)
+		)
+		gate.release()
+		_ = try await pending.value
+		#expect(second.id != first.id)
+		#expect(await store.count == 1)
+		_ = try await store.status(id: second.id)
+		// 上限仍生效：第二台在跑時，第三個 spawn 照樣被擋。
+		await #expect(throws: NymphError.admissionDenied(limit: 1)) {
+			try await store.spawn(golden: "base", kind: .mac, cpus: 1, memoryGiB: 1, wait: false, readinessTimeout: .seconds(1))
+		}
+	}
+
 	/// 兩個同時進來的 spawn 不會雙雙放行：准入的計數本身含 await（回收那一趟向控制面查狀態），
 	/// 期間 actor 可重入，後到的那個必須看得見先到者已經佔住的席位、被擋在上限外。
 	@Test
