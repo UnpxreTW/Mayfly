@@ -35,16 +35,19 @@ public struct MacGuestExec: Sendable {
 	///   - username: 連入的 guest 帳號，預設 `runner`（golden 注入公鑰的那個帳號）。
 	///   - runner: 跑 ssh 的行程執行器，預設 ``SystemProcessRunner``；測試注入假執行器。
 	///   - sshExecutable: ssh 二進位路徑，預設 `/usr/bin/ssh`。
+	///   - launcher: 啟動不等結束的 ssh（`start` 用），預設 ``SystemProcessRunner``；測試注入假執行器。
 	public init(
 		identity: NymphHostKey,
 		username: String = "runner",
 		runner: any ProcessRunner = SystemProcessRunner(),
-		sshExecutable: String = "/usr/bin/ssh"
+		sshExecutable: String = "/usr/bin/ssh",
+		launcher: any ProcessLauncher = SystemProcessRunner()
 	) {
 		self.identity = identity
 		self.username = username
 		self.runner = runner
 		self.sshExecutable = sshExecutable
+		self.launcher = launcher
 	}
 
 	/// 以 nymph 私鑰 SSH 進 `ipAddress` 跑 `command`（argv），回 ``GuestExecResult``。
@@ -120,6 +123,25 @@ public struct MacGuestExec: Sendable {
 		workingDirectory: String?,
 		environment: [String: String]
 	) -> [String] {
+		sshArguments(
+			ipAddress: ipAddress,
+			remoteScript: Self.remoteCommand(
+				command: command,
+				workingDirectory: workingDirectory,
+				environment: environment
+			),
+			timeout: timeout
+		)
+	}
+
+	/// 同 ``sshArguments(ipAddress:command:timeout:workingDirectory:environment:)``，但遠端那段
+	/// 直接給一整串 shell 文字（呼叫端自行負責跳脫）。
+	/// - Parameters:
+	///   - ipAddress: guest IP。
+	///   - remoteScript: 遠端執行的 shell 文字。
+	///   - timeout: 非 nil 時下 `ConnectTimeout`。
+	/// - Returns: ssh argv。
+	internal func sshArguments(ipAddress: String, remoteScript: String, timeout: Duration?) -> [String] {
 		var arguments: [String] = [
 			"-i", identity.privateKeyURL.path,
 			"-o", "BatchMode=yes",
@@ -131,36 +153,27 @@ public struct MacGuestExec: Sendable {
 			arguments += ["-o", "ConnectTimeout=\(max(1, Int(timeout.components.seconds)))"]
 		}
 		arguments.append("\(username)@\(ipAddress)")
-		arguments.append(Self.remoteCommand(
-			command: command,
-			workingDirectory: workingDirectory,
-			environment: environment
-		))
+		arguments.append(remoteScript)
 		return arguments
 	}
 
-	// MARK: Private
-
 	/// ssh 的傳輸層錯誤 sentinel 結束碼（man ssh）。
-	private static let sshTransportFailureCode: Int32 = 255
-
-	/// nymph 穩定身份鑰。
-	private let identity: NymphHostKey
-
-	/// 連入的 guest 帳號。
-	private let username: String
+	internal static let sshTransportFailureCode: Int32 = 255
 
 	/// 跑 ssh 的行程執行器。
-	private let runner: any ProcessRunner
+	internal let runner: any ProcessRunner
 
 	/// ssh 二進位路徑。
-	private let sshExecutable: String
+	internal let sshExecutable: String
+
+	/// 啟動不等結束的 ssh。
+	internal let launcher: any ProcessLauncher
 
 	/// 把 argv + cwd + env 組成單一遠端 shell 命令字串。ssh 以登入 shell 跑單一字串、
 	/// 不保留 argv 邊界——每片段都 POSIX 單引號硬跳脫（含 arg / cwd / env 值），杜絕
 	/// 空白 / glob / `$` / `;` 在遠端被 re-split 或展開。env 走 `env K=V …` 前綴（不靠
 	/// sshd `AcceptEnv`、預設多半關）、鍵排序求輸出穩定；cwd 走 `cd '<dir>' && `。
-	private static func remoteCommand(
+	internal static func remoteCommand(
 		command: [String],
 		workingDirectory: String?,
 		environment: [String: String]
@@ -181,14 +194,22 @@ public struct MacGuestExec: Sendable {
 
 	/// POSIX sh 單引號硬跳脫：整段包單引號、內部單引號替換成 `'\''`（收單引號 → 字面
 	/// 單引號 → 再開單引號）。空字串回 `''`。
-	private static func shellQuote(_ value: String) -> String {
+	internal static func shellQuote(_ value: String) -> String {
 		"'" + value.replacingOccurrences(of: "'", with: "'\\''") + "'"
 	}
 
 	/// UTF-8 解碼（無法解的 byte 走替代字元、不失長度）。
-	private static func decodeUTF8(_ data: Data) -> String {
+	internal static func decodeUTF8(_ data: Data) -> String {
 		String(decoding: data, as: UTF8.self)
 	}
+
+	// MARK: Private
+
+	/// nymph 穩定身份鑰。
+	private let identity: NymphHostKey
+
+	/// 連入的 guest 帳號。
+	private let username: String
 }
 
 #if arch(arm64)

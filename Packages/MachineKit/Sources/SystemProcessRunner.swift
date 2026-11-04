@@ -112,3 +112,74 @@ public struct SystemProcessRunner: ProcessRunner {
 		private var value: Data = .init()
 	}
 }
+
+/// ``SystemProcessRunner`` 的 ``ProcessLauncher`` 面：用 Foundation `Process` 起真行程、
+/// 以 `readabilityHandler` 逐段讀 stdout / stderr。
+///
+/// 兩條 pipe 各自由 Foundation 的背景讀取驅動、互不阻塞，任一條 buffer 滿不會卡住另一條
+/// （與 ``SystemProcessRunner/run(executable:arguments:standardInput:timeout:)`` 的並行 drain
+/// 同一個理由）。stdin 在背景 queue 寫完即關——寫入量大於 pipe buffer 而對方還沒讀時，
+/// 啟動這一步不會被卡住。
+extension SystemProcessRunner: ProcessLauncher {
+
+	/// 啟動行程、掛上兩條串流的逐段讀取，回已啟動的行程（語意見 ``ProcessLauncher``）。
+	public func launch(
+		executable: String,
+		arguments: [String],
+		standardInput: Data?,
+		standardOutput: OutputTailBuffer,
+		standardError: OutputTailBuffer
+	) throws -> any LaunchedProcess {
+		let process: Process = .init()
+		process.executableURL = URL(fileURLWithPath: executable)
+		process.arguments = arguments
+		let stdoutPipe: Pipe = .init()
+		let stderrPipe: Pipe = .init()
+		let stdinPipe: Pipe = .init()
+		process.standardOutput = stdoutPipe
+		process.standardError = stderrPipe
+		process.standardInput = stdinPipe
+		// 三件事都到齊才算結束：行程退出、兩條 pipe 各讀到 EOF。只等退出的話，最後一段輸出
+		// 可能還在 pipe 裡沒進緩衝。
+		let group: DispatchGroup = .init()
+		group.enter()
+		group.enter()
+		group.enter()
+		SystemProcessRunner.drain(stdoutPipe, into: standardOutput, group: group)
+		SystemProcessRunner.drain(stderrPipe, into: standardError, group: group)
+		process.terminationHandler = { _ in group.leave() }
+		do {
+			try process.run()
+		} catch {
+			stdoutPipe.fileHandleForReading.readabilityHandler = nil
+			stderrPipe.fileHandleForReading.readabilityHandler = nil
+			throw error
+		}
+		DispatchQueue.global().async {
+			if let standardInput {
+				// 對方先結束（例如連線失敗）時寫入會失敗，丟掉即可：結束碼與 stderr 會說明原因。
+				try? stdinPipe.fileHandleForWriting.write(contentsOf: standardInput)
+			}
+			// 關寫端失敗只會發生在對方已結束、pipe 已斷時，此時沒有需要送 EOF 的對象。
+			try? stdinPipe.fileHandleForWriting.close()
+		}
+		return SystemLaunchedProcess(process: process, group: group)
+	}
+
+	/// 掛 `readabilityHandler`：非空就寫進緩衝；讀到空資料＝EOF，拆掉 handler 並離開 group。
+	/// - Parameters:
+	///   - pipe: 要讀的 pipe。
+	///   - buffer: 寫入的緩衝。
+	///   - group: 讀到 EOF 時離開的會合點。
+	private static func drain(_ pipe: Pipe, into buffer: OutputTailBuffer, group: DispatchGroup) {
+		pipe.fileHandleForReading.readabilityHandler = { handle in
+			let chunk: Data = handle.availableData
+			if chunk.isEmpty {
+				handle.readabilityHandler = nil
+				group.leave()
+			} else {
+				buffer.append(chunk)
+			}
+		}
+	}
+}
