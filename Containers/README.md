@@ -79,6 +79,40 @@ daemon 啟動時讀這份檔，日誌會印出讀到的路徑與條目數；檔�
 
 改完檔要重啟 daemon 才生效。第一次用新別名 spawn 會當場拉映像（還沒有 kernel 快取時另加一次 kernel 下載，初次約十幾分鐘），這段沒有逾時、呼叫端會一直等——換 digest 之後先手動 spawn 一次暖快取，再讓 job 進來。
 
+## 在本機燒映像
+
+沒有 registry、也不想經過上面的 workflow 時，可以在跑 daemon 的那台機器上直接燒一顆：從 base 映像起一台容器、跑一支設定腳本，把結果固化成新映像並寫進 `linux-images.json`。
+
+```shell
+mayfly linux bake linux-6.3.3 --base ci-swift --provision provision.sh --verify verify.sh
+```
+
+| 選項 | 說明 |
+|---|---|
+| `<別名>` | 寫進別名表的別名，規則同上一節。別名表已有同名別名時要加 `--replace`；只差大小寫的別名一律擋下（兩者會對到同一個映像名） |
+| `--base` | 起設定容器用的映像：別名或完整參照。容器接網路，設定腳本可以裝套件 |
+| `--provision` | 設定腳本，以 root、`bash -l` 在容器裡執行；非 0 結束就整次作廢 |
+| `--verify` | 選用。新映像起來、通過內建冒煙之後，在同一台容器裡多跑的驗證腳本 |
+| `--rootfs-gib` | 設定容器、冒煙容器與新別名共用的 rootfs 大小；省略就沿用 base 別名的大小 |
+| `--cpus`、`--memory-gib` | 設定容器與冒煙容器的 vCPU 數與記憶體（GiB），預設各 4 |
+| `--readiness-timeout` | 每台容器等就緒的上限（秒），預設 180 |
+| `--replace` | 別名已存在時覆寫 |
+
+燒的步驟：
+
+1. 照 base 起容器、跑設定腳本，輸出即時轉到 stderr。
+2. 用容器裡的 GNU tar 把整個 rootfs 匯出成一層（`/tmp`、`/var/tmp` 的內容與 `/etc/resolv.conf` 不進映像，掛上來的 `/proc`、`/sys`、`/dev` 也不進）。base 是 Alpine 這類用 busybox tar 的映像時，設定腳本要先裝 GNU tar。
+3. 封成單層映像，載入本機 image store，參照是 `mayfly.local/<小寫別名>:b<UTC 時刻>`。這個網域解析不到，萬一本機的映像不見了也不會從外面拉到同名的別人的映像。
+4. 以新映像起一台容器，逐條驗上面〈映像要滿足的條件〉（`HOME` 那一條改驗 `/etc/passwd` 裡 root 的家目錄有值：這一步的命令不帶映像設定的環境變數）；有 `--verify` 就接著跑它。任一項不過，新映像從 image store 移除、不寫別名表。
+5. 寫進別名表。成功時 stdout 印新映像的參照。
+
+使用時注意：
+
+- 燒的時候讓 daemon 停著，燒完再啟動它才會讀到新別名。image store 的參照表沒有跨行程的鎖，兩邊同時寫可能互相蓋掉；兩個行程各開一顆容器網路能否並存也還沒驗過。
+- 這支命令自己開容器，執行檔要帶虛擬化的 entitlement（`Scripts/build-signed-cli.sh` 建出的那一支）。
+- 不設逾時。要中途停下就送 SIGINT 或 SIGTERM：當下那台容器整台停掉、暫存檔收掉，不寫別名表。
+- 映像只有一層、未壓縮，佔的空間約等於 rootfs 的實際大小。同一個別名每燒一次多一顆映像（舊參照仍可用），不用的要自己清。
+
 ## 更新工具版本
 
 SwiftLint 與 SwiftFormat 的版本與 sha256 釘在 `Containers/ci-lint/Dockerfile` 的 `ARG` 裡。要升版就改那四行：版本號自己填，checksum 取下載回來的 zip 自己算（release 沒有附 checksum 檔）。
