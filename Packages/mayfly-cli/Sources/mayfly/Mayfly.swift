@@ -22,6 +22,8 @@ import ArgumentParser
 /// - **起 daemon**：`nymph`（常駐、開 socket）。
 /// - **MCP shim**：`mcp`（短命 stdio 轉接殼、橋接同一顆 socket；契約 #31 步③，見
 ///   ``MCPCommand``）。
+/// - **密碼保管（無 daemon）**：`secret set` / `rm` / `feed`——guest 管理者密碼存在 keychain、
+///   需要 `sudo` 時由這支 binary 餵進命令 stdin（見 ``SecretCommand``）。
 ///
 /// `destroy` 過載依 socket 連通性消歧（見 ``DestroyCommand``）。
 ///
@@ -44,7 +46,8 @@ struct Mayfly: AsyncParsableCommand {
 			ExecuteCommand.self,
 			ListCommand.self,
 			StatusCommand.self,
-			MCPCommand.self
+			MCPCommand.self,
+			SecretCommand.self
 		]
 	)
 
