@@ -335,6 +335,9 @@ public struct ToolError: Codable, Sendable, Equatable, Error {
 		case .execTimedOut:
 			self.init(code: "timed_out", message: "execute timed out")
 
+		case .execCancelled:
+			self.init(code: "cancelled", message: "execute was cancelled")
+
 		case .notAppleSilicon:
 			self.init(code: "not_apple_silicon", message: "nymph requires Apple Silicon")
 
