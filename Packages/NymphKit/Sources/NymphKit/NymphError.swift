@@ -36,6 +36,9 @@ public enum NymphError: Error, Sendable, Equatable {
 	/// exec 逾 timeout 未結束、已被終止。
 	case execTimedOut
 
+	/// exec 被取消、已被終止（所屬 session 被 destroy／drain）。
+	case execCancelled
+
 	/// host 非 Apple Silicon（daemon 需 Virtualization.framework）。
 	case notAppleSilicon
 
