@@ -43,8 +43,55 @@ public protocol GuestControl: Sendable {
 		environment: [String: String]
 	) async throws -> GuestExecResult
 
+	/// 在此 guest 內啟動命令、不等它結束：stdout／stderr 逐段寫進給定的緩衝，回一個可等待、
+	/// 可取消的執行。傳輸層起不來擲 ``NymphError``（notReady / ipUnavailable / transportFailure）。
+	///
+	/// 預設實作擲 ``NymphError/internalFailure(_:)``——不支援背景執行的 guest 不必實作。
+	func startExec(
+		_ command: [String],
+		standardInput: String?,
+		workingDirectory: String?,
+		environment: [String: String],
+		standardOutput: OutputTailBuffer,
+		standardError: OutputTailBuffer
+	) async throws -> any GuestExecution
+
+	/// 對此 guest 上所有進行中的命令發出取消，**不等**終止流程跑完就回（destroy／drain 停機前
+	/// 呼叫；終止流程要另開一趟連線，guest 失聯時會等到連線上限）。
+	///
+	/// 預設實作不做事。
+	func cancelRunningCommands() async
+
 	/// 刪掉此 guest 的 clone bundle（destroy 收尾；stop 之後呼叫）。
 	func destroyClone() throws
+}
+
+/// ``GuestControl`` 新 requirement 的預設實作：沒有背景執行的 guest 不必實作。
+extension GuestControl {
+
+	/// 預設不支援：擲 ``NymphError/internalFailure(_:)``。
+	/// - Parameters:
+	///   - command: 遠端命令 argv。
+	///   - standardInput: 餵給 stdin 的文字。
+	///   - workingDirectory: 遠端 `cd` 的目錄。
+	///   - environment: 額外環境變數。
+	///   - standardOutput: stdout 的落點。
+	///   - standardError: stderr 的落點。
+	/// - Returns: 不回傳（恆擲錯）。
+	public func startExec(
+		_ command: [String],
+		standardInput: String?,
+		workingDirectory: String?,
+		environment: [String: String],
+		standardOutput: OutputTailBuffer,
+		standardError: OutputTailBuffer
+	) async throws -> any GuestExecution {
+		throw NymphError.internalFailure("detached exec is not supported for this guest")
+	}
+
+	/// 預設不做事：沒有經 ``startExec(_:standardInput:workingDirectory:environment:standardOutput:standardError:)``
+	/// 啟動的命令可取消。
+	public func cancelRunningCommands() async {}
 }
 
 /// golden 別名 → 一台備妥（clone 完成、尚未 start）的 guest。`SessionStore.spawn` 在
