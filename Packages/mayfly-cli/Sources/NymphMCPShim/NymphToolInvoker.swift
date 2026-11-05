@@ -154,6 +154,9 @@ enum NymphToolInvoker {
 		case "timed_out":
 			return "the operation timed out"
 
+		case "cancelled":
+			return "the command was cancelled because its session was destroyed"
+
 		case "not_apple_silicon":
 			return "nymph requires Apple Silicon"
 

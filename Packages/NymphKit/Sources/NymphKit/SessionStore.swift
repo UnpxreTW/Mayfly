@@ -236,6 +236,8 @@ public actor SessionStore {
 			}
 			destroying.insert(id)
 			defer { destroying.remove(id) }
+			// 停機之前先發取消：guest 停了，連在上面的 ssh 不會自己察覺，進行中的命令會一直掛到逾時。
+			await entry.control.cancelRunningCommands()
 			if force {
 				try? await entry.control.forceStop()
 			} else {
@@ -260,6 +262,7 @@ public actor SessionStore {
 		defer { destroying.removeAll() }
 		for entry in table.values {
 			_ = try? await logging(.drain, sessionID: entry.id, force: true) { trace in
+				await entry.control.cancelRunningCommands()
 				try? await entry.control.forceStop()
 				trace?.mark(.stop)
 				try? entry.control.destroyClone()

@@ -106,8 +106,12 @@ public struct RealGuestEngine: GuestEngine {
 }
 
 /// ``GuestControl`` 的真機實作：把 store 的抽象動作轉成引擎呼叫。VM 活在 `session`（actor）
-/// 內；exec 走 `MacGuestExec` 的 session overload（現查 lease IP）；`MacGuestExecError` 在此映成
+/// 內；exec 經 ``startExec(_:standardInput:workingDirectory:environment:standardOutput:standardError:)``
+/// 走 `MacGuestExec.start`（先現查 lease IP）；`MacGuestExecError` 在此映成
 /// ``NymphError``（傳輸層錯誤面）。
+///
+/// 同步 exec 與背景 exec 都經同一個可取消的入口啟動、登記在 ``running``，destroy／drain 才收得到
+/// 進行中的命令。
 struct RealGuestControl: GuestControl {
 
 	/// VM session（actor）。
@@ -121,6 +125,9 @@ struct RealGuestControl: GuestControl {
 
 	/// CoW 複製器（destroy clone 用）。
 	let cloner: MacGuestCloner
+
+	/// 進行中的命令。
+	internal let running: RunningGuestCommands = .init()
 
 	func start() async throws {
 		try await session.start()
@@ -176,18 +183,83 @@ struct RealGuestControl: GuestControl {
 		workingDirectory: String?,
 		environment: [String: String]
 	) async throws -> GuestExecResult {
+		// 同步路徑回全文、不截斷：緩衝不設上限。
+		let standardOutput: OutputTailBuffer = .init(capacity: .max)
+		let standardError: OutputTailBuffer = .init(capacity: .max)
+		let execution: any GuestExecution = try await startExec(
+			command,
+			standardInput: standardInput,
+			workingDirectory: workingDirectory,
+			environment: environment,
+			standardOutput: standardOutput,
+			standardError: standardError
+		)
+		switch await execution.wait(timeout: timeout) {
+		case let .exited(exitCode):
+			return GuestExecResult(
+				standardOutput: standardOutput.snapshot().text,
+				standardError: standardError.snapshot().text,
+				exitCode: exitCode
+			)
+		case .timedOut:
+			throw NymphError.execTimedOut
+		case .cancelled:
+			throw NymphError.execCancelled
+		case let .transportFailure(detail):
+			throw NymphError.transportFailure(detail)
+		}
+	}
+
+	/// 現查 IP 後以 `MacGuestExec.start` 啟動，並登記在 ``running``——destroy／drain 的取消靠這份登記。
+	/// - Parameters:
+	///   - command: 遠端命令 argv。
+	///   - standardInput: 餵給 stdin 的文字。
+	///   - workingDirectory: 遠端 `cd` 的目錄。
+	///   - environment: 額外環境變數。
+	///   - standardOutput: stdout 的落點。
+	///   - standardError: stderr 的落點。
+	/// - Returns: 執行中的命令。
+	internal func startExec(
+		_ command: [String],
+		standardInput: String?,
+		workingDirectory: String?,
+		environment: [String: String],
+		standardOutput: OutputTailBuffer,
+		standardError: OutputTailBuffer
+	) async throws -> any GuestExecution {
 		await promoteIfBooting()
+		guard case .ready = await session.state else {
+			throw NymphError.notReady
+		}
+		// 與同步 `run` 的 session 版同一套解法：現查 host lease、退回 readiness 解出的 IP。
+		guard let ipAddress: String = await currentIP() else {
+			throw NymphError.ipUnavailable
+		}
+		let handle: MacGuestExecHandle
 		do {
-			return try await exec.run(
+			handle = try exec.start(
 				command,
-				on: session,
-				timeout: timeout,
+				onHost: ipAddress,
 				standardInput: standardInput,
 				workingDirectory: workingDirectory,
-				environment: environment
+				environment: environment,
+				standardOutput: standardOutput,
+				standardError: standardError
 			)
 		} catch let error as MacGuestExecError {
 			throw RealGuestControl.map(error)
+		}
+		running.track(handle)
+		return handle
+	}
+
+	/// 每條取消各開一個 task、不等：終止流程要另開一趟連線，guest 失聯時會等到連線上限，
+	/// 呼叫端（destroy／drain）不該被這段卡住。
+	internal func cancelRunningCommands() async {
+		for execution in running.current() {
+			Task {
+				await execution.cancel()
+			}
 		}
 	}
 

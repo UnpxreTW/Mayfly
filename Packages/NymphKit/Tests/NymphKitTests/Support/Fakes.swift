@@ -133,6 +133,9 @@ final class FakeGuestControl: GuestControl, @unchecked Sendable {
 		var state: SessionState = .idle
 
 		var execCommands: [[String]] = []
+
+		/// 取消與停機的呼叫序（`cancel`／`forceStop`／`gracefulStop`）。
+		internal var stopSequence: [String] = []
 	}
 
 	init(
@@ -203,6 +206,7 @@ final class FakeGuestControl: GuestControl, @unchecked Sendable {
 
 	func forceStop() async throws {
 		recorded.withLock {
+			$0.stopSequence.append("forceStop")
 			$0.forceStopped = true
 			$0.state = .stopped
 		}
@@ -210,6 +214,7 @@ final class FakeGuestControl: GuestControl, @unchecked Sendable {
 
 	func gracefulStop(within grace: Duration) async throws {
 		recorded.withLock {
+			$0.stopSequence.append("gracefulStop")
 			$0.gracefulStopped = true
 			$0.state = .stopped
 		}
@@ -235,6 +240,11 @@ final class FakeGuestControl: GuestControl, @unchecked Sendable {
 			await execGate.enterAndWait()
 		}
 		return try execOutcome.get()
+	}
+
+	/// 只記下呼叫序，不動任何命令。
+	internal func cancelRunningCommands() async {
+		recorded.withLock { $0.stopSequence.append("cancel") }
 	}
 
 	func destroyClone() throws {
