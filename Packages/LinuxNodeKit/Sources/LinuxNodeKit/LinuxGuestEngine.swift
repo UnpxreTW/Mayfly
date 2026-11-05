@@ -67,6 +67,36 @@ public struct LinuxGuestEngine: GuestEngine {
 		memoryGiB: Int,
 		readinessTimeout: Duration
 	) async throws -> ProvisionedGuest {
+		let spec: LinuxGuestSpec = try resolver.resolve(golden)
+		let guest: (control: LinuxGuestControl, clonePath: URL) = try await makeGuest(
+			spec: spec,
+			cpus: cpus,
+			memoryGiB: memoryGiB,
+			readinessTimeout: readinessTimeout
+		)
+		return ProvisionedGuest(control: guest.control, goldenAlias: golden, clonePath: guest.clonePath)
+	}
+
+	// MARK: Internal
+
+	/// 照一份已解析好的 ``LinuxGuestSpec`` 建一台容器（未 start）。
+	///
+	/// ``provision(golden:cpus:memoryGiB:readinessTimeout:)`` 先解別名再走這裡；燒映像時直接給
+	/// spec——它要自己決定 rootfs 大小，也要拿到具體的 ``LinuxGuestControl`` 來串流輸出。
+	///
+	/// - Parameters:
+	///   - spec: 映像參照、kernel 與 rootfs 大小。
+	///   - cpus: vCPU 數。
+	///   - memoryGiB: 記憶體（GiB）。
+	///   - readinessTimeout: readiness 等待上限。
+	/// - Returns: 控制面與 per-container 狀態目錄。
+	/// - Throws: ``NymphError``。
+	internal func makeGuest(
+		spec: LinuxGuestSpec,
+		cpus: Int,
+		memoryGiB: Int,
+		readinessTimeout: Duration
+	) async throws -> (control: LinuxGuestControl, clonePath: URL) {
 		guard memoryGiB > 0, UInt64(memoryGiB) <= UInt64.max >> 30 else {
 			throw NymphError.internalFailure("memory_gib out of range: \(memoryGiB)")
 		}
@@ -78,7 +108,6 @@ public struct LinuxGuestEngine: GuestEngine {
 		} catch {
 			throw NymphError.cloneFailed("linux container network unavailable: \(error)")
 		}
-		let spec: LinuxGuestSpec = try resolver.resolve(golden)
 		let kernelPath: URL = try await kernelProvisioner.prepare(spec.kernel)
 		let kernel: Kernel = .init(path: kernelPath, platform: .linuxArm)
 		let containerID: String = LinuxGuestEngine.makeContainerID()
@@ -129,7 +158,7 @@ public struct LinuxGuestEngine: GuestEngine {
 		// 對齊 containerization 0.37.0 `ContainerManager` 的實際佈局（已對上游原始碼驗證）：
 		// per-container 狀態（rootfs.ext4／bootlog.log）落在 `<root>/containers/<id>`。
 		let clonePath: URL = stateRoot.appending(component: "containers").appending(component: containerID)
-		return ProvisionedGuest(control: control, goldenAlias: golden, clonePath: clonePath)
+		return (control, clonePath)
 	}
 
 	// MARK: Private

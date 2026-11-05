@@ -157,7 +157,72 @@ final class LinuxGuestControl: GuestControl, @unchecked Sendable {
 		try withLock { try manager.delete(containerID) }
 	}
 
+	// MARK: Internal
+
+	/// 本容器的 image store（建出容器的 manager 所用的那一份）。
+	///
+	/// 燒映像時要從這裡讀 base 映像的 config，再把固化出來的映像載回同一份 store。
+	internal var imageStore: ImageStore {
+		withLock { manager.imageStore }
+	}
+
+	/// 執行一條命令，輸出邊跑邊交給呼叫端的 ``Writer``、不留在記憶體。
+	///
+	/// 給輸出大到不該整份收進記憶體（rootfs 匯出）或需要即時轉給操作者看的命令用。與
+	/// ``exec(_:timeout:standardInput:workingDirectory:environment:)`` 同一道 readiness 檢查，
+	/// 但**不帶逾時**：`LinuxProcess.wait(timeoutInSeconds:)` 逾時只擲錯、不收行程，要上限得由
+	/// 呼叫端整台 ``forceStop()``——停機後這裡的等待隨之結束並擲錯。
+	///
+	/// - Parameters:
+	///   - command: argv。
+	///   - standardInput: 送進 stdin 的位元組；`nil`＝不接 stdin。
+	///   - standardOutput: stdout 的去處。
+	///   - standardError: stderr 的去處。
+	/// - Returns: 命令的結束碼。
+	/// - Throws: ``NymphError/notReady``，或啟動、等待行程時的錯誤（經 ``LinuxGuestErrorMapping`` 轉換）。
+	internal func stream(
+		_ command: [String],
+		standardInput: Data?,
+		standardOutput: any Writer,
+		standardError: any Writer
+	) async throws -> Int32 {
+		if withLock({ lifecycleState }) == .booting {
+			await promoteIfReady()
+		}
+		guard withLock({ lifecycleState }) == .ready else { throw NymphError.notReady }
+		do {
+			return try await launch(
+				Invocation(command: command, standardInput: standardInput),
+				standardOutput: standardOutput,
+				standardError: standardError
+			)
+		} catch let error as NymphError {
+			throw error
+		} catch {
+			throw LinuxGuestErrorMapping.map(error)
+		}
+	}
+
 	// MARK: Private
+
+	/// 一次 exec 的命令與執行條件。
+	private struct Invocation: Sendable {
+
+		/// argv。
+		internal let command: [String]
+
+		/// 等待上限（秒）；`nil`＝不設。
+		internal var timeoutSeconds: Int64?
+
+		/// 送進 stdin 的位元組；`nil`＝不接 stdin。
+		internal var standardInput: Data?
+
+		/// 工作目錄；`nil`＝`/`。
+		internal var workingDirectory: String?
+
+		/// 疊加在預設環境變數之上的變數。
+		internal var environment: [String: String] = [:]
+	}
 
 	/// readiness 探測輪詢間隔（毫秒）。
 	private static let readinessPollIntervalMilliseconds: Int = 100
@@ -229,28 +294,51 @@ final class LinuxGuestControl: GuestControl, @unchecked Sendable {
 	) async throws -> GuestExecResult {
 		let stdout: BufferedOutputWriter = .init()
 		let stderr: BufferedOutputWriter = .init()
-		let processID: String = "exec-\(UUID().uuidString)"
-		let process: LinuxProcess = try await container.exec(processID) { configuration in
-			configuration.arguments = command
-			configuration.workingDirectory = workingDirectory ?? "/"
-			// 附加、不取代預設 environmentVariables——保留內建 PATH，呼叫端額外變數
-			// 疊加上去，避免「一傳自訂環境變數就丟失 PATH」的落地陷阱。
-			if !environment.isEmpty {
-				configuration.environmentVariables.append(contentsOf: environment.map { "\($0.key)=\($0.value)" })
-			}
-			configuration.stdout = stdout
-			configuration.stderr = stderr
-			if let standardInput {
-				configuration.stdin = StaticInputStream(data: Data(standardInput.utf8))
-			}
-		}
-		try await process.start()
-		let status: ExitStatus = try await process.wait(timeoutInSeconds: timeoutSeconds)
+		let invocation: Invocation = .init(
+			command: command,
+			timeoutSeconds: timeoutSeconds,
+			standardInput: standardInput.map { Data($0.utf8) },
+			workingDirectory: workingDirectory,
+			environment: environment
+		)
+		let exitCode: Int32 = try await launch(invocation, standardOutput: stdout, standardError: stderr)
 		return GuestExecResult(
 			standardOutput: String(data: stdout.data, encoding: .utf8) ?? "",
 			standardError: String(data: stderr.data, encoding: .utf8) ?? "",
-			exitCode: status.exitCode
+			exitCode: exitCode
 		)
+	}
+
+	/// 起一個 exec 行程、等它結束；輸出寫進呼叫端給的 ``Writer``。
+	/// - Parameters:
+	///   - invocation: 命令與執行條件。
+	///   - standardOutput: stdout 的去處。
+	///   - standardError: stderr 的去處。
+	/// - Returns: 結束碼。
+	/// - Throws: 啟動或等待行程時的 Containerization 錯誤。
+	private func launch(
+		_ invocation: Invocation,
+		standardOutput: any Writer,
+		standardError: any Writer
+	) async throws -> Int32 {
+		let processID: String = "exec-\(UUID().uuidString)"
+		let process: LinuxProcess = try await container.exec(processID) { configuration in
+			configuration.arguments = invocation.command
+			configuration.workingDirectory = invocation.workingDirectory ?? "/"
+			// 附加、不取代預設 environmentVariables——保留內建 PATH，呼叫端額外變數
+			// 疊加上去，避免「一傳自訂環境變數就丟失 PATH」的落地陷阱。
+			if !invocation.environment.isEmpty {
+				configuration.environmentVariables.append(contentsOf: invocation.environment.map { "\($0.key)=\($0.value)" })
+			}
+			configuration.stdout = standardOutput
+			configuration.stderr = standardError
+			if let standardInput: Data = invocation.standardInput {
+				configuration.stdin = StaticInputStream(data: standardInput)
+			}
+		}
+		try await process.start()
+		let status: ExitStatus = try await process.wait(timeoutInSeconds: invocation.timeoutSeconds)
+		return status.exitCode
 	}
 }
 
