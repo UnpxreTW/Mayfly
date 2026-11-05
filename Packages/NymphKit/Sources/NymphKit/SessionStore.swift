@@ -115,8 +115,8 @@ public actor SessionStore {
 			// 若自行停機，別人的准入回收不會把這條當成殘留收走——那會讓呼叫端拿到一個當場即
 			// noSuchID 的 handle、紀錄面的「訖」還排在「起」之前。
 			let id: String = mintHandle()
-			retainInflight(id, kind: kind)
-			defer { releaseInflight(id) }
+			retainInflight(id, kind: kind, spawning: true)
+			defer { releaseInflight(id, spawning: true) }
 			guard await runningCountReclaimingStopped(of: kind) <= ceiling else {
 				throw NymphError.admissionDenied(limit: ceiling)
 			}
@@ -319,6 +319,13 @@ public actor SessionStore {
 
 		/// 目前握著這條 session 的操作數（spawn 一趟算一個、每個 execute 各算一個）。
 		internal var holders: Int
+
+		/// spawn 那一趟是否還沒回。
+		///
+		/// table 裡沒有條目的佔位席只在這一種情況下代表一台 guest：spawn 在 provision 之前就佔號。
+		/// 另一種沒有條目的佔位席是 session 已被 destroy／drain 收走、手上的 execute 還沒回——guest
+		/// 已停、clone 已刪，那一席不該再擋後面的 spawn。
+		internal var spawning: Bool
 	}
 
 	/// kind → 該種 guest 的引擎；查無即擲 ``NymphError/engineUnavailable(_:)``。
@@ -370,20 +377,27 @@ public actor SessionStore {
 	/// - Parameters:
 	///   - id: session handle。
 	///   - kind: guest 種類（table 條目還不存在時，准入靠這欄知道該算進哪一種的計數）。
-	private func retainInflight(_ id: String, kind: GuestKind) {
+	///   - spawning: 掛的是 spawn 那一趟。
+	private func retainInflight(_ id: String, kind: GuestKind, spawning: Bool = false) {
 		if var seat: InflightSeat = inflight[id] {
 			seat.holders += 1
+			seat.spawning = seat.spawning || spawning
 			inflight[id] = seat
 		} else {
-			inflight[id] = InflightSeat(kind: kind, holders: 1)
+			inflight[id] = InflightSeat(kind: kind, holders: 1, spawning: spawning)
 		}
 	}
 
 	/// 放掉一席；最後一個放手的把條目移除。
-	/// - Parameter id: session handle。
-	private func releaseInflight(_ id: String) {
+	/// - Parameters:
+	///   - id: session handle。
+	///   - spawning: 放的是 spawn 那一趟。
+	private func releaseInflight(_ id: String, spawning: Bool = false) {
 		guard var seat: InflightSeat = inflight[id] else { return }
 		seat.holders -= 1
+		if spawning {
+			seat.spawning = false
+		}
 		inflight[id] = seat.holders > 0 ? seat : nil
 	}
 
@@ -428,7 +442,9 @@ public actor SessionStore {
 	///
 	/// 已經有人在收的（``destroying``）或還有人握著的（``inflight``）不碰，且仍算它一席——
 	/// 停機尚未收斂、或 clone 正被 spawn／exec 用著，資源都還在手上。尚未寫進 table 的佔位席
-	/// （spawn 在 provision 之前就佔號）另外數，否則那台開到一半的 guest 不佔席。
+	/// （spawn 在 provision 之前就佔號）另外數，否則那台開到一半的 guest 不佔席。已被
+	/// destroy／drain 移出 table、只剩 execute 還沒回的佔位席不數：guest 已停、clone 已刪，
+	/// 手上只剩一條等著結束的連線，算它一席會把後面的 spawn 擋到那條 execute 逾時為止。
 	///
 	/// - Important: 這條回收目前只對 macOS 生效——Linux 的控制面只在 start 失敗與強制停止時
 	///   翻成 stopped，容器自行 exit 不翻態、於是永遠不落進這一趟；那是 LinuxNodeKit 的後續
@@ -442,7 +458,7 @@ public actor SessionStore {
 	/// - Returns: 回收之後，該種仍在跑的 session 數（含呼叫端自己已掛上的佔位席）。
 	private func runningCountReclaimingStopped(of kind: GuestKind) async -> Int {
 		var count: Int = 0
-		for (id, seat) in inflight where seat.kind == kind && table[id] == nil {
+		for (id, seat) in inflight where seat.kind == kind && seat.spawning && table[id] == nil {
 			count += 1
 		}
 		for id in table.compactMap({ $0.value.kind == kind ? $0.key : nil }) {
