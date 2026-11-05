@@ -27,6 +27,17 @@ private final class MacGuestExecHandleTests {
 		#expect(launcher.lastArguments[launcher.lastArguments.count - 2] == "runner@10.0.0.1")
 	}
 
+	/// 啟動的那一趟帶連線上限與對端存活探測：沒有整體上限的命令，連不上或中途失聯時都不會無限期掛著。
+	@Test
+	private func `start bounds connect and detects a lost guest`() throws {
+		let launcher: FakeLauncher = .init()
+		_ = try makeExec(launcher: launcher, runner: quietRunner())
+			.start(["true"], onHost: "10.0.0.1", standardOutput: .init(), standardError: .init())
+		#expect(launcher.lastArguments.contains("ConnectTimeout=15"))
+		#expect(launcher.lastArguments.contains("ServerAliveInterval=15"))
+		#expect(launcher.lastArguments.contains("ServerAliveCountMax=4"))
+	}
+
 	/// 自行結束：結束碼原樣回、不走終止流程。
 	@Test
 	private func `natural exit returns exit code`() async throws {

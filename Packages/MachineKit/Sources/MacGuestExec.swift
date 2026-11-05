@@ -116,6 +116,7 @@ public struct MacGuestExec: Sendable {
 	/// **不碰 known_hosts**（`StrictHostKeyChecking=no` + `UserKnownHostsFile=/dev/null`）：
 	/// ephemeral guest 每台 host key 不同、TOFU 只會噪音兼卡住；`BatchMode=yes` 杜絕任何
 	/// 互動提示（key-only、無 fallback 到密碼）；`LogLevel=ERROR` 壓掉 known-hosts 警告。
+	/// 存活探測見 ``sshArguments(ipAddress:remoteScript:timeout:)``。
 	func sshArguments(
 		ipAddress: String,
 		command: [String],
@@ -136,6 +137,11 @@ public struct MacGuestExec: Sendable {
 
 	/// 同 ``sshArguments(ipAddress:command:timeout:workingDirectory:environment:)``，但遠端那段
 	/// 直接給一整串 shell 文字（呼叫端自行負責跳脫）。
+	///
+	/// 連線建立後每 ``serverAliveInterval`` 探一次對端、連續 ``serverAliveCountMax`` 次沒回應就斷線：
+	/// guest 失聯（停機、網路斷）時 ssh 約一分鐘內收尾，不會一直掛到呼叫端的上限。斷線時 ssh 以 255
+	/// 結束（man ssh_config `ServerAliveCountMax`：「ssh will disconnect from the server, terminating the
+	/// session」；255 見 ``sshTransportFailureCode``）。
 	/// - Parameters:
 	///   - ipAddress: guest IP。
 	///   - remoteScript: 遠端執行的 shell 文字。
@@ -147,7 +153,9 @@ public struct MacGuestExec: Sendable {
 			"-o", "BatchMode=yes",
 			"-o", "StrictHostKeyChecking=no",
 			"-o", "UserKnownHostsFile=/dev/null",
-			"-o", "LogLevel=ERROR"
+			"-o", "LogLevel=ERROR",
+			"-o", "ServerAliveInterval=\(max(1, Int(Self.serverAliveInterval.components.seconds)))",
+			"-o", "ServerAliveCountMax=\(Self.serverAliveCountMax)"
 		]
 		if let timeout {
 			arguments += ["-o", "ConnectTimeout=\(max(1, Int(timeout.components.seconds)))"]
@@ -156,6 +164,16 @@ public struct MacGuestExec: Sendable {
 		arguments.append(remoteScript)
 		return arguments
 	}
+
+	/// 對端存活探測的間隔。
+	internal static let serverAliveInterval: Duration = .seconds(15)
+
+	/// 連續幾次探測沒回應就斷線。
+	internal static let serverAliveCountMax: Int = 4
+
+	/// ``start(_:onHost:standardInput:workingDirectory:environment:standardOutput:standardError:)``
+	/// 建立連線的上限：該入口不帶整體上限，連到沒有回應的位址時不能落回系統的 TCP 預設。
+	internal static let connectTimeout: Duration = .seconds(15)
 
 	/// ssh 的傳輸層錯誤 sentinel 結束碼（man ssh）。
 	internal static let sshTransportFailureCode: Int32 = 255

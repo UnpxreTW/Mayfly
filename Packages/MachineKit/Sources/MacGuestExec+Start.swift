@@ -50,7 +50,7 @@ extension MacGuestExec {
 		do {
 			process = try launcher.launch(
 				executable: sshExecutable,
-				arguments: sshArguments(ipAddress: ipAddress, remoteScript: script, timeout: nil),
+				arguments: sshArguments(ipAddress: ipAddress, remoteScript: script, timeout: MacGuestExec.connectTimeout),
 				standardInput: standardInput.map { Data($0.utf8) },
 				standardOutput: standardOutput,
 				standardError: standardError
