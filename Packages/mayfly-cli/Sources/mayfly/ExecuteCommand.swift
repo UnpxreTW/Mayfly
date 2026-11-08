@@ -17,6 +17,10 @@ import NymphKit
 ///
 /// 選項須置於 id 之前（命令陣列 passthrough 捕獲其後全部 token）：
 /// `mayfly execute --timeout 30 <id> ls -la`。
+///
+/// 帶 `--detach` 則不等命令結束：送出即回，stdout 印背景 exec 的 id 一行、退出碼 0；之後以
+/// `exec-output` 取輸出與結束碼、以 `exec-cancel` 取消。其餘選項（`--timeout`／`--cwd`／
+/// `--env`／`--stdin`）照樣生效。
 struct ExecuteCommand: AsyncParsableCommand {
 
 	static let configuration: CommandConfiguration = .init(
@@ -49,6 +53,13 @@ struct ExecuteCommand: AsyncParsableCommand {
 	@Flag(name: .customLong("stdin"), help: "Forward this process's stdin to the remote command.")
 	var forwardStdin = false
 
+	/// 不等命令結束：送出即印背景 exec 的 id。
+	@Flag(
+		name: .customLong("detach"),
+		help: "Start the command in the background and print its exec id instead of waiting."
+	)
+	internal var detach: Bool = false
+
 	/// 紀錄門檻（`--log-level`；未給時看 `LOG_LEVEL`）。
 	@OptionGroup
 	internal var logging: LoggingOptions
@@ -61,23 +72,23 @@ struct ExecuteCommand: AsyncParsableCommand {
 		let standardInput: String? = forwardStdin
 			? String(decoding: FileHandle.standardInput.readDataToEndOfFile(), as: UTF8.self)
 			: nil
-		let request: NymphRequest = .execute(ExecuteParams(
+		let params: ExecuteParams = .init(
 			id: id,
 			command: command,
 			timeoutSeconds: timeoutSeconds,
 			standardInput: standardInput,
 			workingDirectory: workingDirectory,
 			environment: environment
-		))
-		switch try await NymphClientSupport.send(request) {
-		case let .execute(result):
+		)
+		switch try await NymphClientSupport.send(detach ? .executeDetached(params) : .execute(params)) {
+		case let .execSubmit(result) where detach:
+			CommandOutput.write(result.execID)
+		case let .execute(result) where !detach:
 			FileHandle.standardOutput.write(Data(result.standardOutput.utf8))
 			FileHandle.standardError.write(Data(result.standardError.utf8))
 			throw ExitCode(result.exit)
-
 		case let .toolError(error):
 			throw NymphClientSupport.fail(error)
-
 		default:
 			throw NymphClientSupport.unexpectedResponse()
 		}
