@@ -117,6 +117,10 @@ enum NymphToolInvoker {
 
 		case let .toolError(error):
 			return errorResult(code: error.code, message: daemonErrorMessage(for: error.code))
+
+		case .execSubmit, .execOutput, .execCancel:
+			// 背景 exec 只開放給 daemon socket 直連方；shim 不送這三種請求，回應也就不該出現。
+			return errorResult(code: "internal_error", message: "an internal shim error occurred")
 		}
 	}
 
