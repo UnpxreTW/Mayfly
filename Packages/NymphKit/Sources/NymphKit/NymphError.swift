@@ -36,8 +36,14 @@ public enum NymphError: Error, Sendable, Equatable {
 	/// exec 逾 timeout 未結束、已被終止。
 	case execTimedOut
 
-	/// exec 被取消、已被終止（所屬 session 被 destroy／drain）。
+	/// exec 被取消、已被終止（呼叫端取消，或所屬 session 被 destroy／drain）。
 	case execCancelled
+
+	/// 背景 exec 登記簿無此 id（從未有過，或已結束且被淘汰）。
+	case execNotFound(String)
+
+	/// 背景 exec 已結束、無從取消。
+	case execNotRunning(String)
 
 	/// host 非 Apple Silicon（daemon 需 Virtualization.framework）。
 	case notAppleSilicon
