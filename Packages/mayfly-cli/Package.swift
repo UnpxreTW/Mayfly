@@ -53,7 +53,9 @@ let package = Package(
 			name: "mayflyTests",
 			dependencies: [
 				"mayfly",
+				.product(name: "ArgumentParser", package: "swift-argument-parser"),
 				.product(name: "Logging", package: "swift-log"),
+				.product(name: "NymphKit", package: "NymphKit"),
 			],
 			path: "Tests/mayflyTests"
 		),
