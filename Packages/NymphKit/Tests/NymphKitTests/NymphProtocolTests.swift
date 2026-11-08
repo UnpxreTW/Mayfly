@@ -39,6 +39,10 @@ private final class NymphProtocolTests {
 			.list(ListParams(all: true)),
 			.status(StatusParams(id: "mfly-2")),
 			.destroy(DestroyParams(id: "mfly-3", force: false)),
+			.executeDetached(ExecuteParams(id: "mfly-1", command: ["make"], timeoutSeconds: 600)),
+			.execOutput(ExecOutputParams(execID: "exec-1", tailBytes: 4096)),
+			.execOutput(ExecOutputParams(execID: "exec-1")),
+			.execCancel(ExecCancelParams(execID: "exec-1")),
 		]
 		for request in requests {
 			#expect(try roundTrip(request) == request)
@@ -55,6 +59,27 @@ private final class NymphProtocolTests {
 			.list(ListResult(sessions: [summary])),
 			.status(StatusResult(summary: summary, stopReason: "forced")),
 			.destroy(DestroyResult(id: "mfly-1")),
+			.execSubmit(ExecSubmitResult(execID: "exec-1")),
+			.execOutput(ExecOutputResult(
+				state: .running,
+				standardOutput: "out",
+				standardError: "",
+				standardOutputTruncated: true,
+				standardErrorTruncated: false,
+				lastOutputAt: Date(timeIntervalSince1970: 1000),
+				exit: nil,
+				endedAt: nil
+			)),
+			.execCancel(ExecOutputResult(
+				state: .cancelled,
+				standardOutput: "",
+				standardError: "err",
+				standardOutputTruncated: false,
+				standardErrorTruncated: false,
+				lastOutputAt: nil,
+				exit: nil,
+				endedAt: Date(timeIntervalSince1970: 2000)
+			)),
 			.toolError(ToolError(code: "no_such_id", message: "no such session id: mfly-x")),
 		]
 		for response in responses {
@@ -83,6 +108,9 @@ private final class NymphProtocolTests {
 		#expect(ToolError(.ipUnavailable).code == "ip_unavailable")
 		#expect(ToolError(.transportFailure("d")).code == "transport_failure")
 		#expect(ToolError(.execTimedOut).code == "timed_out")
+		#expect(ToolError(.execCancelled).code == "cancelled")
+		#expect(ToolError(.execNotFound("e")).code == "exec_not_found")
+		#expect(ToolError(.execNotRunning("e")).code == "exec_not_running")
 		#expect(ToolError(.notAppleSilicon).code == "not_apple_silicon")
 		#expect(ToolError(.engineUnavailable(.linux)).code == "engine_unavailable")
 		#expect(ToolError(.internalFailure("d")).code == "internal_error")
