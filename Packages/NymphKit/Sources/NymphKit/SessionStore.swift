@@ -376,6 +376,9 @@ public actor SessionStore {
 	/// 的那個的旗標一併清掉。
 	private var inflight: [String: InflightSeat] = [:]
 
+	/// 背景 exec 登記簿。
+	private var detached: DetachedExecs = .init()
+
 	/// 掛住一席：同一 id 再掛就加一。
 	/// - Parameters:
 	///   - id: session handle。
@@ -558,6 +561,143 @@ public actor SessionStore {
 	}
 }
 
+/// 背景 exec：送出即回、之後取輸出或取消（輪詢，不做串流）。
+extension SessionStore {
+
+	// MARK: Public
+
+	/// 在既有 session 內啟動命令、不等它結束，回背景 exec 的 id。
+	///
+	/// 命令跑著時握一席佔位（與 `execute` 同一套）；結束時放掉，並發一筆 `execute` 事件。
+	/// - Parameters:
+	///   - id: 目標 session。
+	///   - command: 遠端命令 argv。
+	///   - timeout: 上限；nil＝不設限。
+	///   - standardInput: 餵給 stdin 的文字。
+	///   - workingDirectory: 遠端 `cd` 的目錄。
+	///   - environment: 額外環境變數。
+	/// - Returns: 背景 exec 的 id。
+	public func executeDetached(
+		id: String,
+		command: [String],
+		timeout: Duration?,
+		standardInput: String?,
+		workingDirectory: String?,
+		environment: [String: String]
+	) async throws -> ExecSubmitResult {
+		let trace: SessionLogTrace? = logSink.map { _ in
+			SessionLogTrace(operation: .execute, sessionID: id, command: command.first)
+		}
+		guard let entry: Entry = table[id] else {
+			emit(trace, outcome: .error(ToolError(.noSuchID(id))))
+			throw NymphError.noSuchID(id)
+		}
+		retainInflight(id, kind: entry.kind)
+		let standardOutput: OutputTailBuffer = .init(clock: clock)
+		let standardError: OutputTailBuffer = .init(clock: clock)
+		let execution: any GuestExecution
+		do {
+			execution = try await entry.control.startExec(
+				command,
+				standardInput: standardInput,
+				workingDirectory: workingDirectory,
+				environment: environment,
+				standardOutput: standardOutput,
+				standardError: standardError
+			)
+		} catch {
+			releaseInflight(id)
+			emit(trace, outcome: .error(SessionStore.toolError(for: error)))
+			throw error
+		}
+		// 啟動有 await：期間 session 若已被 destroy／drain 收走，那一趟的取消看不到這條命令，在這裡補。
+		if table[id]?.clonePath != entry.clonePath || destroying.contains(id) {
+			Task {
+				await execution.cancel()
+			}
+		}
+		let execID: String = detached.insert(DetachedExecs.Record(
+			sessionID: id,
+			execution: execution,
+			standardOutput: standardOutput,
+			standardError: standardError,
+			trace: trace
+		))
+		Task {
+			let outcome: MacGuestExecOutcome = await execution.wait(timeout: timeout)
+			_ = finishExec(execID, outcome: outcome)
+		}
+		return ExecSubmitResult(execID: execID)
+	}
+
+	/// 取背景 exec 目前的輸出；已結束者一併帶終局。
+	/// - Parameters:
+	///   - execID: 背景 exec 的 id。
+	///   - tailBytes: 每條串流只回最後這麼多 bytes；nil＝全部。
+	/// - Returns: 輸出與狀態。
+	/// - Throws: ``NymphError/execNotFound(_:)``。
+	public func execOutput(execID: String, tailBytes: Int?) throws -> ExecOutputResult {
+		guard let record: DetachedExecs.Record = detached[execID] else { throw NymphError.execNotFound(execID) }
+		return DetachedExecs.output(of: record, tailBytes: tailBytes)
+	}
+
+	/// 取消背景 exec，等它收尾後回最終狀態。
+	///
+	/// 終止流程要另開一趟連線對 guest 內的行程群組送訊號，guest 失聯時這一步會等到終止流程的上限才回。
+	/// - Parameter execID: 背景 exec 的 id。
+	/// - Returns: 最終輸出與狀態。
+	/// - Throws: ``NymphError/execNotFound(_:)``／``NymphError/execNotRunning(_:)``。
+	public func execCancel(execID: String) async throws -> ExecOutputResult {
+		guard let record: DetachedExecs.Record = detached[execID] else { throw NymphError.execNotFound(execID) }
+		guard record.outcome == nil else { throw NymphError.execNotRunning(execID) }
+		await record.execution.cancel()
+		let outcome: MacGuestExecOutcome = await record.execution.wait(timeout: nil)
+		guard let final: DetachedExecs.Record = finishExec(execID, outcome: outcome) ?? detached[execID] else {
+			throw NymphError.execNotFound(execID)
+		}
+		return DetachedExecs.output(of: final, tailBytes: nil)
+	}
+
+	// MARK: Private
+
+	/// 記下背景 exec 的終局：放掉佔位席、發 `execute` 事件。只有第一次有效。
+	/// - Parameters:
+	///   - execID: 背景 exec 的 id。
+	///   - outcome: 終局。
+	/// - Returns: 記下終局後的紀錄；已記過或查無為 nil。
+	private func finishExec(_ execID: String, outcome: MacGuestExecOutcome) -> DetachedExecs.Record? {
+		guard let record: DetachedExecs.Record = detached.finish(execID, outcome: outcome, endedAt: clock()) else {
+			return nil
+		}
+		releaseInflight(record.sessionID)
+		record.trace?.mark(.exec)
+		switch outcome {
+		case let .exited(exitCode):
+			record.trace?.exitCode = exitCode
+			emit(record.trace, outcome: .ok)
+		case .timedOut:
+			emit(record.trace, outcome: .error(ToolError(.execTimedOut)))
+		case .cancelled:
+			emit(record.trace, outcome: .error(ToolError(.execCancelled)))
+		case let .transportFailure(detail):
+			emit(record.trace, outcome: .error(ToolError(.transportFailure(detail))))
+		}
+		return record
+	}
+
+	/// 結束一段量測並送出事件（操作紀錄關閉時 trace 為 nil、不做事）。
+	/// - Parameters:
+	///   - trace: 量測脈絡。
+	///   - outcome: 結果。
+	private func emit(_ trace: SessionLogTrace?, outcome: SessionLogEvent.Outcome) {
+		guard
+			let trace,
+			let logSink
+		else { return }
+		logSink(trace.finish(timestamp: clock(), outcome: outcome))
+	}
+}
+
 /// socket 面把 ``NymphRequest`` 打進 store：分派到對應方法、``NymphError`` / ``ToolError``
 /// 於此收斂成 ``NymphResponse/toolError(_:)``（tool-error envelope 不擲出連線層）。
 extension SessionStore: RequestDispatching {
@@ -593,6 +733,22 @@ extension SessionStore: RequestDispatching {
 
 			case let .destroy(params):
 				return .destroy(try await destroy(id: params.id, force: params.force))
+
+			case let .executeDetached(params):
+				return .execSubmit(try await executeDetached(
+					id: params.id,
+					command: params.command,
+					timeout: params.timeoutSeconds.map { .seconds($0) },
+					standardInput: params.standardInput,
+					workingDirectory: params.workingDirectory,
+					environment: params.environment
+				))
+
+			case let .execOutput(params):
+				return .execOutput(try execOutput(execID: params.execID, tailBytes: params.tailBytes))
+
+			case let .execCancel(params):
+				return .execCancel(try await execCancel(execID: params.execID))
 			}
 		} catch {
 			return .toolError(SessionStore.toolError(for: error))

@@ -33,6 +33,16 @@ public enum NymphRequest: Codable, Sendable, Equatable {
 
 	/// 停 VM + 刪 clone + 移出 table。
 	case destroy(DestroyParams)
+
+	/// 在既有 session 內啟動命令、不等它結束：回背景 exec 的 id，之後以 ``execOutput(_:)``
+	/// 取輸出與終局、以 ``execCancel(_:)`` 取消。`timeoutSeconds` 照樣生效。
+	case executeDetached(ExecuteParams)
+
+	/// 取背景 exec 目前的輸出；已結束者一併帶終局。
+	case execOutput(ExecOutputParams)
+
+	/// 取消背景 exec：走與逾時同一條終止流程，等它收尾後回最終狀態。
+	case execCancel(ExecCancelParams)
 }
 
 /// daemon → client 的回應。成功回對應結果、失敗回 ``ToolError``（tool-error envelope）。
@@ -52,6 +62,15 @@ public enum NymphResponse: Codable, Sendable, Equatable {
 
 	/// destroy 成功。
 	case destroy(DestroyResult)
+
+	/// 背景 exec 已啟動。
+	case execSubmit(ExecSubmitResult)
+
+	/// 背景 exec 的目前輸出（``NymphRequest/execOutput(_:)`` 的回應）。
+	case execOutput(ExecOutputResult)
+
+	/// 背景 exec 取消後的最終狀態（``NymphRequest/execCancel(_:)`` 的回應）。
+	case execCancel(ExecOutputResult)
 
 	/// 工具錯誤（no such id / 未 ready / 傳輸失敗 / 達上限…）。
 	case toolError(ToolError)
@@ -337,6 +356,12 @@ public struct ToolError: Codable, Sendable, Equatable, Error {
 
 		case .execCancelled:
 			self.init(code: "cancelled", message: "execute was cancelled")
+
+		case let .execNotFound(id):
+			self.init(code: "exec_not_found", message: "no such exec id: \(id)")
+
+		case let .execNotRunning(id):
+			self.init(code: "exec_not_running", message: "exec has already ended: \(id)")
 
 		case .notAppleSilicon:
 			self.init(code: "not_apple_silicon", message: "nymph requires Apple Silicon")

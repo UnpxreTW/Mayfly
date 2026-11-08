@@ -147,7 +147,10 @@ final class FakeGuestControl: GuestControl, @unchecked Sendable {
 		stopGate: Gate? = nil,
 		readyGate: Gate? = nil,
 		execGate: Gate? = nil,
-		stateGate: Gate? = nil
+		stateGate: Gate? = nil,
+		startExecError: NymphError? = nil,
+		skipCancellation: Bool = false,
+		startExecGate: Gate? = nil
 	) {
 		self.readyIP = readyIP
 		self.timeoutOnReady = timeoutOnReady
@@ -158,9 +161,15 @@ final class FakeGuestControl: GuestControl, @unchecked Sendable {
 		self.readyGate = readyGate
 		self.execGate = execGate
 		self.stateGate = stateGate
+		self.startExecError = startExecError
+		self.skipCancellation = skipCancellation
+		self.startExecGate = startExecGate
 	}
 
 	let recorded: Locked<Recorded> = .init(Recorded())
+
+	/// startExec 開出的假執行（依序）。
+	internal let executions: Locked<[FakeExecution]> = .init([])
 
 	func start() async throws {
 		if let startError {
@@ -242,9 +251,36 @@ final class FakeGuestControl: GuestControl, @unchecked Sendable {
 		return try execOutcome.get()
 	}
 
-	/// 只記下呼叫序，不動任何命令。
+	internal func startExec(
+		_ command: [String],
+		standardInput: String?,
+		workingDirectory: String?,
+		environment: [String: String],
+		standardOutput: OutputTailBuffer,
+		standardError: OutputTailBuffer
+	) async throws -> any GuestExecution {
+		if let startExecError {
+			throw startExecError
+		}
+		recorded.withLock { $0.execCommands.append(command) }
+		// 啟動還沒回的窗口（真機是查 IP、起 ssh）：掛了閘就停在這裡，命令此時還不在清單上。
+		if let startExecGate {
+			await startExecGate.enterAndWait()
+		}
+		let execution: FakeExecution = .init(standardOutput: standardOutput, standardError: standardError)
+		executions.withLock { $0.append(execution) }
+		return execution
+	}
+
+	/// 記下呼叫序，並以 `.cancelled` 結束 ``startExec(_:standardInput:workingDirectory:environment:standardOutput:standardError:)``
+	/// 開出的假執行（`skipCancellation` 時只記呼叫序）。
 	internal func cancelRunningCommands() async {
 		recorded.withLock { $0.stopSequence.append("cancel") }
+		// 真機的取消要另開連線、可能遲遲收不了尾；skipCancellation 讓命令維持在跑，模擬那段窗口。
+		guard !skipCancellation else { return }
+		for execution in executions.current {
+			execution.finish(.cancelled)
+		}
 	}
 
 	func destroyClone() throws {
@@ -269,8 +305,86 @@ final class FakeGuestControl: GuestControl, @unchecked Sendable {
 
 	private let stateGate: Gate?
 
+	private let startExecError: NymphError?
+
+	private let skipCancellation: Bool
+
+	private let startExecGate: Gate?
+
 	/// `stateGate` 尚未被用掉（見 ``currentState()``）。
 	private let stateGateArmed: Locked<Bool> = .init(true)
+}
+
+// MARK: - FakeExecution
+
+/// 假背景執行：由測試決定何時結束、以什麼終局結束；取消即以 `.cancelled` 結束。輸出由測試直接
+/// 寫進 ``standardOutput``／``standardError``。
+internal final class FakeExecution: GuestExecution, @unchecked Sendable {
+
+	internal init(standardOutput: OutputTailBuffer, standardError: OutputTailBuffer) {
+		self.standardOutput = standardOutput
+		self.standardError = standardError
+	}
+
+	/// cancel 被呼叫的次數。
+	internal var cancelCount: Int {
+		state.current.cancelCount
+	}
+
+	internal let standardOutput: OutputTailBuffer
+
+	internal let standardError: OutputTailBuffer
+
+	/// 以 `outcome` 結束；已結束則不做事。
+	internal func finish(_ outcome: MacGuestExecOutcome) {
+		let waiters: [CheckedContinuation<MacGuestExecOutcome, Never>] = state.withLock { value in
+			guard value.outcome == nil else { return [] }
+			value.outcome = outcome
+			defer { value.waiters = [] }
+			return value.waiters
+		}
+		for waiter in waiters {
+			waiter.resume(returning: outcome)
+		}
+	}
+
+	internal func wait(timeout: Duration?) async -> MacGuestExecOutcome {
+		if let timeout {
+			Task {
+				// sleep 只會因取消而擲錯，這個 Task 不會被取消；擲了也照樣以逾時收尾。
+				try? await Task.sleep(for: timeout)
+				finish(.timedOut)
+			}
+		}
+		return await withCheckedContinuation { continuation in
+			let ended: MacGuestExecOutcome? = state.withLock { value in
+				if value.outcome == nil {
+					value.waiters.append(continuation)
+				}
+				return value.outcome
+			}
+			if let ended {
+				continuation.resume(returning: ended)
+			}
+		}
+	}
+
+	internal func cancel() async {
+		state.withLock { $0.cancelCount += 1 }
+		finish(.cancelled)
+	}
+
+	/// 終局、等待者與取消次數，一起放在鎖裡。
+	private struct Fields {
+
+		internal var outcome: MacGuestExecOutcome?
+
+		internal var waiters: [CheckedContinuation<MacGuestExecOutcome, Never>] = []
+
+		internal var cancelCount: Int = 0
+	}
+
+	private let state: Locked<Fields> = .init(Fields())
 }
 
 /// 假引擎：每次 provision 造一個 ``FakeGuestControl`` 並記錄它與 clonePath，供斷言。可配
